@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<app:root xmlns:app="http://ui.purelib.chav1961/">
+	<app:i18n location="i18n:prop:chav1961/purelib/navigator/i18n/i18n"/>
+	<app:menu id="mainmenu">
+		<app:submenu name="menu.file" caption="menu.file" tooltip="menu.ttFile">
+			<app:item name="menu.file.exit" caption="menu.exit" tooltip="menu.ttExit" action="exit"/>
+		</app:submenu>
+		<app:submenu name="menu.help" caption="menu.help" tooltip="menu.ttHelp">
+			<app:item name="menu.help.updatesoft" caption="menu.updateSoft" tooltip="menu.ttUpdateSoft" action="softUpdate"/>
+			<app:item name="menu.help.pluginmarket" caption="menu.pluginMarket" tooltip="menu.ttPluginMarket" action="pluginMarket"/>
+			<app:separator/>
+			<app:item name="menu.help.about" caption="menu.about" tooltip="menu.ttAbout" action="helpAbout"/>
+		</app:submenu>
+	</app:menu>
+	<app:menu id="toolbar">
+		<app:item name="menu.project.new" caption="newProject" tooltip="ttNewProject" action="newProject" icon="file:./src/test/resources/chav1961/purelib/ui/swing/wizard.png"/>
+		<app:item name="menu.project.open" caption="openProject" tooltip="ttOpenProject" action="openProject"/>
+		<app:item name="menu.project.save" caption="saveProject" tooltip="ttSaveProject" enabled="false" action="saveProject"/>
+		<app:item name="menu.project.saveas" caption="saveProjectAs" tooltip="ttSaveProjectAs" enabled="false" action="saveProjectAs"/>
+		<app:item name="menu.project.close" caption="closeProject" tooltip="ttCloseProject" enabled="false" action="closeProject"/>
+		<app:separator/>
+		<app:item name="menu.project.play" caption="playProject" tooltip="ttPlayProject" action="playProject"/>
+		<app:separator/>
+		<app:item name="menu.project.exit" caption="exit" tooltip="ttExit" action="exit"/>
+	</app:menu>
+</app:root>
