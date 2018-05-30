@@ -5,6 +5,12 @@
 		<app:submenu name="menu.file" caption="menu.file" tooltip="menu.ttFile">
 			<app:item name="menu.file.exit" caption="menu.exit" tooltip="menu.ttExit" action="exit"/>
 		</app:submenu>
+		<app:submenu name="menu.search" caption="menu.search" tooltip="menu.ttSearch">
+			<app:item name="menu.search.luceneNavigator" caption="menu.luceneNavigator" tooltip="menu.ttLuceneNavigator" action="luceneNavigator"/>
+		</app:submenu>
+		<app:submenu name="menu.windows" caption="menu.windows" tooltip="menu.ttWindows">
+			<app:item name="menu.windows.creoleEditor" caption="menu.creoleEditor" tooltip="menu.ttCreoleEditor" action="creoleEditor"/>
+		</app:submenu>
 		<app:submenu name="menu.help" caption="menu.help" tooltip="menu.ttHelp">
 			<app:item name="menu.help.updatesoft" caption="menu.updateSoft" tooltip="menu.ttUpdateSoft" action="softUpdate"/>
 			<app:item name="menu.help.pluginmarket" caption="menu.pluginMarket" tooltip="menu.ttPluginMarket" action="pluginMarket"/>

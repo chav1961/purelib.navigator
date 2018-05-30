@@ -8,6 +8,10 @@ package chav1961.purelib.navigator;
  */
 
 public abstract class LocalizationKeys {
+	public static final String		HELP_ABOUT_APPLICATION = "help.aboutApplication";
+	
+	public static final String		LABEL_LUCENENAVIGATOR_ENTER_SEARCH = "label.luceneNavigator.enterSearch";
+	
 	public static final String		MENU_FILE = "menu.file";
 	public static final String		MENU_FILE_TOOLTIP = "menu.ttFile";
 	public static final String		MENU_FILE_EXIT = "menu.exit";
@@ -21,8 +25,9 @@ public abstract class LocalizationKeys {
 	public static final String		MENU_HELP_ABOUT = "menu.about";
 	public static final String		MENU_HELP_ABOUT_TOOLTIP = "menu.ttAbout";
 
-	public static final String		HELP_ABOUT_APPLICATION = "help.aboutApplication";
 	
+	public static final String		TITLE_APPLICATION = "title.application";
 	public static final String		TITLE_HELP_ABOUT_APPLICATION = "title.help.aboutApplication";
 
+	
 }

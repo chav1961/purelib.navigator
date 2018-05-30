@@ -47,7 +47,17 @@
 			<groupId>com.github.chav1961</groupId>
 			<artifactId>purelib</artifactId>
 			<version>0.0.1</version>
-		</dependency> -->		
+		</dependency> -->
+ 		<dependency>
+		    <groupId>org.apache.lucene</groupId>
+		    <artifactId>lucene-core</artifactId>
+		    <version>7.1.0</version>
+		</dependency>
+		<dependency>
+		    <groupId>org.apache.lucene</groupId>
+		    <artifactId>lucene-queryparser</artifactId>
+		    <version>7.1.0</version>
+		</dependency>
 	</dependencies>
   
 	<repositories>
@@ -59,7 +69,15 @@
 	            <updatePolicy>always</updatePolicy>
 	        </snapshots>
 	    </repository>
-	</repositories>
+		<repository>
+		    <id>lucene core</id>
+		    <url>https://mvnrepository.com/artifact/org.apache.lucene/lucene-core/</url>
+		</repository>	    
+		<repository>
+		    <id>lucene query parser</id>
+		    <url>https://mvnrepository.com/artifact/org.apache.lucene/lucene-queryparser/</url>
+		</repository>	    
+    </repositories>
 
   	<distributionManagement>
 	    <repository>
