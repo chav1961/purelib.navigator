@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.MenuBar;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.IOException;
@@ -41,6 +42,7 @@ public class GUIApplication extends JFrame implements LocaleChangeListener {
 	private final Localizer					localizer;
 	private final JTabbedPane				tab = new JTabbedPane();
 	private final JLabel					state = new JLabel("(c) 2018 chav1961");
+	private final JMenuBar					bar;
 	
 	public GUIApplication(final XMLDescribedApplication xda, final Localizer parentLocalizer) throws NullPointerException, IllegalArgumentException, EnvironmentException {
 		if (xda == null) {
@@ -55,7 +57,7 @@ public class GUIApplication extends JFrame implements LocaleChangeListener {
 			
 			localizer.setParent(parentLocalizer);
 			
-			final JMenuBar	bar = xda.getEntity("mainmenu",JMenuBar.class,null); 
+			this.bar = xda.getEntity("mainmenu",JMenuBar.class,null); 
 			
 			SwingUtils.assignActionListeners(bar,this);
 			getContentPane().add(bar,BorderLayout.NORTH);
@@ -88,13 +90,13 @@ public class GUIApplication extends JFrame implements LocaleChangeListener {
 				@Override public void windowDeactivated(WindowEvent e) {}
 			});
 			
-			fillLocalizedStrings(localizer.currentLocale().getLocale());
+			fillLocalizedStrings(localizer.currentLocale().getLocale(),localizer.currentLocale().getLocale());
 		}
 	}
 
 	@Override
 	public void localeChanged(final Locale oldLocale, final Locale newLocale) throws LocalizationException {
-		fillLocalizedStrings(localizer.currentLocale().getLocale());
+		fillLocalizedStrings(oldLocale,newLocale);
 		SwingUtils.refreshLocale(this,oldLocale, newLocale);
 	}
 
@@ -116,6 +118,17 @@ public class GUIApplication extends JFrame implements LocaleChangeListener {
 		tab.addTab("Lucene",navigator);
 		navigator.prepare(getContentPane().getSize());
 	}
+
+	@OnAction("builtin.languages:en")
+	private void selectEN() throws LocalizationException {
+		localizer.setCurrentLocale(Locale.forLanguageTag("en"));
+	}
+
+	@OnAction("builtin.languages:ru")
+	private void selectRU() throws LocalizationException {
+		localizer.setCurrentLocale(Locale.forLanguageTag("ru"));
+	}
+	
 	
 	@OnAction("creoleEditor")
 	private void creoleEditor() {
@@ -143,7 +156,8 @@ public class GUIApplication extends JFrame implements LocaleChangeListener {
 		}
 	}
 
-	private void fillLocalizedStrings(final Locale locale) throws LocalizationException{
+	private void fillLocalizedStrings(final Locale oldLocale, final Locale newLocale) throws LocalizationException{
+		((LocaleChangeListener)bar).localeChanged(oldLocale, newLocale);
 		setTitle(localizer.getValue(LocalizationKeys.TITLE_APPLICATION));
 	}
 }

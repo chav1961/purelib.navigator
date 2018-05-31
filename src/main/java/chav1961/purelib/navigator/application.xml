@@ -8,6 +8,9 @@
 		<app:submenu name="menu.search" caption="menu.search" tooltip="menu.ttSearch">
 			<app:item name="menu.search.luceneNavigator" caption="menu.luceneNavigator" tooltip="menu.ttLuceneNavigator" action="luceneNavigator"/>
 		</app:submenu>
+		<app:submenu name="menu.tools" caption="menu.tools" tooltip="menu.ttTools">
+			<app:builtinSubmenu name="builtin.languages" caption="menu.languages" tooltip="menu.ttLanguages"/>
+		</app:submenu>
 		<app:submenu name="menu.windows" caption="menu.windows" tooltip="menu.ttWindows">
 			<app:item name="menu.windows.creoleEditor" caption="menu.creoleEditor" tooltip="menu.ttCreoleEditor" action="creoleEditor"/>
 		</app:submenu>
