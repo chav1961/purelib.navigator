@@ -3,10 +3,10 @@
 	<groupId>com.github.chav1961</groupId>
 	<artifactId>purelib.navigator</artifactId>
 	<version>0.0.1</version>
-	<description>Funny Prolog interpreter for Java</description>
+	<description>Pure library navigator</description>
 	<url>https://github.com/chav1961/purelib.navigator</url>
 	<packaging>jar</packaging>
-	<name>funnypro</name>
+	<name>Pure Lib Navigator</name>
 	  
 	<developers>
 		<developer>
@@ -43,11 +43,11 @@
 			<version>4.12</version>
 			<scope>test</scope>
 		</dependency>
-<!--  		<dependency>
+  		<dependency>
 			<groupId>com.github.chav1961</groupId>
 			<artifactId>purelib</artifactId>
-			<version>0.0.1</version>
-		</dependency> -->
+			<version>0.0.2</version>
+		</dependency>
  		<dependency>
 		    <groupId>org.apache.lucene</groupId>
 		    <artifactId>lucene-core</artifactId>

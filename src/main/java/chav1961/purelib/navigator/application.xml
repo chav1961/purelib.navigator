@@ -10,6 +10,7 @@
 		</app:submenu>
 		<app:submenu name="menu.tools" caption="menu.tools" tooltip="menu.ttTools">
 			<app:builtinSubmenu name="builtin.languages" caption="menu.languages" tooltip="menu.ttLanguages"/>
+			<app:item name="menu.tools.luceneIndex" caption="menu.luceneIndex" tooltip="menu.ttLuceneIndex" action="luceneIndex"/>
 		</app:submenu>
 		<app:submenu name="menu.windows" caption="menu.windows" tooltip="menu.ttWindows">
 			<app:item name="menu.windows.creoleEditor" caption="menu.creoleEditor" tooltip="menu.ttCreoleEditor" action="creoleEditor"/>

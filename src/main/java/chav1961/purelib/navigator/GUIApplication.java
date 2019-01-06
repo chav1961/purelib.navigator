@@ -9,6 +9,7 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.IOException;
 import java.io.Reader;
+import java.nio.channels.UnsupportedAddressTypeException;
 import java.util.Locale;
 
 import javax.activation.MimeType;
@@ -26,17 +27,25 @@ import javax.swing.border.EtchedBorder;
 import javax.swing.border.LineBorder;
 
 import chav1961.purelib.basic.exceptions.EnvironmentException;
+import chav1961.purelib.basic.exceptions.FlowException;
 import chav1961.purelib.basic.exceptions.LocalizationException;
+import chav1961.purelib.basic.exceptions.PreparationException;
+import chav1961.purelib.basic.interfaces.LoggerFacade.Severity;
 import chav1961.purelib.i18n.interfaces.Localizer;
 import chav1961.purelib.i18n.interfaces.Localizer.LocaleChangeListener;
 import chav1961.purelib.navigator.gui.CreoleEditor;
 import chav1961.purelib.navigator.gui.LuceneNavigator;
+import chav1961.purelib.navigator.utils.LuceneIndexWizard;
 import chav1961.purelib.ui.swing.SwingUtils;
 import chav1961.purelib.ui.swing.XMLDescribedApplication;
 import chav1961.purelib.ui.swing.interfaces.OnAction;
 
 public class GUIApplication extends JFrame implements LocaleChangeListener {
-	private static final long serialVersionUID = -1408706234867048980L;
+	private static final long 				serialVersionUID = -1408706234867048980L;
+	private static final String 			INFO_MESSAGE_TEMPLATE = "<html><body><font color=black>%1$s</font></body></html>"; 
+	private static final String 			WARNING_MESSAGE_TEMPLATE = "<html><body><font color=bluek>%1$s</font></body></html>"; 
+	private static final String 			ERROR_MESSAGE_TEMPLATE = "<html><body><font color=red>%1$s</font></body></html>"; 
+	private static final String 			SEVERE_MESSAGE_TEMPLATE = "<html><body><font color=red><b>%1$s</b></font></body></html>"; 
 
 	private final XMLDescribedApplication	xda;
 	private final Localizer					localizer;
@@ -128,6 +137,23 @@ public class GUIApplication extends JFrame implements LocaleChangeListener {
 	private void selectRU() throws LocalizationException {
 		localizer.setCurrentLocale(Locale.forLanguageTag("ru"));
 	}
+
+	@OnAction("luceneIndex")
+	private void buildLuceneIndex() throws LocalizationException, PreparationException, FlowException, InterruptedException {
+		final LuceneIndexWizard	wizard = new LuceneIndexWizard(this, localizer);
+		
+		final Thread			t = new Thread(new Runnable() {
+										@Override
+										public void run() {
+											try{wizard.animate(wizard);
+											} catch (LocalizationException | PreparationException | FlowException | InterruptedException e) {
+												showStateMessage(Severity.error,e.getLocalizedMessage());
+											}
+										}
+									});
+		t.setDaemon(true);
+		t.start();
+	}
 	
 	
 	@OnAction("creoleEditor")
@@ -159,5 +185,19 @@ public class GUIApplication extends JFrame implements LocaleChangeListener {
 	private void fillLocalizedStrings(final Locale oldLocale, final Locale newLocale) throws LocalizationException{
 		((LocaleChangeListener)bar).localeChanged(oldLocale, newLocale);
 		setTitle(localizer.getValue(LocalizationKeys.TITLE_APPLICATION));
+	}
+	
+	private void showStateMessage(final Severity severity, String message, final Object... parameters) {
+		String	text = parameters == null || parameters.length == 0 ? message : String.format(message,parameters); 
+
+		text = text.replace("<","&lt;").replace(">","&gt;").replace("&","&amp;");
+		switch (severity) {
+			case error	: text = String.format(ERROR_MESSAGE_TEMPLATE,text); break;
+			case severe	: text = String.format(SEVERE_MESSAGE_TEMPLATE,text); break;
+			case warning: text = String.format(WARNING_MESSAGE_TEMPLATE,text); break;
+			case debug : case trace : case info : text = String.format(INFO_MESSAGE_TEMPLATE,text); break;
+			default : throw new UnsupportedOperationException("Severity level ["+severity+"] is not supported yet");
+		}
+		state.setText(text);
 	}
 }
