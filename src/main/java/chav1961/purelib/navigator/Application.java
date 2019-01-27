@@ -12,7 +12,7 @@ import chav1961.purelib.basic.interfaces.LoggerFacade;
 import chav1961.purelib.i18n.LocalizerFactory;
 import chav1961.purelib.i18n.PureLibLocalizer;
 import chav1961.purelib.i18n.interfaces.Localizer;
-import chav1961.purelib.ui.swing.XMLDescribedApplication;
+import chav1961.purelib.ui.XMLDescribedApplication;
 
 /**
  * <p>This class is an application class for Pure Library Navigator.</p>
