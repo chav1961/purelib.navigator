@@ -11,15 +11,12 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
-import javax.swing.JToolTip;
 import javax.swing.border.LineBorder;
 
 import chav1961.purelib.basic.exceptions.LocalizationException;
-import chav1961.purelib.i18n.interfaces.LocaleResource;
 import chav1961.purelib.i18n.interfaces.Localizer;
 import chav1961.purelib.i18n.interfaces.Localizer.LocaleChangeListener;
 import chav1961.purelib.navigator.LocalizationKeys;
-import chav1961.purelib.ui.swing.SmartToolTip;
 
 public class LuceneNavigator extends JPanel implements LocaleChangeListener {
 	private static final long serialVersionUID = 6225927119842941130L;
@@ -33,12 +30,7 @@ public class LuceneNavigator extends JPanel implements LocaleChangeListener {
 		super(new BorderLayout(5,5));
 		
 		this.localizer = localizer;
-		this.query = new JTextField(){ private static final long serialVersionUID = 1L;
-									@Override
-									public JToolTip createToolTip() {
-										return new SmartToolTip(localizer,this);
-									}
-								};
+		this.query = new JTextField();
 		query.setColumns(50);
 		query.setFocusable(true);
 		

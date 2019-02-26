@@ -2,17 +2,19 @@ package chav1961.purelib.navigator;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
 import java.util.Locale;
 
+import chav1961.purelib.basic.ArgParser;
+import chav1961.purelib.basic.NullLoggerFacade;
 import chav1961.purelib.basic.SystemErrLoggerFacade;
+import chav1961.purelib.basic.exceptions.CommandLineParametersException;
+import chav1961.purelib.basic.exceptions.ConsoleCommandException;
 import chav1961.purelib.basic.exceptions.EnvironmentException;
-import chav1961.purelib.basic.exceptions.LocalizationException;
 import chav1961.purelib.basic.interfaces.LoggerFacade;
-import chav1961.purelib.i18n.LocalizerFactory;
 import chav1961.purelib.i18n.PureLibLocalizer;
 import chav1961.purelib.i18n.interfaces.Localizer;
-import chav1961.purelib.ui.XMLDescribedApplication;
+import chav1961.purelib.model.ContentModelFactory;
+import chav1961.purelib.model.interfaces.ContentMetadataInterface;
 
 /**
  * <p>This class is an application class for Pure Library Navigator.</p>
@@ -30,15 +32,20 @@ public class Application {
 	public static final String	MUTUALLY_EXCLUSIVE_PARAMETERS = "Mutually exclusive parameters %1$s and %2$s were typed";
 	public static final String	SHUTDOWN_REQUIRES_HTTP = "Using %1$s parameter requires to type %2$s also";
 	
-	public static final String	KEY_HTTP = "-http";
-	public static final String	KEY_SWING = "-swing";
-	public static final String	KEY_LOCAL = "-local";
-	public static final String	KEY_EXTERNAL = "-external";
-	public static final String	KEY_SHUTDOWN = "-shutdown";
-	public static final String	KEY_LANG = "-lang";
+	public static final String	KEY_DEBUG = "debug";
+	public static final String	KEY_HTTP = "http";
+	public static final String	KEY_SWING = "swing";
+	public static final String	KEY_LOCAL = "local";
+	public static final String	KEY_EXTERNAL = "external";
+	public static final String	KEY_SHUTDOWN = "shutdown";
+	public static final String	KEY_LANG = "lang";
 	
 	public static final String	APPLICATION_XML = "application.xml";
 
+	public enum Language {
+		en, ru
+	}
+	
 	/**
 	 * <p>Main method to start application. Available command line arguments are:</p>
 	 * <ul>
@@ -58,102 +65,53 @@ public class Application {
 	 * @param args command line arguments
 	 */
 	public static void main(final String[] args) {
-		// TODO Auto-generated method stub
-		if (args.length == 0) {
-			printAndExit(1);
-		}
-		else {
-			boolean		wasHttp = false, wasSwing = false, wasLocal = false, wasExternal = false, wasShutdown = false, wasLang = false;
-			String		lang = Locale.getDefault().getLanguage().equals(new Locale("ru").getLanguage()) ? new Locale("ru").getLanguage() : new Locale("en").getLanguage();
-			int			httpPort = 0;
-			
-			for (int index = 0; index < args.length; index++) {
-				switch (args[index]) {
-					case KEY_HTTP		:
-						wasHttp = true;
-						if (index < args.length-1) {
-							try{httpPort = Integer.valueOf(args[++index]);
-								if (httpPort < 1 || httpPort >= 65536) {
-									System.err.println(String.format(ILLEGAL_HTTP_PORT,args[index]));
-									printAndExit(128);
-								}
-							} catch (NumberFormatException exc) {
-								System.err.println(String.format(ILLEGAL_HTTP_PORT,args[index]));
-								printAndExit(128);
-							}
-						}
-						else {
-							System.err.println(String.format(HTTP_PORT_MISSING,KEY_HTTP));
-							printAndExit(128);
-						}
-						break;
-					case KEY_SWING		:
-						wasSwing = true;
-						break;
-					case KEY_LOCAL		:
-						wasLocal = true;
-						break;
-					case KEY_EXTERNAL	:
-						wasExternal = true;
-						break;
-					case KEY_SHUTDOWN	:
-						wasShutdown = true;
-						break;
-					case KEY_LANG		:
-						wasLang = true;
-						if (index < args.length-1) {
-							lang = args[++index];
-							if (lang.equals("ru")) {
-								lang = new Locale("ru").getLanguage();
-							}
-							else {
-								lang = new Locale("en").getLanguage();
-							}
-						}
-						else {
-							System.err.println(LANGUAGE_MISSING);
-							printAndExit(128);
-						}
-						break;
-					default :
-						System.err.println(String.format(UNKNOWN_ARGUMENT,args[index]));
-						printAndExit(128);
-						break;
-				}
-			}
-			if (wasHttp && wasSwing) {
-				System.err.println(String.format(MUTUALLY_EXCLUSIVE_PARAMETERS,KEY_HTTP,KEY_SWING));
-				printAndExit(128);
-			}
-			else if (wasLocal && wasExternal) {
-				System.err.println(String.format(MUTUALLY_EXCLUSIVE_PARAMETERS,KEY_LOCAL,KEY_EXTERNAL));
-				printAndExit(128);
-			}
-			else if (wasShutdown && !wasHttp) {
-				System.err.println(String.format(SHUTDOWN_REQUIRES_HTTP,KEY_SHUTDOWN,KEY_HTTP));
-				printAndExit(128);
-			}
-			else if (wasHttp && wasShutdown) {
-				System.exit(stopServer(httpPort));
-			}
-			else if (wasHttp && !wasShutdown) {
-				startServer(httpPort,lang);
+		final ArgParser		parser = new ApplicationArgParser();
+		
+		try{final ArgParser	parsedString = parser.parse(args);
+
+			if (args.length == 0) {
+				System.err.println(parser.getUsage("purelib.navigator.jar"));
+				System.exit(1);
 			}
 			else {
-				startGUI(lang);
+				if (parsedString.isTyped(KEY_HTTP) && parsedString.isTyped(KEY_SWING)) {
+					System.err.println(String.format(MUTUALLY_EXCLUSIVE_PARAMETERS,KEY_HTTP,KEY_SWING));
+					printAndExit(128);
+				}
+				else if (parsedString.isTyped(KEY_LOCAL) && parsedString.isTyped(KEY_EXTERNAL)) {
+					System.err.println(String.format(MUTUALLY_EXCLUSIVE_PARAMETERS,KEY_LOCAL,KEY_EXTERNAL));
+					printAndExit(128);
+				}
+				else if (parsedString.isTyped(KEY_SHUTDOWN) && !parsedString.isTyped(KEY_HTTP)) {
+					System.err.println(String.format(SHUTDOWN_REQUIRES_HTTP,KEY_SHUTDOWN,KEY_HTTP));
+					printAndExit(128);
+				}
+				else if (parsedString.isTyped(KEY_HTTP) && parsedString.isTyped(KEY_SHUTDOWN)) {
+					System.exit(stopServer(parsedString.getValue(KEY_HTTP,int.class)));
+				}
+				else if (parsedString.isTyped(KEY_HTTP) && !parsedString.isTyped(KEY_SHUTDOWN)) {
+					startServer(parsedString.getValue(KEY_HTTP,int.class),parsedString.getValue(KEY_LANG,Language.class).toString());
+				}
+				else {
+					startGUI(parsedString);
+				}
 			}
+		} catch (ConsoleCommandException | CommandLineParametersException exc) {
+			System.err.println(exc.getLocalizedMessage());
+			System.err.println(parser.getUsage("purelib.navigator.jar"));
+			System.exit(128);
 		}
 	}
 	
-	private static int startGUI(final String lang) {
-		Locale.setDefault(new Locale(lang));
+	private static int startGUI(final ArgParser parser) throws CommandLineParametersException {
+		Locale.setDefault(new Locale(parser.getValue(KEY_LANG,Language.class).name()));
 		
 		try{final Localizer						purelibLocalizer = new PureLibLocalizer();
 			try(final InputStream				is = Application.class.getResourceAsStream(APPLICATION_XML);
-				final LoggerFacade				logger = new SystemErrLoggerFacade()) {
-				final XMLDescribedApplication	xda = new XMLDescribedApplication(is,logger);
+				final LoggerFacade				logger = parser.getValue(KEY_DEBUG,boolean.class) ? new SystemErrLoggerFacade() : new NullLoggerFacade()) {
+				final ContentMetadataInterface	xda = ContentModelFactory.forXmlDescription(is);
 				
-				new GUIApplication(xda,purelibLocalizer.push(xda.getLocalizer())).setVisible(true);
+				new GUIApplication(xda,purelibLocalizer).setVisible(true);
 			}
 			return 0;
 		} catch (EnvironmentException | IOException exc) {
@@ -177,5 +135,21 @@ public class Application {
 	private static void printAndExit(final int rc) {
 		System.err.println(HELP_USING);
 		System.exit(1);
+	}
+
+	private static class ApplicationArgParser extends ArgParser {
+		private static final ArgParser.AbstractArg[]	KEYS = {
+					 new BooleanArg(KEY_DEBUG, false, "turn on debugging trace", false)
+					,new IntegerArg(KEY_HTTP, false, "local http port to connect to", 8080)
+					,new BooleanArg(KEY_SWING, false, "Use Java Swing instead of WEB browser", false)
+					,new BooleanArg(KEY_LOCAL, false, "turn on debugging trace", false)
+					,new BooleanArg(KEY_EXTERNAL, false, "turn on debugging trace", false)
+					,new BooleanArg(KEY_SHUTDOWN, false, "turn on debugging trace", false)
+					,new EnumArg<Language>(KEY_LANG, Language.class, false, "turn on debugging trace", Language.ru)
+				};
+		
+		ApplicationArgParser() {
+			super(KEYS);
+		}
 	}
 }

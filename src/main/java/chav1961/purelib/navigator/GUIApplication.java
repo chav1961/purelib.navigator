@@ -4,12 +4,11 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.MenuBar;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.IOException;
 import java.io.Reader;
-import java.nio.channels.UnsupportedAddressTypeException;
+import java.net.URI;
 import java.util.Locale;
 
 import javax.activation.MimeType;
@@ -31,14 +30,16 @@ import chav1961.purelib.basic.exceptions.FlowException;
 import chav1961.purelib.basic.exceptions.LocalizationException;
 import chav1961.purelib.basic.exceptions.PreparationException;
 import chav1961.purelib.basic.interfaces.LoggerFacade.Severity;
+import chav1961.purelib.i18n.LocalizerFactory;
 import chav1961.purelib.i18n.interfaces.Localizer;
 import chav1961.purelib.i18n.interfaces.Localizer.LocaleChangeListener;
-import chav1961.purelib.navigator.gui.CreoleEditor;
+import chav1961.purelib.model.interfaces.ContentMetadataInterface;
 import chav1961.purelib.navigator.gui.LuceneNavigator;
 import chav1961.purelib.navigator.utils.LuceneIndexWizard;
-import chav1961.purelib.ui.XMLDescribedApplication;
+import chav1961.purelib.ui.swing.SwingModelUtils;
 import chav1961.purelib.ui.swing.SwingUtils;
 import chav1961.purelib.ui.swing.interfaces.OnAction;
+import chav1961.purelib.ui.swing.useful.JStateString;
 
 public class GUIApplication extends JFrame implements LocaleChangeListener {
 	private static final long 				serialVersionUID = -1408706234867048980L;
@@ -47,13 +48,13 @@ public class GUIApplication extends JFrame implements LocaleChangeListener {
 	private static final String 			ERROR_MESSAGE_TEMPLATE = "<html><body><font color=red>%1$s</font></body></html>"; 
 	private static final String 			SEVERE_MESSAGE_TEMPLATE = "<html><body><font color=red><b>%1$s</b></font></body></html>"; 
 
-	private final XMLDescribedApplication	xda;
+	private final ContentMetadataInterface	xda;
 	private final Localizer					localizer;
-	private final JTabbedPane				tab = new JTabbedPane();
-	private final JLabel					state = new JLabel("(c) 2018 chav1961");
+	private final JStateString				state;
 	private final JMenuBar					bar;
+	private final JTabbedPane				tab = new JTabbedPane();
 	
-	public GUIApplication(final XMLDescribedApplication xda, final Localizer parentLocalizer) throws NullPointerException, IllegalArgumentException, EnvironmentException {
+	public GUIApplication(final ContentMetadataInterface xda, final Localizer parentLocalizer) throws NullPointerException, IllegalArgumentException, EnvironmentException, IOException {
 		if (xda == null) {
 			throw new NullPointerException("Application descriptor can't be null");
 		}
@@ -62,11 +63,13 @@ public class GUIApplication extends JFrame implements LocaleChangeListener {
 		}
 		else {
 			this.xda = xda;
-			this.localizer = xda.getLocalizer();
+			this.localizer = LocalizerFactory.getLocalizer(xda.getRoot().getLocalizerAssociated());
+			this.state = new JStateString(localizer);
 			
 			localizer.setParent(parentLocalizer);
+			localizer.addLocaleChangeListener(this);
 			
-			this.bar = xda.getEntity("mainmenu",JMenuBar.class,null); 
+			this.bar = SwingModelUtils.toMenuEntity(xda.byUIPath(URI.create("ui:/model/navigation.top.mainmenu")),JMenuBar.class); 
 			
 			SwingUtils.assignActionListeners(bar,this);
 			getContentPane().add(bar,BorderLayout.NORTH);
@@ -80,9 +83,7 @@ public class GUIApplication extends JFrame implements LocaleChangeListener {
 			statePanel.setBorder(new LineBorder(Color.BLACK));
 			getContentPane().add(statePanel,BorderLayout.SOUTH);
 			
-			localizer.addLocaleChangeListener(this);
-			
-			SwingUtils.assignHelpKey((JPanel)getContentPane(),localizer,LocalizationKeys.HELP_ABOUT_APPLICATION);
+//			SwingUtils.assignHelpKey((JPanel)getContentPane(),localizer,LocalizationKeys.HELP_ABOUT_APPLICATION);
 			SwingUtils.centerMainWindow(this,0.75f);
 			addWindowListener(new WindowListener() {
 				@Override public void windowOpened(WindowEvent e) {}
@@ -109,18 +110,14 @@ public class GUIApplication extends JFrame implements LocaleChangeListener {
 		SwingUtils.refreshLocale(this,oldLocale, newLocale);
 	}
 
-	private void message(final String message) {
-		state.setText(message);
-	}
-	
-	@OnAction("exit")
+	@OnAction("action:/exit")
 	private void exitApplication () {
 		setVisible(false);
 		dispose();
 	}
 
 		
-	@OnAction("luceneNavigator")
+	@OnAction("action:/luceneNavigator")
 	private void luceneNavigator() throws LocalizationException {
 		final LuceneNavigator	navigator = new LuceneNavigator(localizer);
 		
@@ -138,7 +135,7 @@ public class GUIApplication extends JFrame implements LocaleChangeListener {
 		localizer.setCurrentLocale(Locale.forLanguageTag("ru"));
 	}
 
-	@OnAction("luceneIndex")
+	@OnAction("action:/luceneIndex")
 	private void buildLuceneIndex() throws LocalizationException, PreparationException, FlowException, InterruptedException {
 		final LuceneIndexWizard	wizard = new LuceneIndexWizard(this, localizer);
 		
@@ -147,7 +144,7 @@ public class GUIApplication extends JFrame implements LocaleChangeListener {
 										public void run() {
 											try{wizard.animate(wizard);
 											} catch (LocalizationException | PreparationException | FlowException | InterruptedException e) {
-												showStateMessage(Severity.error,e.getLocalizedMessage());
+												state.message(Severity.error,e.getLocalizedMessage());
 											}
 										}
 									});
@@ -156,15 +153,7 @@ public class GUIApplication extends JFrame implements LocaleChangeListener {
 	}
 	
 	
-	@OnAction("creoleEditor")
-	private void creoleEditor() {
-		final CreoleEditor	editor = new CreoleEditor(localizer);
-		
-		tab.addTab("Creole",editor);
-		editor.prepare(getContentPane().getSize());
-	}
-	
-	@OnAction("helpAbout")
+	@OnAction("action:/helpAbout")
 	private void showAboutScreen() {
 		try{final JEditorPane 	pane = new JEditorPane("text/html",null);
 			final Icon			icon = new ImageIcon(this.getClass().getResource("avatar.jpg"));
@@ -185,19 +174,5 @@ public class GUIApplication extends JFrame implements LocaleChangeListener {
 	private void fillLocalizedStrings(final Locale oldLocale, final Locale newLocale) throws LocalizationException{
 		((LocaleChangeListener)bar).localeChanged(oldLocale, newLocale);
 		setTitle(localizer.getValue(LocalizationKeys.TITLE_APPLICATION));
-	}
-	
-	private void showStateMessage(final Severity severity, String message, final Object... parameters) {
-		String	text = parameters == null || parameters.length == 0 ? message : String.format(message,parameters); 
-
-		text = text.replace("<","&lt;").replace(">","&gt;").replace("&","&amp;");
-		switch (severity) {
-			case error	: text = String.format(ERROR_MESSAGE_TEMPLATE,text); break;
-			case severe	: text = String.format(SEVERE_MESSAGE_TEMPLATE,text); break;
-			case warning: text = String.format(WARNING_MESSAGE_TEMPLATE,text); break;
-			case debug : case trace : case info : text = String.format(INFO_MESSAGE_TEMPLATE,text); break;
-			default : throw new UnsupportedOperationException("Severity level ["+severity+"] is not supported yet");
-		}
-		state.setText(text);
 	}
 }
