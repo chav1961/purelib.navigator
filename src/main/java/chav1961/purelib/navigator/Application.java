@@ -107,6 +107,7 @@ public class Application {
 		Locale.setDefault(new Locale(parser.getValue(KEY_LANG,Language.class).name()));
 		
 		try{final Localizer						purelibLocalizer = new PureLibLocalizer();
+			
 			try(final InputStream				is = Application.class.getResourceAsStream(APPLICATION_XML);
 				final LoggerFacade				logger = parser.getValue(KEY_DEBUG,boolean.class) ? new SystemErrLoggerFacade() : new NullLoggerFacade()) {
 				final ContentMetadataInterface	xda = ContentModelFactory.forXmlDescription(is);

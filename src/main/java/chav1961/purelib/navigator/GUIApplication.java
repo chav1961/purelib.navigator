@@ -4,6 +4,8 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.IOException;
@@ -43,16 +45,24 @@ import chav1961.purelib.ui.swing.useful.JStateString;
 
 public class GUIApplication extends JFrame implements LocaleChangeListener {
 	private static final long 				serialVersionUID = -1408706234867048980L;
-	private static final String 			INFO_MESSAGE_TEMPLATE = "<html><body><font color=black>%1$s</font></body></html>"; 
-	private static final String 			WARNING_MESSAGE_TEMPLATE = "<html><body><font color=bluek>%1$s</font></body></html>"; 
-	private static final String 			ERROR_MESSAGE_TEMPLATE = "<html><body><font color=red>%1$s</font></body></html>"; 
-	private static final String 			SEVERE_MESSAGE_TEMPLATE = "<html><body><font color=red><b>%1$s</b></font></body></html>"; 
-
+	private static final String				TAB_OVERVIEW = "application.tab.overview";
+	private static final String				TAB_OVERVIEW_TOOLTIP = "application.tab.overview.tt";
+	private static final String				TAB_SEARCH = "application.tab.search";
+	private static final String				TAB_SEARCH_TOOLTIP = "application.tab.search.tt";
+	private static final String				TAB_SAMPLE = "application.tab.codeSample";
+	private static final String				TAB_SAMPLE_TOOLTIP = "application.tab.codeSample.tt";
+	
 	private final ContentMetadataInterface	xda;
 	private final Localizer					localizer;
 	private final JStateString				state;
 	private final JMenuBar					bar;
 	private final JTabbedPane				tab = new JTabbedPane();
+	private final OverviewScreen			overviewScreen = new OverviewScreen();
+	private final JLabel					overviewMark = new JLabel();
+	private final SearchScreen				searchScreen = new SearchScreen(); 
+	private final JLabel					searchMark = new JLabel();
+	private final CodeSampleScreen			codeSampleScreen = new CodeSampleScreen(); 
+	private final JLabel					sampleMark = new JLabel();
 	
 	public GUIApplication(final ContentMetadataInterface xda, final Localizer parentLocalizer) throws NullPointerException, IllegalArgumentException, EnvironmentException, IOException {
 		if (xda == null) {
@@ -98,6 +108,46 @@ public class GUIApplication extends JFrame implements LocaleChangeListener {
 				@Override public void windowDeiconified(WindowEvent e) {}
 				@Override public void windowActivated(WindowEvent e) {}
 				@Override public void windowDeactivated(WindowEvent e) {}
+			});
+			
+			tab.addTab(TAB_OVERVIEW,overviewScreen);
+			tab.setTabComponentAt(0,overviewMark);
+			overviewMark.addMouseListener(new MouseListener() {
+				@Override public void mouseReleased(MouseEvent e) {}
+				@Override public void mousePressed(MouseEvent e) {}
+				@Override public void mouseExited(MouseEvent e) {}
+				@Override public void mouseEntered(MouseEvent e) {}
+				
+				@Override 
+				public void mouseClicked(MouseEvent e) {
+					tab.setSelectedComponent(overviewScreen);
+				}
+			});
+			tab.addTab(TAB_SEARCH,searchScreen);
+			tab.setTabComponentAt(1,searchMark);
+			searchMark.addMouseListener(new MouseListener() {
+				@Override public void mouseReleased(MouseEvent e) {}
+				@Override public void mousePressed(MouseEvent e) {}
+				@Override public void mouseExited(MouseEvent e) {}
+				@Override public void mouseEntered(MouseEvent e) {}
+				
+				@Override 
+				public void mouseClicked(MouseEvent e) {
+					tab.setSelectedComponent(searchScreen);
+				}
+			});
+			tab.addTab(TAB_SAMPLE,codeSampleScreen);
+			tab.setTabComponentAt(2,sampleMark);
+			sampleMark.addMouseListener(new MouseListener() {
+				@Override public void mouseReleased(MouseEvent e) {}
+				@Override public void mousePressed(MouseEvent e) {}
+				@Override public void mouseExited(MouseEvent e) {}
+				@Override public void mouseEntered(MouseEvent e) {}
+				
+				@Override 
+				public void mouseClicked(MouseEvent e) {
+					tab.setSelectedComponent(codeSampleScreen);
+				}
 			});
 			
 			fillLocalizedStrings(localizer.currentLocale().getLocale(),localizer.currentLocale().getLocale());
@@ -174,5 +224,11 @@ public class GUIApplication extends JFrame implements LocaleChangeListener {
 	private void fillLocalizedStrings(final Locale oldLocale, final Locale newLocale) throws LocalizationException{
 		((LocaleChangeListener)bar).localeChanged(oldLocale, newLocale);
 		setTitle(localizer.getValue(LocalizationKeys.TITLE_APPLICATION));
+		overviewMark.setText(localizer.getValue(TAB_OVERVIEW));
+		overviewMark.setToolTipText(localizer.getValue(TAB_OVERVIEW_TOOLTIP));
+		searchMark.setText(localizer.getValue(TAB_SEARCH));
+		searchMark.setToolTipText(localizer.getValue(TAB_SEARCH_TOOLTIP));
+		sampleMark.setText(localizer.getValue(TAB_SAMPLE));
+		sampleMark.setToolTipText(localizer.getValue(TAB_SAMPLE_TOOLTIP));
 	}
 }
