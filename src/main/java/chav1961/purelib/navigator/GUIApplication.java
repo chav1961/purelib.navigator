@@ -41,6 +41,7 @@ import chav1961.purelib.navigator.utils.LuceneIndexWizard;
 import chav1961.purelib.ui.swing.SwingModelUtils;
 import chav1961.purelib.ui.swing.SwingUtils;
 import chav1961.purelib.ui.swing.interfaces.OnAction;
+import chav1961.purelib.ui.swing.useful.JCloseableTab;
 import chav1961.purelib.ui.swing.useful.JStateString;
 
 public class GUIApplication extends JFrame implements LocaleChangeListener {
@@ -58,11 +59,11 @@ public class GUIApplication extends JFrame implements LocaleChangeListener {
 	private final JMenuBar					bar;
 	private final JTabbedPane				tab = new JTabbedPane();
 	private final OverviewScreen			overviewScreen = new OverviewScreen();
-	private final JLabel					overviewMark = new JLabel();
+	private final JCloseableTab				overviewMark = new JCloseableTab(" ");
 	private final SearchScreen				searchScreen = new SearchScreen(); 
-	private final JLabel					searchMark = new JLabel();
+	private final JCloseableTab				searchMark = new JCloseableTab(" ");
 	private final CodeSampleScreen			codeSampleScreen = new CodeSampleScreen(); 
-	private final JLabel					sampleMark = new JLabel();
+	private final JCloseableTab				sampleMark = new JCloseableTab(" ");
 	
 	public GUIApplication(final ContentMetadataInterface xda, final Localizer parentLocalizer) throws NullPointerException, IllegalArgumentException, EnvironmentException, IOException {
 		if (xda == null) {
@@ -111,44 +112,14 @@ public class GUIApplication extends JFrame implements LocaleChangeListener {
 			});
 			
 			tab.addTab(TAB_OVERVIEW,overviewScreen);
+			overviewMark.associate(tab,overviewScreen);
 			tab.setTabComponentAt(0,overviewMark);
-			overviewMark.addMouseListener(new MouseListener() {
-				@Override public void mouseReleased(MouseEvent e) {}
-				@Override public void mousePressed(MouseEvent e) {}
-				@Override public void mouseExited(MouseEvent e) {}
-				@Override public void mouseEntered(MouseEvent e) {}
-				
-				@Override 
-				public void mouseClicked(MouseEvent e) {
-					tab.setSelectedComponent(overviewScreen);
-				}
-			});
 			tab.addTab(TAB_SEARCH,searchScreen);
+			searchMark.associate(tab,searchScreen);
 			tab.setTabComponentAt(1,searchMark);
-			searchMark.addMouseListener(new MouseListener() {
-				@Override public void mouseReleased(MouseEvent e) {}
-				@Override public void mousePressed(MouseEvent e) {}
-				@Override public void mouseExited(MouseEvent e) {}
-				@Override public void mouseEntered(MouseEvent e) {}
-				
-				@Override 
-				public void mouseClicked(MouseEvent e) {
-					tab.setSelectedComponent(searchScreen);
-				}
-			});
 			tab.addTab(TAB_SAMPLE,codeSampleScreen);
+			sampleMark.associate(tab,codeSampleScreen);
 			tab.setTabComponentAt(2,sampleMark);
-			sampleMark.addMouseListener(new MouseListener() {
-				@Override public void mouseReleased(MouseEvent e) {}
-				@Override public void mousePressed(MouseEvent e) {}
-				@Override public void mouseExited(MouseEvent e) {}
-				@Override public void mouseEntered(MouseEvent e) {}
-				
-				@Override 
-				public void mouseClicked(MouseEvent e) {
-					tab.setSelectedComponent(codeSampleScreen);
-				}
-			});
 			
 			fillLocalizedStrings(localizer.currentLocale().getLocale(),localizer.currentLocale().getLocale());
 		}
