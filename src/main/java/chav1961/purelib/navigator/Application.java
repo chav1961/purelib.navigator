@@ -9,6 +9,7 @@ import chav1961.purelib.basic.NullLoggerFacade;
 import chav1961.purelib.basic.SystemErrLoggerFacade;
 import chav1961.purelib.basic.exceptions.CommandLineParametersException;
 import chav1961.purelib.basic.exceptions.ConsoleCommandException;
+import chav1961.purelib.basic.exceptions.ContentException;
 import chav1961.purelib.basic.exceptions.EnvironmentException;
 import chav1961.purelib.basic.interfaces.LoggerFacade;
 import chav1961.purelib.i18n.PureLibLocalizer;
@@ -115,7 +116,7 @@ public class Application {
 				new GUIApplication(xda,purelibLocalizer).setVisible(true);
 			}
 			return 0;
-		} catch (EnvironmentException | IOException exc) {
+		} catch (EnvironmentException | ContentException | IOException exc) {
 			exc.printStackTrace();
 			return 129;
 		}

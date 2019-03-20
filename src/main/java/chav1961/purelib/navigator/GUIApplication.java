@@ -27,10 +27,12 @@ import javax.swing.JTabbedPane;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.LineBorder;
 
+import chav1961.purelib.basic.exceptions.ContentException;
 import chav1961.purelib.basic.exceptions.EnvironmentException;
 import chav1961.purelib.basic.exceptions.FlowException;
 import chav1961.purelib.basic.exceptions.LocalizationException;
 import chav1961.purelib.basic.exceptions.PreparationException;
+import chav1961.purelib.basic.exceptions.SyntaxException;
 import chav1961.purelib.basic.interfaces.LoggerFacade.Severity;
 import chav1961.purelib.i18n.LocalizerFactory;
 import chav1961.purelib.i18n.interfaces.Localizer;
@@ -60,12 +62,12 @@ public class GUIApplication extends JFrame implements LocaleChangeListener {
 	private final JTabbedPane				tab = new JTabbedPane();
 	private final OverviewScreen			overviewScreen = new OverviewScreen();
 	private final JCloseableTab				overviewMark = new JCloseableTab(" ");
-	private final SearchScreen				searchScreen = new SearchScreen(); 
+	private final SearchScreen				searchScreen; 
 	private final JCloseableTab				searchMark = new JCloseableTab(" ");
 	private final CodeSampleScreen			codeSampleScreen = new CodeSampleScreen(); 
 	private final JCloseableTab				sampleMark = new JCloseableTab(" ");
 	
-	public GUIApplication(final ContentMetadataInterface xda, final Localizer parentLocalizer) throws NullPointerException, IllegalArgumentException, EnvironmentException, IOException {
+	public GUIApplication(final ContentMetadataInterface xda, final Localizer parentLocalizer) throws NullPointerException, IllegalArgumentException, EnvironmentException, IOException, SyntaxException, ContentException {
 		if (xda == null) {
 			throw new NullPointerException("Application descriptor can't be null");
 		}
@@ -79,6 +81,7 @@ public class GUIApplication extends JFrame implements LocaleChangeListener {
 			
 			localizer.setParent(parentLocalizer);
 			localizer.addLocaleChangeListener(this);
+			this.searchScreen = new SearchScreen(this.localizer); 
 			
 			this.bar = SwingModelUtils.toMenuEntity(xda.byUIPath(URI.create("ui:/model/navigation.top.mainmenu")),JMenuBar.class); 
 			
