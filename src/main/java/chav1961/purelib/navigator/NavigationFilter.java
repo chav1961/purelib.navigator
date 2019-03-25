@@ -2,7 +2,7 @@ package chav1961.purelib.navigator;
 
 import chav1961.purelib.i18n.interfaces.LocaleResource;
 import chav1961.purelib.i18n.interfaces.LocaleResourceLocation;
-import chav1961.purelib.ui.interfacers.Format;
+import chav1961.purelib.ui.interfaces.Format;
 
 @LocaleResourceLocation("i18n:prop:chav1961/purelib/navigator/i18n/i18n")
 @LocaleResource(value="NavigationFilter",tooltip="NavigationFilter.tt")	
