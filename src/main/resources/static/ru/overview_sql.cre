@@ -1,0 +1,42 @@
+= Работа с базами данных (пакет purelib.sql)
+Как отмечалось в описании, основное (но не единственное) назначение данного пакета - построение диагностических наборов данных (в том числе и для использования в JUnit-тестах). Источниками диагностических данных могут быть:
+
+* пустые наборы данных (класс [[|NullReadOnlyResultSet]])
+* наборы данных, основанные на массивах (класс [[|InMemoryReadOnlyResultSet]])
+* наборы данных, подключаемые по [[https://docs.oracle.com/javase/tutorial/sound/SPI-intro.html|SPI]], среди которых:
+** наборы данных на основе CSV-формата ([[https://www.ietf.org/rfc/rfc4180.txt|RFC 4180]])
+** наборы данных на основе JSON-формата ([[https://tools.ietf.org/html/rfc7159|RFC 7159]])
+** наборы данных на основе XML-формата 
+
+Наборы данных, подключаемые по SPI, доступны через класс [[|ResultSetFactory]], расположенный в подпакете **purelib.sql.content**. Как и в большинстве других классов-фабрик, доступ к тому или иному набору данных управляется черех механизм URI. Схема всех URI для доступа к наборам данных называется **rsps**, специфическая часть URI имеет вид:
+
+|= тип источника |= форма записи URI |= комментарий |
+| CSV-формат | rsps:csv:<URI_источника> | Доступ к набору данных на основе CSV-формата. Предполагается, что первая строка источника данных содержит \\ имена полей набора данных |
+| JSON-формат | rsps:json:<URI_источника> | Доступ к набору на основе JSON-формата. Предполагается, что источник данных содержит массив записей, \\ не имеющий внутри записей других вложенных структур |
+| XML-формат | rsps:xml:<URI_источника> | Доступ к набору на основе XML-формата. Предполагается, что источник данных содержит трехуровневое DOM-дерево |
+
+Помимо указанных источников данных, в пакете имеется также утилитный класс [[|SQLUtils]], в котором, в частности, имеются методы преобразования различных типов данных друг в друга. Учитывая богатство типов данных современных СУБД, этот класс может быть полезным при программировании именно в этом качестве.
+
+В подпакете **purelib.sql.interfaces** содержится полезный интерфейс [[|ORMProvider]], предназначенный, как можно догадаться, для поддержки работы встроенного в библиотеку PL механизма [[https://ru.wikipedia.org/wiki/ORM|ORM]]. Построением экземпляров этого интерфейса "заведует" класс [[|ContentModelFactory]] из пакета **purelib.model**. Детальное описание этого интерфейса см [[|здесь]].
+
+Отдельно следует сказать о классах, реализующих набор интерфейсов протокола [[https://ru.wikipedia.org/wiki/Java_Database_Connectivity|JDBC]]. Все эти классы - абстрактные, и содержат более-менее полную реализацию функциональности, характерной для интерфейсов протокола JDBC, в части, не связанной с хранением информации и взаимодействием с сервером базы данных. Это набор может быть использован при написании собственного драйвера протокола JDBC. Состав этих классов следующий:
+
+* класс [[|AbstractConnection]] (реализует интерфейс [[https://docs.oracle.com/javase/8/docs/api/java/sql/Connection.html|Connection]])
+* класс [[|AbstractStatement]] (реализует интерфейс [[https://docs.oracle.com/javase/8/docs/api/java/sql/Statement.html|Statement]])
+* класс [[|AbstractPreparedStatement]] (реализует интерфейс [[https://docs.oracle.com/javase/8/docs/api/java/sql/PreparedStatement.html|PreparedStatement]])
+* класс [[|AbstractCallableStatement]] (реализует интерфейс [[https://docs.oracle.com/javase/8/docs/api/java/sql/CallableStatement.html|CallableStatement]])
+* класс [[|AbstractReadOnlyResultSet]] (реализует интерфейс [[https://docs.oracle.com/javase/8/docs/api/java/sql/ResultSet.html|ResultSet]])
+* класс [[|AbstractResultSetMetaData]] (реализует интерфейс [[https://docs.oracle.com/javase/8/docs/api/java/sql/ResultSetMetaData.html|ResultSetMetaData]])
+
+Для манипуляции содержимым курсоров имеется класс [[|AbstractContent]]. Некоторые из этих классов используются при работе источников диагностических данных.
+
+Для специфичных форм представления данных в СУБД, в пакете имеются "легкие" версии таких форм. Список их следующий:
+
+* класс [[|InMemoryLittleArray]] (реализует интерфейс [[https://docs.oracle.com/javase/8/docs/api/java/sql/Array.html|Array]])
+* класс [[|InMemoryLittleBlob]] (реализует интерфейс [[https://docs.oracle.com/javase/8/docs/api/java/sql/Blob.html|Blob]])
+* класс [[|InMemoryLittleClob]] (реализует интерфейс [[https://docs.oracle.com/javase/8/docs/api/java/sql/Clob.html|Clob]])
+* класс [[|InMemoryLittleNClob]] (реализует интерфейс [[https://docs.oracle.com/javase/8/docs/api/java/sql/NClob.html|NClob]])
+* класс [[|InMemoryLittleSQLXML]] (реализует интерфейс [[https://docs.oracle.com/javase/8/docs/api/java/sql/SQLXML.html|SQLXML]])
+* класс [[|InMemoryLittleStruct]] (реализует интерфейс [[https://docs.oracle.com/javase/8/docs/api/java/sql/Struct.html|Struct]])
+
+Отличительная их особенность - хранение связанных с ними данных непосредственно в памяти приложения. Эти классы также используются при работе источников диагностических данных.
