@@ -16,6 +16,7 @@ import org.w3c.dom.Document;
 import chav1961.purelib.basic.NullLoggerFacade;
 import chav1961.purelib.basic.PureLibSettings;
 import chav1961.purelib.basic.Utils;
+import chav1961.purelib.basic.XMLUtils;
 import chav1961.purelib.basic.exceptions.ContentException;
 import chav1961.purelib.basic.exceptions.FlowException;
 import chav1961.purelib.basic.exceptions.LocalizationException;
@@ -55,8 +56,8 @@ public class SearchScreen extends JPanel {
 									}
 								},2);
 			try(final InputStream	is = this.getClass().getResourceAsStream("test.xml");
-				final InputStream	isXSD = Utils.getPurelibXSD(XSDCollection.CreoleXMLFO)) {
-				this.modelContent = Utils.validateAndLoadXML(is,isXSD,tran);
+				final InputStream	isXSD = XMLUtils.getPurelibXSD(XSDCollection.CreoleXMLFO)) {
+				this.modelContent = XMLUtils.validateAndLoadXML(is,isXSD,tran);
 			} catch (IOException e) {
 				throw new ContentException("XML tree load failed: "+e.getMessage()); 
 			}

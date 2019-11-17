@@ -28,6 +28,7 @@ import chav1961.purelib.i18n.interfaces.LocaleResourceLocation;
 import chav1961.purelib.i18n.interfaces.Localizer;
 import chav1961.purelib.navigator.LocalizationKeys;
 import chav1961.purelib.ui.AbstractWizardStep;
+import chav1961.purelib.ui.interfaces.ErrorProcessing;
 import chav1961.purelib.ui.swing.SimpleWizard;
 
 public class LuceneIndexWizard extends SimpleWizard<LuceneIndexWizard,LoggerFacade.Severity> {
@@ -137,18 +138,6 @@ public class LuceneIndexWizard extends SimpleWizard<LuceneIndexWizard,LoggerFaca
 		}
 
 		@Override
-		public void beforeShow(final LuceneIndexWizard content, final Map<String, Object> temporary, final ErrorProcessing<LuceneIndexWizard, Severity> err) throws FlowException {
-			// TODO Auto-generated method stub
-			
-		}
-
-		@Override
-		public void afterShow(final LuceneIndexWizard content, final Map<String, Object> temporary, final ErrorProcessing<LuceneIndexWizard, Severity> err) throws FlowException {
-			// TODO Auto-generated method stub
-			
-		}
-
-		@Override
 		public void actionPerformed(ActionEvent e) {
 			switch (e.getActionCommand()) {
 				case "indexSources"			:
@@ -169,6 +158,20 @@ public class LuceneIndexWizard extends SimpleWizard<LuceneIndexWizard,LoggerFaca
 					break;
 				default : throw new UnsupportedOperationException("Unknown action commandd ["+e.getActionCommand()+"]");
 			}
+		}
+
+		@Override
+		public void beforeShow(LuceneIndexWizard content, Map<String, Object> temporary,
+				ErrorProcessing<LuceneIndexWizard, Severity> err) throws FlowException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void afterShow(LuceneIndexWizard content, Map<String, Object> temporary,
+				ErrorProcessing<LuceneIndexWizard, Severity> err) throws FlowException {
+			// TODO Auto-generated method stub
+			
 		}
 	}
 
