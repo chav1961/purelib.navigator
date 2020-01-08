@@ -97,7 +97,7 @@ public class Application {
 					startGUI(parsedString);
 				}
 			}
-		} catch (ConsoleCommandException | CommandLineParametersException exc) {
+		} catch (CommandLineParametersException exc) {
 			System.err.println(exc.getLocalizedMessage());
 			System.err.println(parser.getUsage("purelib.navigator.jar"));
 			System.exit(128);

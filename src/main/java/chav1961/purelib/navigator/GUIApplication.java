@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.datatransfer.MimeTypeParseException;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.WindowEvent;
@@ -13,8 +14,6 @@ import java.io.Reader;
 import java.net.URI;
 import java.util.Locale;
 
-import javax.activation.MimeType;
-import javax.activation.MimeTypeParseException;
 import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JEditorPane;
@@ -27,6 +26,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.LineBorder;
 
+import chav1961.purelib.basic.MimeType;
 import chav1961.purelib.basic.exceptions.ContentException;
 import chav1961.purelib.basic.exceptions.EnvironmentException;
 import chav1961.purelib.basic.exceptions.FlowException;
@@ -61,11 +61,11 @@ public class GUIApplication extends JFrame implements LocaleChangeListener {
 	private final JMenuBar					bar;
 	private final JTabbedPane				tab = new JTabbedPane();
 	private final OverviewScreen			overviewScreen = new OverviewScreen();
-	private final JCloseableTab				overviewMark = new JCloseableTab(" ");
+	private final JCloseableTab				overviewMark;
 	private final SearchScreen				searchScreen; 
-	private final JCloseableTab				searchMark = new JCloseableTab(" ");
+	private final JCloseableTab				searchMark;
 	private final CodeSampleScreen			codeSampleScreen = new CodeSampleScreen(); 
-	private final JCloseableTab				sampleMark = new JCloseableTab(" ");
+	private final JCloseableTab				sampleMark;
 	
 	public GUIApplication(final ContentMetadataInterface xda, final Localizer parentLocalizer) throws NullPointerException, IllegalArgumentException, EnvironmentException, IOException, SyntaxException, ContentException {
 		if (xda == null) {
@@ -78,6 +78,9 @@ public class GUIApplication extends JFrame implements LocaleChangeListener {
 			this.xda = xda;
 			this.localizer = LocalizerFactory.getLocalizer(xda.getRoot().getLocalizerAssociated());
 			this.state = new JStateString(localizer);
+			this.overviewMark = new JCloseableTab(localizer);
+			this.searchMark = new JCloseableTab(localizer);
+			this.sampleMark = new JCloseableTab(localizer);
 			
 			localizer.setParent(parentLocalizer);
 			localizer.addLocaleChangeListener(this);
