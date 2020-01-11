@@ -11,6 +11,7 @@ import chav1961.purelib.basic.exceptions.LocalizationException;
 import chav1961.purelib.i18n.LocalizerFactory;
 import chav1961.purelib.i18n.interfaces.Localizer;
 import chav1961.purelib.i18n.interfaces.Localizer.LocaleDescriptor;
+import chav1961.purelibnavigator.navigator.LocalizationKeys;
 
 public class LocalizationKeysTest {
 	public static final String	LOCALIZER_URI = "i18n:prop:chav1961/purelib/navigator/i18n/i18n";

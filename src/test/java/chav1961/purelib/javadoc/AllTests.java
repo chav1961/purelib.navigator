@@ -5,7 +5,7 @@ import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
 @RunWith(Suite.class)
-@SuiteClasses({ DocletUtilsTest.class, NewPureLibDocletTest.class, PureLibDocletTest.class })
+@SuiteClasses({ NewPureLibDocletTest.class, PureLibDocletTest.class })
 public class AllTests {
 
 }

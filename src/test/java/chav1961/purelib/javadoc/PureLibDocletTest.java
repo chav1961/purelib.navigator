@@ -15,7 +15,7 @@ import org.w3c.dom.Element;
 
 import chav1961.purelib.enumerations.ContinueMode;
 import chav1961.purelib.enumerations.NodeEnterMode;
-import chav1961.purelib.javadoc.PureLibDoclet;
+import chav1961.purelibnavigator.javadoc.PureLibDoclet;
 
 public class PureLibDocletTest {
 	@Test

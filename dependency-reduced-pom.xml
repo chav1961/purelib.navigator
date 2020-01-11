@@ -3,9 +3,9 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.github.chav1961</groupId>
   <artifactId>purelib.navigator</artifactId>
-  <name>funnypro</name>
+  <name>Pure Lib Navigator</name>
   <version>0.0.1</version>
-  <description>Funny Prolog interpreter for Java</description>
+  <description>Pure library navigator</description>
   <url>https://github.com/chav1961/purelib.navigator</url>
   <issueManagement>
     <system>GitHub</system>
@@ -46,11 +46,11 @@
     <plugins>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>2.5.1</version>
+        <version>3.7.0</version>
         <inherited>true</inherited>
         <configuration>
-          <source>1.8</source>
-          <target>1.8</target>
+          <source>9</source>
+          <target>9</target>
         </configuration>
       </plugin>
       <plugin>
@@ -63,7 +63,7 @@
             <manifest>
               <addClasspath>true</addClasspath>
               <classpathPrefix>./</classpathPrefix>
-              <mainClass>chav1961.purelib.navigator.Application</mainClass>
+              <mainClass>chav1961.purelibnavigator.Application</mainClass>
             </manifest>
           </archive>
         </configuration>
