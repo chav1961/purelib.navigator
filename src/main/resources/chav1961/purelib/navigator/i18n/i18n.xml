@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<localization xmlns="http://www.i18n.purelib.chav1961.ru/">
+	<lang name="en">
+<!-- Localization for screen labels  -->
+		<key name="label.luceneNavigator.enterSearch">Enter search</key>
+
+<!-- Localization for application menu  -->
+		<key name="menu.file">File</key>
+		<key name="menu.ttFile">File menu</key>
+		<key name="menu.exit">Quit</key>
+		<key name="menu.ttExit">Quit application</key>
+
+		<key name="menu.search">Search</key>
+		<key name="menu.ttSearch">Search content</key> 
+		<key name="menu.luceneNavigator">Lucene navigator</key>
+		<key name="menu.ttLuceneNavigator">Start Lucene navigator</key>
+
+		<key name="menu.tools">Tools</key>
+		<key name="menu.ttTools">Different tools</key>
+		<key name="menu.languages">Languages</key>
+		<key name="menu.ttLanguages">Select surrent language</key>
+		<key name="menu.luceneIndex">Lucene index</key>
+		<key name="menu.ttLuceneIndex">Build Lucene index for the Pure Library content</key>
+
+		<key name="menu.windows">Windows</key>
+		<key name="menu.ttWindows">Manage windows</key>
+		<key name="menu.creoleEditor">Creole editor</key>
+		<key name="menu.ttCreoleEditor">Open Creole editor</key>
+
+		<key name="menu.help">Help</key>
+		<key name="menu.ttHelp">Help for the application</key>
+		<key name="menu.updateSoft">Update soft</key>
+		<key name="menu.ttUpdateSoft">Download new releases of the appication</key>
+		<key name="menu.pluginMarket">Plugins</key>
+		<key name="menu.ttPluginMarket">Download an setup plugins</key>
+		<key name="menu.about">About</key>
+		<key name="menu.ttAbout">About application</key>
+
+<!-- Localization for helps -->
+		<key name="help.aboutApplication">uri(aboutApplication.cre)</key>
+
+<!-- Localization for window titles -->
+		<key name="title.application">(c) 2018, A.V.Chernomyrdin aka chav1961, Pure Library Navigator V.R">1.00</key>
+		<key name="title.help.aboutApplication">About...</key>
+
+<!-- Localization for window tabs -->
+		<key name="application.tab.overview">Overview</key>
+		<key name="application.tab.overview.tt">Pure Library overview</key>
+		<key name="application.tab.search">Search</key>
+		<key name="application.tab.search.tt">Search Pure Library components and solutions</key>
+		<key name="application.tab.codeSample">Sample</key>
+		<key name="application.tab.codeSample.tt">Test &amp; debug code samples and use cases for Pure Library content</key>  
+
+<!-- Localization for wizards -->
+		<key name="LuceneIndexWizard.Caption">Lucene indexer</key>
+
+<!-- Localization for search filter -->
+		<key name="NavigationFilter">Search navigator filter</key>
+		<key name="NavigationFilter.tt">Set navigation filter</key>
+		<key name="NavigationFilter.showDeprecated">Show deprecated</key>
+		<key name="NavigationFilter.showDeprecated.tt">Show classes, fields and methods marked as deprecated</key>
+		<key name="NavigationFilter.showBeta"> Show beta</key>
+		<key name="NavigationFilter.showBeta.tt">Show classes, fields and methods marked as Beta tested</key> 
+		<key name="NavigationFilter.hideNonThreadSafe">Hide non thread-safed</key>
+		<key name="NavigationFilter.hideNonThreadSafe.tt">Hide non thread-safed classes, fields and methods</key>
+		<key name="NavigationFilter.hideRestricted">Hide restricted</key>
+		<key name="NavigationFilter.hideRestricted.tt">Hide restricted classes, fields and methods</key>
+	</lang>
+	<lang name="ru">
+<!-- Локализация меток на экране -->
+		<key name="label.luceneNavigator.enterSearch">Введите строку поиска</key>
+
+<!-- Локализация меню приложения -->
+		<key name="menu.file">Файл</key>
+		<key name="menu.ttFile">Меню файл</key>
+		<key name="menu.exit">Выход</key>
+		<key name="menu.ttExit">Завершение работы приложения</key>
+
+		<key name="menu.search">Поиск</key>
+		<key name="menu.ttSearch">Поиск контента</key> 
+		<key name="menu.luceneNavigator">Lucene navigator</key>
+		<key name="menu.ttLuceneNavigator">Запуск навигатора Lucene</key>
+
+		<key name="menu.tools">Инструменты</key>
+		<key name="menu.ttTools">Различные инструменты</key>
+		<key name="menu.languages">Языки</key>
+		<key name="menu.ttLanguages">Выбрать язык системы</key>
+		<key name="menu.luceneIndex">построить индекс Lucene</key>
+		<key name="menu.ttLuceneIndex">Построить индекс Lucene для Pure Library</key>
+
+		<key name="menu.windows">Окна</key>
+		<key name="menu.ttWindows">Управление окнами</key>
+		<key name="menu.creoleEditor">Редактор Creole</key>
+		<key name="menu.ttCreoleEditor">Открыть редактор Creole-файлов</key>
+
+		<key name="menu.help">Справка</key>
+		<key name="menu.ttHelp">Справка по программе</key>
+		<key name="menu.updateSoft">Обновить приложение</key>
+		<key name="menu.ttUpdateSoft">Загрузка новых версий приложения</key>
+		<key name="menu.pluginMarket">Дополнения</key>
+		<key name="menu.ttPluginMarket">Загрузка дополнений к приложению</key>
+		<key name="menu.about">О программе</key>
+		<key name="menu.ttAbout">Информация о приложении</key>
+
+<!-- Локализация справок по приложению -->
+		<key name="help.aboutApplication">uri(aboutApplication.cre)</key>
+
+<!-- Локализация заголовков окон -->
+		<key name="title.application">(c) 2018, А.В.Черномырдин aka chav1961, Pure Library Navigator V.R">1.00</key>
+		<key name="title.help.aboutApplication">О программе</key>
+
+<!-- Локализация закладок окон -->
+		<key name="application.tab.overview">Обзор</key>
+		<key name="application.tab.overview.tt">Обзор библиотеки Pure Library</key>
+		<key name="application.tab.search">Поиск</key>
+		<key name="application.tab.search.tt">Поиск компонент и решений библиотеки Pure Library</key>
+		<key name="application.tab.codeSample">Примеры</key>
+		<key name="application.tab.codeSample.tt">Тест &amp; отладка примеров кода и решений для классов Pure Library</key>  
+
+<!-- Локализация настроек -->
+		<key name="LuceneIndexWizard.Caption">Индексатор Lucene</key>
+
+<!-- Локализация поискового фильтра -->
+		<key name="NavigationFilter">Фильтр поискового навигатора</key>
+		<key name="NavigationFilter.tt">Установить фильтр навигатора</key>
+		<key name="NavigationFilter.showDeprecated">Показать нерекомендуемые</key>
+		<key name="NavigationFilter.showDeprecated.tt">Показывать классы, поля и методы, не рекомндуемые к использованиь</key>
+		<key name="NavigationFilter.showBeta">Показать неготовые</key>
+		<key name="NavigationFilter.showBeta.tt">Показывать классы, поля и методы, находящиеся в стадии разработки и бета-тестрования</key>
+		<key name="NavigationFilter.hideNonThreadSafe">Скрыть непотокобезопасные</key>
+		<key name="NavigationFilter.hideNonThreadSafe.tt">Скрыть непотокобезопасные классы, поля и методы</key>
+		<key name="NavigationFilter.hideRestricted">Скрыть ограниченные</key>
+		<key name="NavigationFilter.hideRestricted.tt">Скрыть классы, поля и методы с органичениями реализации</key>
+	</lang>
+</localization>

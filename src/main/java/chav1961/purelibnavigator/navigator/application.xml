@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <app:root xmlns:app="http://ui.purelib.chav1961/">
-	<app:i18n location="i18n:prop:chav1961/purelib/navigator/i18n/i18n"/>
+	<app:i18n location="i18n:xml:chav1961/purelib/navigator/i18n/i18n.xml"/>
 	<app:menu id="mainmenu">
 		<app:submenu name="menu.file" caption="menu.file" tooltip="menu.ttFile">
 			<app:item name="menu.file.exit" caption="menu.exit" tooltip="menu.ttExit" action="exit"/>
