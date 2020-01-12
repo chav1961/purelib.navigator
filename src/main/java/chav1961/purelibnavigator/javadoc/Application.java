@@ -96,7 +96,7 @@ public class Application {
 			if (current.isDirectory()) {
 				for (File item : current.listFiles()) {
 					if (item.isFile() && item.getName().endsWith(".java")) {
-						return packageName.substring(1);
+						return packageName.isEmpty() ? "" : packageName.substring(1);
 					}
 				}
 				for (File item : current.listFiles()) {
