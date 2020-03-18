@@ -24,6 +24,8 @@ import chav1961.purelib.basic.exceptions.SyntaxException;
 import chav1961.purelib.basic.interfaces.LoggerFacade;
 import chav1961.purelib.enumerations.XSDCollection;
 import chav1961.purelib.i18n.interfaces.Localizer;
+import chav1961.purelib.model.ContentModelFactory;
+import chav1961.purelib.model.interfaces.ContentMetadataInterface;
 import chav1961.purelib.ui.interfaces.FormManager;
 import chav1961.purelib.ui.interfaces.RefreshMode;
 import chav1961.purelib.ui.swing.AutoBuiltForm;
@@ -44,7 +46,8 @@ public class SearchScreen extends JPanel {
 		try(final LoggerFacade	tran = logger.transaction("SearchScreen")) {
 			final JSplitPane	jsp = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 			final JPanel		leftPanel = new JPanel(new BorderLayout());
-			final JPanel		leftTopPanel = new AutoBuiltForm<NavigationFilter>(localizer, filter, new FormManager<Object, NavigationFilter>() {
+			final ContentMetadataInterface	mdi = ContentModelFactory.forAnnotatedClass(filter.getClass());
+			final JPanel		leftTopPanel = new AutoBuiltForm<NavigationFilter>(mdi,localizer, filter, new FormManager<Object, NavigationFilter>() {
 									@Override
 									public RefreshMode onField(NavigationFilter inst, Object id, String fieldName, Object oldValue) throws FlowException, LocalizationException {
 										return RefreshMode.DEFAULT;

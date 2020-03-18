@@ -38,7 +38,6 @@ import chav1961.purelib.model.ContentModelFactory;
 import chav1961.purelib.model.interfaces.ContentMetadataInterface;
 import chav1961.purelib.model.interfaces.ContentMetadataInterface.ContentNodeMetadata;
 import chav1961.purelib.nanoservice.NanoServiceFactory;
-import chav1961.purelib.ui.swing.SwingModelUtils;
 import chav1961.purelib.ui.swing.SwingUtils;
 import chav1961.purelib.ui.swing.interfaces.OnAction;
 import chav1961.purelib.ui.swing.useful.JStateString;
@@ -81,7 +80,7 @@ public class Application extends JFrame implements LocaleChangeListener {
 			
 			parent.push(localizer);
 			localizer.addLocaleChangeListener(this);
-			this.menu = SwingModelUtils.toMenuEntity(app.byUIPath(URI.create("ui:/model/navigation.top.mainmenu")), JMenuBar.class);
+			this.menu = SwingUtils.toJComponent(app.byUIPath(URI.create("ui:/model/navigation.top.mainmenu")), JMenuBar.class);
 			
 			SwingUtils.assignActionListeners(menu,this);
 			SwingUtils.centerMainWindow(this,0.75f);

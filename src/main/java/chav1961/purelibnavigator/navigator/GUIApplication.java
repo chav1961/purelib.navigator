@@ -38,7 +38,6 @@ import chav1961.purelib.i18n.LocalizerFactory;
 import chav1961.purelib.i18n.interfaces.Localizer;
 import chav1961.purelib.i18n.interfaces.Localizer.LocaleChangeListener;
 import chav1961.purelib.model.interfaces.ContentMetadataInterface;
-import chav1961.purelib.ui.swing.SwingModelUtils;
 import chav1961.purelib.ui.swing.SwingUtils;
 import chav1961.purelib.ui.swing.interfaces.OnAction;
 import chav1961.purelib.ui.swing.useful.JCloseableTab;
@@ -86,7 +85,7 @@ public class GUIApplication extends JFrame implements LocaleChangeListener {
 			localizer.addLocaleChangeListener(this);
 			this.searchScreen = new SearchScreen(this.localizer); 
 			
-			this.bar = SwingModelUtils.toMenuEntity(xda.byUIPath(URI.create("ui:/model/navigation.top.mainmenu")),JMenuBar.class); 
+			this.bar = SwingUtils.toJComponent(xda.byUIPath(URI.create("ui:/model/navigation.top.mainmenu")),JMenuBar.class); 
 			
 			SwingUtils.assignActionListeners(bar,this);
 			getContentPane().add(bar,BorderLayout.NORTH);
