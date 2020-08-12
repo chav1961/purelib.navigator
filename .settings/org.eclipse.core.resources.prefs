@@ -1,4 +1,5 @@
 eclipse.preferences.version=1
+encoding//src/main/resources/chav1961/purelib/admin/i18n/i18n_ru.properties=UTF-8
 encoding//src/main/resources/chav1961/purelib/navigator/i18n/i18n.xml=UTF-8
 encoding//src/main/resources/chav1961/purelib/navigator/i18n/i18n/help/en/aboutApplication.cre=UTF-8
 encoding//src/main/resources/chav1961/purelib/navigator/i18n/i18n/help/ru/aboutApplication.cre=UTF-8
@@ -7,3 +8,4 @@ encoding//src/main/resources/chav1961/purelib/navigator/utils/LuceneIndexWizard_
 encoding//src/main/resources/index.html=UTF-8
 encoding//src/main/resources/static=UTF-8
 encoding//src/main/resources/static/ru/overview.cre=UTF-8
+encoding//src/main/resources/static/ru/overview_basic.cre=UTF-8

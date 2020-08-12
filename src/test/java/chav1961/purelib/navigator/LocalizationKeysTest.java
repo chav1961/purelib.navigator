@@ -14,7 +14,7 @@ import chav1961.purelib.i18n.interfaces.Localizer.LocaleDescriptor;
 import chav1961.purelibnavigator.navigator.LocalizationKeys;
 
 public class LocalizationKeysTest {
-	public static final String	LOCALIZER_URI = "i18n:prop:chav1961/purelib/navigator/i18n/i18n";
+	public static final String	LOCALIZER_URI = "i18n:xml:root://chav1961.purelibnavigator.admin.Application/chav1961/purelib/admin/i18n/i18n.xml";
 
 	@Test
 	public void test() throws LocalizationException, IOException, IllegalAccessException {

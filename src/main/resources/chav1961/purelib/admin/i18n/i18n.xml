@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<localization xmlns="http://www.i18n.purelib.chav1961.ru/">
+	<lang name="en">
+<!-- Application localization -->
+		<key name="Application.title">(c) 2019, A.V.Chernomyrdin aka chav1961, Mercury landing V.R.=1.0, static content editor</key>  
+
+<!-- Application menu localization -->
+		<key name="menu.file">File</key>
+		<key name="menu.file.tt">Manage file operations and exit application</key>
+		<key name="menu.file.new">New</key>
+		<key name="menu.file.new.tt">Create new program</key>
+		<key name="menu.file.open">Open</key>
+		<key name="menu.file.open.tt">Open existent program</key>
+		<key name="menu.file.save">Save</key>
+		<key name="menu.file.save.tt">Save program</key>
+		<key name="menu.file.saveAs">Save as...</key>
+		<key name="menu.file.saveAs.tt">Save program with another name</key>
+		<key name="menu.file.lru">Open last used...</key>
+		<key name="menu.file.lru.tt">Open last used files</key>
+		<key name="menu.file.exit">Exit</key>
+		<key name="menu.file.exit.tt">Exit application</key>
+		<key name="menu.tools">Tools</key>
+		<key name="menu.tools.tt">Tools and settings</key>
+		<key name="menu.tools.preview">Preview</key>
+		<key name="menu.tools.preview.tt">Preview current file content</key>
+		<key name="menu.tools.languages">Language</key>
+		<key name="menu.tools.languages.tt">Select language for user interface</key>
+		<key name="menu.help">Help</key>
+		<key name="menu.help.tt">Help for applications</key>
+		<key name="menu.help.startBrowser">Start browser</key>
+		<key name="menu.help.startBrowser.tt">Start browser to view static content</key>
+		<key name="menu.help.about">About</key>
+		<key name="menu.help.about.tt">About application</key>
+
+<!-- Application messages localization -->
+		<key name="Application.message.fileLoaded">File %1$s was loaded successfully</key> 
+		<key name="Application.message.fileSaved">File %1$s was saved successfully</key>
+
+<!-- Localized errors, warnings etc -->
+		<key name="warning.no_desktop_available">Sorry, no tools available to start WEB browser. Visit instead</key>
+	</lang>
+	<lang name="ru">
+	
+<!-- Application localization -->
+		<key name="Application.title">(c) 2019, A.V.Chernomyrdin aka chav1961, Mercury landing V.R.=1.0, редактор статического контента</key>  
+
+<!-- Application menu localization -->
+		<key name="menu.file">Файл</key>
+		<key name="menu.file.tt">Работа с файлами и выход из программы</key>
+		<key name="menu.file.new">Новый</key>
+		<key name="menu.file.new.tt">Начать новую программу</key>
+		<key name="menu.file.open">Открыть</key>
+		<key name="menu.file.open.tt">Открыть ранее сохраненную программу</key>
+		<key name="menu.file.save">Сохранить</key>
+		<key name="menu.file.save.tt">Сохранить программу</key>
+		<key name="menu.file.saveAs">Сохранить как...</key>
+		<key name="menu.file.saveAs.tt">Сохранить программу под новым именем</key>
+		<key name="menu.file.lru">Открыть последние...</key>
+		<key name="menu.file.lru.tt">Открыть последние использованные файлы</key>
+		<key name="menu.file.exit">Выход</key>
+		<key name="menu.file.exit.tt">Выход из программы</key>
+		<key name="menu.tools">Инструменты</key>
+		<key name="menu.tools.tt">Инструменты и настройки</key>
+		<key name="menu.tools.preview">Просмотр</key>
+		<key name="menu.tools.preview.tt">Предварительный просмотр редактируемого файла</key>
+		<key name="menu.tools.languages">Язык</key>
+		<key name="menu.tools.languages.tt">Выбрать язык взаимодействия с программой</key>
+		<key name="menu.help">Помощь</key>
+		<key name="menu.help.tt">Помощь по программе</key>
+		<key name="menu.help.startBrowser">Запустить браузер</key>
+		<key name="menu.help.startBrowser.tt">Запустить браузер для просмотра статического контента</key>
+		<key name="menu.help.about">О программе</key>
+		<key name="menu.help.about.tt">Информация о программе</key>
+
+<!-- Локализация сообщений приложения -->
+		<key name="Application.message.fileLoaded">Файл %1$s успешно загружен</key> 
+		<key name="Application.message.fileSaved">Файл %1$s успешно сохранен</key>
+
+<!-- Локализованные ошибки, предупреждения и т.д. -->
+		<key name="warning.no_desktop_available">Увы, невозможно запустить ваш WEB-браузер. Воспользуйтесь вместо</key>	
+	</lang>
+</localization>

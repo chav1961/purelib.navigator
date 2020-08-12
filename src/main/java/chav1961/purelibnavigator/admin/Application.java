@@ -41,6 +41,7 @@ import chav1961.purelib.nanoservice.NanoServiceFactory;
 import chav1961.purelib.ui.swing.SwingUtils;
 import chav1961.purelib.ui.swing.interfaces.OnAction;
 import chav1961.purelib.ui.swing.useful.JStateString;
+import chav1961.purelibnavigator.navigator.utils.Redirector;
 
 public class Application extends JFrame implements LocaleChangeListener {
 	private static final long 		serialVersionUID = -3061028320843379171L;
@@ -257,10 +258,13 @@ public class Application extends JFrame implements LocaleChangeListener {
 				final ContentMetadataInterface	xda = ContentModelFactory.forXmlDescription(is);
 				final CountDownLatch			latch = new CountDownLatch(1);
 					
+				
+				service.deploy("/redir",new Redirector());
 				new Application(xda,localizer,helpPort,latch).setVisible(true);
 				service.start();
 				latch.await();
 				service.stop();
+				service.undeploy("/redir");
 			} catch (IOException | EnvironmentException | InterruptedException  e) {
 				e.printStackTrace();
 				System.exit(129);
