@@ -41,7 +41,6 @@ import chav1961.purelib.nanoservice.NanoServiceFactory;
 import chav1961.purelib.ui.swing.SwingUtils;
 import chav1961.purelib.ui.swing.interfaces.OnAction;
 import chav1961.purelib.ui.swing.useful.JStateString;
-import chav1961.purelibnavigator.navigator.utils.Redirector;
 
 public class Application extends JFrame implements LocaleChangeListener {
 	private static final long 		serialVersionUID = -3061028320843379171L;
@@ -212,7 +211,7 @@ public class Application extends JFrame implements LocaleChangeListener {
 	@OnAction("action:/startBrowser")
 	private void startBrowser () {
 		if (Desktop.isDesktopSupported()) {
-			try{Desktop.getDesktop().browse(URI.create("http://localhost:"+localHelpPort+"/index.html"));
+			try{Desktop.getDesktop().browse(URI.create("http://localhost:"+localHelpPort+"/static/index.html"));
 			} catch (IOException exc) {
 				exc.printStackTrace();
 			}
@@ -244,12 +243,11 @@ public class Application extends JFrame implements LocaleChangeListener {
 		try{final ArgParser						parser = new ApplicationArgParser().parse(args);
 			final int							helpPort = !parser.isTyped(ARG_HELP_PORT) ? getFreePort() : parser.getValue(ARG_HELP_PORT, int.class);
 			final SubstitutableProperties		props = new SubstitutableProperties(Utils.mkProps(
-																	 NanoServiceFactory.NANOSERVICE_PORT, ""+helpPort
-																	,NanoServiceFactory.NANOSERVICE_ROOT, "fsys:file:./src/main/resources"
-
-																	,NanoServiceFactory.NANOSERVICE_CREOLE_PROLOGUE_URI, Application.class.getResource("prolog.cre").toString() 
-																	,NanoServiceFactory.NANOSERVICE_CREOLE_EPILOGUE_URI, Application.class.getResource("epilog.cre").toString() 
-																	));
+													 NanoServiceFactory.NANOSERVICE_PORT, ""+helpPort
+													,NanoServiceFactory.NANOSERVICE_ROOT, "fsys:xmlReadOnly:root://chav1961.purelibnavigator.admin.Application/chav1961/purelibnavigator/admin/helptree.xml"
+													,NanoServiceFactory.NANOSERVICE_CREOLE_PROLOGUE_URI, Application.class.getResource("prolog.cre").toString() 
+													,NanoServiceFactory.NANOSERVICE_CREOLE_EPILOGUE_URI, Application.class.getResource("epilog.cre").toString() 
+												));
 		
 			try(final LoggerFacade				logger = new SystemErrLoggerFacade();
 				final InputStream				is = Application.class.getResourceAsStream("application.xml");
@@ -257,14 +255,11 @@ public class Application extends JFrame implements LocaleChangeListener {
 				final NanoServiceFactory		service = new NanoServiceFactory(logger,props)) {
 				final ContentMetadataInterface	xda = ContentModelFactory.forXmlDescription(is);
 				final CountDownLatch			latch = new CountDownLatch(1);
-					
 				
-				service.deploy("/redir",new Redirector());
 				new Application(xda,localizer,helpPort,latch).setVisible(true);
 				service.start();
 				latch.await();
 				service.stop();
-				service.undeploy("/redir");
 			} catch (IOException | EnvironmentException | InterruptedException  e) {
 				e.printStackTrace();
 				System.exit(129);
