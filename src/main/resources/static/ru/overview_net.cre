@@ -1,0 +1,69 @@
+= Пакет purelib.net и его подпакеты. Общий обзор
+
+Классы пакета [[/doc/chav1961.purelib/chav1961/purelib/net/package-summary.html|purelib.net]] и его подпакетов предназначены для поддержки специфичных для PL схем, предназначенных для использования в классе [[https://docs.oracle.com/javase/8/docs/api/java/net/URL.html|URL]]:
+
+|= Схема URL |= Класс, ее реализующий |= Назначение |
+|**fsys**| [[/doc/chav1961.purelib/chav1961/purelib/net/fsys/FSysHandlerProvider.html|FSysHandlerProvider]] | доступ через URL к файловым системам библиотеки PL |
+|**root**| [[/doc/chav1961.purelib/chav1961/purelib/net/root/RootHandlerProvider.html|RootHandlerProvider]] | доступ через URL к ресурсам как внутри библиотеки PL, так и в других частях приложения |
+|**self**| [[/doc/chav1961.purelib/chav1961/purelib/net/self/SelfHandlerProvider.html|SelfHandlerProvider]] | доступ через URL к ресурсам, непосредственно закодированным в самом URL |
+
+Все классы, упомянутые в таблице, являются реализациями интерфейса [[https://docs.oracle.com/javase/9/docs/api/java/net/spi/URLStreamHandlerProvider.html|URLStreamHandlerProvider]] и подключаются в приложение через механизм [[https://docs.oracle.com/javase/tutorial/sound/SPI-intro.html|SPI]]. Пользоваться этими классами напрямую необходимости нет. Все приведенные в таблице схемы работают только на чтение данных.
+
+Рассмотрим подробнее особенности реализации каждой схемы
+
+==Схема fsys
+
+Схема **fsys** позволяет с помощью класса [[https://docs.oracle.com/javase/8/docs/api/java/net/URL.html|URL]] получить доступ к любому элементу любой [[./overview_fsys.cre|файловой системы]], поддерживаемой бибилиотекой PL, например:
+
+{{{try(final InputStream is = URI.create("fsys:file:./application.properties").toURL().openStream()) {
+	/* TODO: ...*/
+} }}}
+
+В качестве источника URL для работы с данной схемой можно применять любой валидный [[https://docs.oracle.com/javase/8/docs/api/java/net/URI.html|URI]], поддерживаемый классом [[/doc/chav1961.purelib/chav1961/purelib/fsys/FileSystemFactory.html|FileSystemFactory]]. Можно также не преобразовывать класс URI в URL, а сразу указывать нужное содержимое в виде символьной строки в конструкторе класса URL:
+
+{{{try(final InputStream is = new URL("fsys:file:./application.properties").openStream()) {
+	/* TODO: ...*/
+} }}}
+
+==Схема root
+
+Схема **root** позволяет с помощью класса [[https://docs.oracle.com/javase/8/docs/api/java/net/URL.html|URL]] получить доступ к любому ресурсу внутри вашего приложения. Для схемы **root** схемно-специфическая часть URI должна выглядеть следующим образом:
+
+"**root:~//**<имя_класса_внутри_приложения>**/**<путь_до_ресурса>"
+
+//Имя класса внутри приложения// - полное имя любого существующего в вашем приложении класса, записанного в формате Java. //Путь до ресурса// - записанное в формате, принятом для пути, местоположение искомого ресурса внутри вашего приложения. Местоположение это отсчитывается от "корня", от которого образовано полное имя вашего класса.
+
+Допустим, что в вашем приложении имеется класс **pack1.pack2.MyClass**. В этом же пакете **pack1.pack2** расположен файл **myFile.properties**. Тогда для доступа к этому файлу можно использовать следущий вариант кода:
+
+{{{try(final InputStream is = URI.create("root://pack1.pack2.MyClass/pack1/pack2/myFile.properties").toURL().openStream()) {
+	/* TODO: ...*/
+} }}}
+
+Либо, используя относительный путь:
+
+{{{try(final InputStream is = URI.create("root://pack1.pack2.MyClass/./myFile.properties").toURL().openStream()) {
+	/* TODO: ...*/
+} }}}
+
+Функциональность схемы **root** подобна работе методов **getResource(...)** класса [[https://docs.oracle.com/javase/8/docs/api/java/lang/Class.html|Class]], но, в отличие от них, не требует написания программного кода, что позволяет использовать ее, например, в конфигурационных файлах.
+
+==Схема self
+Схема **self** позволяет закодировать данные, которые вы желаете получить с помощью URL, непосредственно в самом URI. Для схемы **self** схемно-специфическая часть URI должна выглядеть следующим образом:
+
+"**self:/#**<base64_контент>[?**encoding= **<кодировка>]"
+
+Данные, доступ к которым обеспечивает эта схема, записываются в кодировке [[https://ru.wikipedia.org/wiki/Base64|Base64]] непосредственно в части фрагмента URI:
+
+{{{try(final InputStream is = URI.create("self:/#dGVzdCBzdHJpbmc=").toURL().openStream()) {
+	/* TODO: ...*/
+} }}}
+
+В этом примере в результате работы будет считана строка **"test string"**.
+
+В классе [[/doc/chav1961.purelib/chav1961/purelib/basic/URIUtils.html|URIUtils]] имеется метод **convert2selfURI(...)**, с помощью которого можно построить соответствующий URI по заданному содержимому, например:
+
+{{{try(final InputStream is = URIUtils.convert2Self("test string".toCharArray(),"UTF-8").toURL().openStream()) {
+	/* TODO: ...*/
+} }}}
+
+Эта возможность позволяет упростить формирование содержимого URI для схемы **self**. Этой схемой удобно пользоваться, например, в JUint-тестах (в качестве источника данных для тестирования)

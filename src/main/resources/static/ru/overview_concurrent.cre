@@ -1,0 +1,70 @@
+= Пакет purelib.concurrent и его подпакеты. Общий обзор
+
+Пакет [[/doc/chav1961.purelib/chav1961/purelib/concurrent/package-summary.html|purelib.concurrent]] и его подпакеты содержат классы, рассчитанные на работу в мультизадачной среде, и решающие специфические задачи именно этой среды. Наиболее важными классами являются:
+
+* класс [[/doc/chav1961.purelib/chav1961/purelib/concurrent/LightWeightListenerList.html|LightWeightListenerList]] для эффективной реализации механизма подписки на события
+* класс [[/doc/chav1961.purelib/chav1961/purelib/concurrent/LightWeightRWLockerWrapper.html|LightWeightRWLockerWrapper]] для эффективного использования локеров
+* классы [[/doc/chav1961.purelib/chav1961/purelib/concurrent/ListenableDouble.html|ListenableDouble]], [[/doc/chav1961.purelib/chav1961/purelib/concurrent/ListenableInt.html|ListenableInt]], [[/doc/chav1961.purelib/chav1961/purelib/concurrent/ListenableLong.html|ListenableLong]], [[/doc/chav1961.purelib/chav1961/purelib/concurrent/ListenableRef.html|ListenableRef]] для хранения данных соответствующего типа, позволяющие отслеживать событие "значение изменилось".
+* классы [[/doc/chav1961.purelib/chav1961/purelib/concurrent/XByteStream.html|XByteStream]], [[/doc/chav1961.purelib/chav1961/purelib/concurrent/XCharStream.html|XCharStream]], [[/doc/chav1961.purelib/chav1961/purelib/concurrent/XStream.html|XStream]], являющиеся аналогами классов [[https://docs.oracle.com/javase/8/docs/api/java/io/PipedInputStream.html|PipedInputStream]] и [[https://docs.oracle.com/javase/8/docs/api/java/io/PipedOutputStream.html|PipedOutputStream]], и предназначенные для обмена информацией между потоками
+
+=== Класс LightWeightListenerList
+
+Класс [[/doc/chav1961.purelib/chav1961/purelib/concurrent/LightWeightListenerList.html|LightWeightListenerList]] поддерживает три метода:
+
+* метод **addListener(...)**, позволяющий добавить слушателя событий в список слушателей событий
+* метод **removeListener(...)**, позволяющий удалить слушателя событий из списка слушателей событий
+* метод **fireEvent(...)**, предназначенный для рассылки извещений о событий всем заинтересованным слушателям
+
+Отличительная особенность класса - возможность правильной работы в мультизадачной среде и использование внутри него локера [[https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/locks/ReentrantReadWriteLock.html|ReentrantReadWriteLock]], что обеспечило высокую эффективность работы.
+
+=== Класс LightWeightRWLockerWrapper
+
+Класс [[/doc/chav1961.purelib/chav1961/purelib/concurrent/LightWeightRWLockerWrapper.html|LightWeightRWLockerWrapper]] представляет собой кеш локеров [[https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/locks/ReentrantReadWriteLock.html|ReentrantReadWriteLock]], благодаря чему сокращает расход памяти при работе. Его метод **lock(...)** возвращает инстанцию класса [[/doc/chav1961.purelib/chav1961/purelib/concurrent/LightWeightRWLockerWrapper.Locker.html|LightWeightRWLockerWrapper.Locker]], реализующую интерфейс [[https://docs.oracle.com/javase/8/docs/api/java/lang/AutoCloseable.html|AutoCloseable]], благодаря чему его можно использовать непосредственно в операторе **try-with-resource**, например:
+
+{{{LightWeightRWLockerWrapper wrapper = new LightWeightRWLockerWrapper();
+// TODO: ...
+try (final LightWeightRWLockerWrapper.Locker lock = wrapper.lock(true)) {
+	// TODO:...
+} }}}
+
+=== Классы ListenableZZZ
+Классы [[/doc/chav1961.purelib/chav1961/purelib/concurrent/ListenableDouble.html|ListenableDouble]], [[/doc/chav1961.purelib/chav1961/purelib/concurrent/ListenableInt.html|ListenableInt]], [[/doc/chav1961.purelib/chav1961/purelib/concurrent/ListenableLong.html|ListenableLong]], [[/doc/chav1961.purelib/chav1961/purelib/concurrent/ListenableRef.html|ListenableRef]] устроены практически одинаково, и содержат:
+
+* набор методов **get(...)** и **set(...)**, позволяющих получить и установить значение, хранящееся в инстанции класса
+* набор методов **await(...)**, позволяющих ожидать установки определенного значения (в том числе и задаваемого логическим выражением)
+
+Пример использования:
+
+{{{ListenableInt  li = new ListenableInt(0);
+// TODO: - в первом потоке:
+li.await(x->x>10);
+// TODO: - во втором потоке: 
+li.set(x->x+100);
+}}}
+
+Классы корректно работают в мультизадачном окружении, а также эффективно реализуют процесс ожидания события
+
+=== Классы XZZZStream
+Классы [[/doc/chav1961.purelib/chav1961/purelib/concurrent/XByteStream.html|XByteStream]], [[/doc/chav1961.purelib/chav1961/purelib/concurrent/XCharStream.html|XCharStream]], [[/doc/chav1961.purelib/chav1961/purelib/concurrent/XStream.html|XStream]] устроены также практически одинаково, и содержат методы:
+* метод **createInputStream(...)/createReader(...)** для создания приемной части конвейера данных
+* метод **createOutputStream(...)/createWriter(...)** для создания передающей части конвейера данных
+
+Дальнейшая работа с созданными частями конвейера не отличается от работы с обычными потоками. Все классы реализуют интерфейс [[https://docs.oracle.com/javase/8/docs/api/java/io/Closeable.html|Closeable]], благодаря чему могут использоваться в операторе **try-with-resource**:
+
+{{{try(final XByteStream pipe = new XByteStream()) {
+	Thread t1 = new Thread(()->{
+		try(final InputStream is = pipe.createInputStream()) {
+			// TODO:...
+		}
+	});
+	t1.start();
+	Thread t2 = new Thread(()->{
+		try(final OutputStream os = pipe.createOutputStream()) {
+			// TODO:...
+		}
+	});
+	t2.start();
+	// TODO:...
+	t1.join();
+	t2.join();
+} }}}

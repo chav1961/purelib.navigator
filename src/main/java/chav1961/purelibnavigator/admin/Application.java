@@ -2,6 +2,11 @@ package chav1961.purelibnavigator.admin;
 
 import java.awt.BorderLayout;
 import java.awt.Desktop;
+import java.awt.Dimension;
+import java.awt.Toolkit;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
+import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.ServerSocket;
@@ -11,12 +16,14 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.CountDownLatch;
 
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
+import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 
 import chav1961.purelib.basic.ArgParser;
@@ -43,23 +50,22 @@ import chav1961.purelib.ui.swing.interfaces.OnAction;
 import chav1961.purelib.ui.swing.useful.JStateString;
 
 public class Application extends JFrame implements LocaleChangeListener {
-	private static final long 		serialVersionUID = -3061028320843379171L;
+	private static final long 			serialVersionUID = -3061028320843379171L;
 
-	public static final String		ARG_HELP_PORT = "helpport";
+	public static final String			ARG_HELP_PORT = "helpport";
 	
-	public static final String		APPLICATION_TITLE = "Application.title";
-	public static final String		MESSAGE_FILE_LOADED = "Application.message.fileLoaded";
-	public static final String		MESSAGE_FILE_SAVED = "Application.message.fileSaved";
+	public static final String			APPLICATION_TITLE = "Application.title";
+	public static final String			MESSAGE_FILE_LOADED = "Application.message.fileLoaded";
+	public static final String			MESSAGE_FILE_SAVED = "Application.message.fileSaved";
 	
 	private final ContentMetadataInterface 	app;
-	private final Localizer			localizer;
-	private final int 				localHelpPort;
-	private final CountDownLatch	latch;
-	private final JMenuBar			menu;
-	private final JTabbedPane		tabber = new JTabbedPane(); 
+	private final Localizer				localizer;
+	private final int 					localHelpPort;
+	private final CountDownLatch		latch;
+	private final JMenuBar				menu;
+	private final JTabbedPane			tabber = new JTabbedPane(); 
 	private final List<CreoleEditorTab>	tabs = new ArrayList<>();
-	private final JStateString		state;
-																		
+	private final JStateString			state;
 	
 	public Application(final ContentMetadataInterface app, final Localizer parent, final int localHelpPort, final CountDownLatch latch) throws EnvironmentException, NullPointerException, IllegalArgumentException, IOException {
 		if (app == null) {
@@ -85,6 +91,8 @@ public class Application extends JFrame implements LocaleChangeListener {
 			SwingUtils.assignActionListeners(menu,this);
 			SwingUtils.centerMainWindow(this,0.75f);
 			SwingUtils.assignExitMethod4MainWindow(this,()->{exitApplication();});
+			SwingUtils.assignActionKey((JComponent)this.getContentPane(),JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT,KeyStroke.getKeyStroke(KeyEvent.VK_F4,KeyEvent.CTRL_DOWN_MASK),(e)->changeTab(+1),"nextTab");
+			SwingUtils.assignActionKey((JComponent)this.getContentPane(),JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT,KeyStroke.getKeyStroke(KeyEvent.VK_F4,KeyEvent.CTRL_DOWN_MASK|KeyEvent.SHIFT_DOWN_MASK),(e)->changeTab(-1),"prevTab");
 			
 			getContentPane().add(menu,BorderLayout.NORTH);
 			getContentPane().add(tabber,BorderLayout.CENTER);
@@ -102,11 +110,26 @@ public class Application extends JFrame implements LocaleChangeListener {
 	@OnAction(value="action:/newFile",async=true)
 	private void newFile () throws IOException {
 		final CreoleEditorTab	newTab = new CreoleEditorTab(localizer, state);
+		final JScrollPane		newScroll = new JScrollPane(newTab.editor); 
 		
+		newScroll.addComponentListener(new ComponentListener() {
+			@Override public void componentShown(final ComponentEvent e) {}
+			@Override public void componentMoved(final ComponentEvent e) {}
+			@Override public void componentHidden(final ComponentEvent e) {}
+			
+			@Override
+			public void componentResized(final ComponentEvent e) {
+				final Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
+				
+				newTab.editor.setPreferredSize(new Dimension(newScroll.getPreferredSize() != null ? newScroll.getPreferredSize().width : screen.width, newTab.editor.getPreferredSize() != null ? newTab.editor.getPreferredSize().height : screen.height));
+			}
+			
+		});
 		tabs.add(newTab);
-		tabber.addTab("(*)",new JScrollPane(newTab.editor));
+		tabber.addTab("(*)",newScroll);
 		tabber.setSelectedIndex(tabs.size()-1);
 		newTab.manipulator.newFile();
+		newTab.editor.requestFocusInWindow();
 	}
 
 	@OnAction(value="action:/openFile",async=true)
@@ -237,6 +260,10 @@ public class Application extends JFrame implements LocaleChangeListener {
 				lru.add(menu);
 			}
 		}
+	}
+
+	private void changeTab(final int step) {
+		tabber.setSelectedIndex((tabber.getSelectedIndex() + step) % tabber.getTabCount());
 	}
 	
 	public static void main(String[] args) {

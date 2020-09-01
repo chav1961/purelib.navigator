@@ -1,0 +1,205 @@
+= Пакет purelib.model и его подпакеты. Общий обзор
+Классы пакета [[/doc/chav1961.purelib/chav1961/purelib/model/package-summary.html|purelib.model]] и его подпакетов обеспечивают работу с //моделями// библиотеки PL. Модель является универсальной и общепринятой в библиотеке PL формой представления метаинформации о той или иной сущности. Модель представляет собой синтаксическое дерево, и является экземпляром интерфейса [[/doc/chav1961.purelib/chav1961/purelib/model/interfaces/ContentMetadataInterface.html|ContentMetadataInterface]]. Узлы самого дерева модели описываются вложенным интерфейсом [[/doc/chav1961.purelib/chav1961/purelib/model/interfaces/ContentMetadataInterface.ContentNodeMetadata.html|ContentMetadataInterface.ContentNodeMetadata]], и, в свою очередь, содержат:
+* [[#Имя и тип вершины|имя]] вершины
+* [[#Имя и тип вершины|тип]] вершины (в виде класса [[https://docs.oracle.com/javase/8/docs/api/java/lang/Class.html|Class]] Java)
+* [[#Идентификаторы вершины|идентификатор]] вершины в дереве модели с точки зрения пользовательского интерфейса (в виде класса [[https://docs.oracle.com/javase/8/docs/api/java/net/URI.html|URI]] Java)
+* [[#Идентификаторы вершины|идентификатор]] вершины с точки зрения прикладной логики (в виде класса [[https://docs.oracle.com/javase/8/docs/api/java/net/URI.html|URI]] Java)
+* [[#Владелец и родитель вершины|владельца]] вершины (в виде интерфейса [[/doc/chav1961.purelib/chav1961/purelib/model/interfaces/ContentMetadataInterface.html|ContentMetadataInterface]])
+* [[#Владелец и родитель вершины|"родителя"]] вершины ([[/doc/chav1961.purelib/chav1961/purelib/model/interfaces/ContentMetadataInterface.ContentNodeMetadata.html|ContentMetadataInterface.ContentNodeMetadata]])
+* [[#Формат представления|формат представления]] вершины с точки зрения пользовательского интерфейса
+* [[#Группа локализации|группу локализации]], состоящую из:
+** локализатора, связанного с данной вершиной (в виде класса [[https://docs.oracle.com/javase/8/docs/api/java/net/URI.html|URI]] Java)
+** человекочитаемого названия вершины (в виде строки)
+** опциональной человекочитаемой подсказки, связанной с данной вершиной (в виде строки)
+** опциональной человекочитаемой справки, связанной с данной вершиной (в виде строки)
+** опциональной иконки, ассоциированной с данной вершиной (в виде класса [[https://docs.oracle.com/javase/8/docs/api/java/net/URI.html|URI]] Java)
+* списка подчиненных вершин
+
+Реализация интерфейса [[/doc/chav1961.purelib/chav1961/purelib/model/interfaces/ContentMetadataInterface.html|ContentMetadataInterface]] обеспечивает работу с деревом модели, в частности:
+* доступ к корню дерева модели
+* поиск вершин в дереве модели по их идентификатору с точки зрения пользовательского интерфейса
+* поиск вершин в дереве модели по из идентификатору с точки зрения прикладной логики
+* обход дерева вершин
+
+Кроме того, интерфейсом [[/doc/chav1961.purelib/chav1961/purelib/model/interfaces/ContentMetadataInterface.html|ContentMetadataInterface]] поддерживается операция //монтирования//, с помощью которой можно подсоединить корень дерева модели в любой узел другой модели (в виде поддерева).
+
+В пакете [[/doc/chav1961.purelib/chav1961/purelib/model/package-summary.html|purelib.model]] имеется класс [[/doc/chav1961.purelib/chav1961/purelib/model/ContentModelFactory.html|ContentModelFactory]], с помощью которого можно построить указанную модель для различных источников данных, в том числе:
+
+* аннотированных определенным образом классов
+* содержимого баз данных
+* файла формата XML
+
+В пакете [[/doc/chav1961.purelib/chav1961/purelib/model/package-summary.html|purelib.model]] имеются классы [[/doc/chav1961.purelib/chav1961/purelib/model/SimpleContentMetadata.html|SimpleContentMetadata]] и [[/doc/chav1961.purelib/chav1961/purelib/model/MutableContentNodeMetadata.html|MutableContentNodeMetadata]], реализующие интерфейсы [[/doc/chav1961.purelib/chav1961/purelib/model/interfaces/ContentMetadataInterface.html|ContentMetadataInterface]] и [[/doc/chav1961.purelib/chav1961/purelib/model/interfaces/ContentMetadataInterface.ContentNodeMetadata.html|ContentMetadataInterface.ContentNodeMetadata]] соответственно. Рекомендую использовать их в качестве базовых классов при написании своих собственных реализаций моделей.
+
+Рассмотрим более подробно следущие вопросы:
+* [[#Элементы узла модели|элементы]] узла дерева модели
+* специфика [[#Специфика построения моделей|построения]] модели для различных источников данных
+* [[#Утилиты пакета|утилиты]] пакета [[/doc/chav1961.purelib/chav1961/purelib/model/package-summary.html|purelib.model]]
+
+==Элементы узла модели
+
+===Имя и тип вершины
+Имя вершины является обязательным атрибутом и представляет собой любое имя, содержащее буквы, цифры, знаки подчеркивания и точку. На данном уровне дерева имя должно быть уникальным, но в дереве в целом могут встречаться повторяющиеся имена. Тип вершины - произвольный Java класс, который должен быть известен загрузчику классов, в котором работает данная модель.
+
+===Идентификаторы вершины
+ Идентификаторы вершины в узле бывают двух типов:
+* идентификатор с точки зрения пользовательского интерфейса
+* идентификатор с точки зрения прикладной логики
+
+Оба идентификатора поедставляют собой экземпляры класса [[https://docs.oracle.com/javase/8/docs/api/java/net/URI.html|URI]], в которых хранится информация о текущей вершине. Отличия идентификаторов друг от друга заключаются в способе их обработки:
+
+* идентификатор узла с точки зрения пользовательского интерфейса на данном уровне дерева должен быть //уникальным//. Этот идентификатор является //локальным// для данного узла модели. Модель также поддерживает дял всех узлов //глобальный// идентификатор узла, образованный из локальных идентификаторов всех вершин, на пути от корня дерева модели к данному узлу (таким же способом, каким образуется полное имя файла из локального имени файла и списка поддиректорий, где он лежит). Благодаря этому механизму идентификатор узла с точки зрения пользовательского интерфейса являюется уникальным для данного узла в пределах //всего// дерева модели, и может быть использован для его однозначной идентификации. Имя схемы идентификатора - **ui**
+* идентификатор с точки зрения прикладной логики никаких требований по уникальности не имеет (ни в пределах данного уровня, ни в дереве в целом). Он представляет только самого себя, и никаких глобальных путей не образует. Имя схемы идентификатора - **app**
+
+Идентификатор с точки зрения прикладной логики, как правило, содержит также ту или иную подсхему, наиболее употребительны из которых следующие:
+
+|= подсхема |= назначение |
+|**class**|Данный узел связан с классом Java|
+|**field**|Данный узел связан с полем класса Java|
+|**table**|Данный узел связан с таблицей или представлением в БД|
+|**column**|Данный узел связан с колонками таблицы или представления в БД|
+|**id**|Данный узел представляет собой уникальный идентификатор|
+|**navigator**|Данный узел представляет собой элемент навигации|
+|**action**|Данный узел описывает определенное действие|
+|**builtin**|Данный узел ссылается на встроенные возможности библиотеки PL| 
+
+Помимо схем и подсхем, идентификатор с точки зрения прикладной логики может содержать любые другие элементы представления [[https://docs.oracle.com/javase/8/docs/api/java/net/URI.html|URI]] (фрагменты, строки запроса и т.д. - см [[https://www.ietf.org/rfc/rfc2396.txt|RFC 2396]]).
+===Владелец и родитель вершины
+
+Владельцем вершины всегда является экземпляр интерфейса [[/doc/chav1961.purelib/chav1961/purelib/model/interfaces/ContentMetadataInterface.html|ContentMetadataInterface]]. У всех узлов данной модели (в том числе и подмонтированных) он всегда один и тот же. Родителем вершины является вершина, в "дочках" которой находится данный узел. У различных узлов родитель может быть различным. Корень дерева родителя не имеет.
+===Формат представления
+Формат представления вершины является классом [[/doc/chav1961.purelib/chav1961/purelib/model/FieldFormat.html|FieldFormat]] и представляет собой строку форматирования, используемую при взаимодействии с пользователем графических приложений. Детальное описание формата см в описании самого класса.
+=== Группа локализации
+Группа локализации предназначена для отображения элемента модели в графических приложениях Java. С любым элементом модели может быть связан локализатор (см [[./overview_i18n.cre|здесь]]). Локализаторы яляются //наследуемыми//, т.е., при отсутствии явно заданного в текущем узле локализатора, будет использован локализатор родителя данного узла. Человекочитаемые названия узлов, подсказки и справки представляют собой ключи, определенные в данном локализаторе. Классы библиотеки PL, использующие модели, будут создавать экранные формы, автоматически выполняющие локализацию в соответствии с текущими настройками системы локализации приложения.
+
+==Специфика построения моделей
+===Построение по аннотируемому классу
+Построение модели по аннотируемому классу удобно делать в том случае, если данный класс будет использован в автоматических построителях экранных форм (см, например, класс [[/doc/chav1961.purelib/chav1961/purelib/ui/swing/AutoBuiltForm.html|AutoBuiltForm]]). Для аннотирования используются следующие аннотации из библиотеки PL:
+|= Аннотация |= Параметры |= Назначение|
+|@LocaleResourceLocation|строка [[https://docs.oracle.com/javase/8/docs/api/java/net/URI.html|URI]] локализатора для класса|Описание локализатора, связанного с данным классом и его полями|
+|@LocaleResource|value="..." [,tooltip="..."] [,help="..."]|ключи [[#Группа локализации|группы локализации]] для данного класса или данного поля класса|
+|@Format|Строка формата|Строка, которая будет передана в конструктор класса [[/doc/chav1961.purelib/chav1961/purelib/model/FieldFormat.html|FieldFormat]]|
+|@Action|resource=@LocaleResource(...), actionString="..."|Описатель группы локализации для данного действия (например, автоматически создаваемой кнопки), и идентификатора, связанного с данным действием (на основании него будет построен [[#Идентификаторы вершины|идентификатор]] вершины с точки зрения прикладной логики)|
+Результатом построения модели является двухуровневое дерево. Корень дерева в идентификаторе прикладной логики будет иметь подсхему **class**, листья-поля - подсхему **field**, действия - подсхему **action**
+
+Пример использования аннотаций:
+
+{{{
+@LocaleResourceLocation("i18n:xml:root://chav1961.calc.plugins.details.coils.CoilsPlugin/chav1961/calculator/i18n/i18n.xml")
+@LocaleResource(value="menu.details.coils",tooltip="menu.details.coils.tt",help="help.aboutApplication")
+@Action(resource=@LocaleResource(value="chav1961.calc.plugins.details.coils.button.inductance",tooltip="chav1961.calc.plugins.details.coils.button.inductance.tt"),actionString="calcInductance")
+@Action(resource=@LocaleResource(value="chav1961.calc.plugins.details.coils.button.coils",tooltip="chav1961.calc.plugins.details.coils.button.coils.tt"),actionString="calcCoils")
+public class CoilsPlugin implements FormManager<Object,CoilsPlugin>, ModuleAccessor {
+	@LocaleResource(value="chav1961.calc.plugins.details.coils.coilsDiameter",tooltip="chav1961.calc.plugins.details.coils.coilsDiameter.tt")
+	@Format("9.2mpzs")
+	public float coilsDiameter = 0;
+	@LocaleResource(value="chav1961.calc.plugins.details.coils.coilsLength",tooltip="chav1961.calc.plugins.details.coils.coilsLength.tt")
+	@Format("9.2mpzs")
+	public float coilsLength = 0;
+	@LocaleResource(value="chav1961.calc.plugins.details.coils.numberOfCoils",tooltip="chav1961.calc.plugins.details.coils.numberOfCoils.tt")
+	@Format("9.2pzs")
+	public float coilsNumberOfCoils = 0;
+	@LocaleResource(value="chav1961.calc.plugins.details.coils.inductance",tooltip="chav1961.calc.plugins.details.coils.inductance.tt")
+	@Format("9.2pzs")
+	public float coilsInductance = 0;
+	@LocaleResource(value="chav1961.calc.plugins.details.coils.wireDiameter",tooltip="chav1961.calc.plugins.details.coils.wireDiameter.tt")
+	@Format("9.2mpzs")
+	public float wireDiameter = 0;
+	@LocaleResource(value="chav1961.calc.plugins.details.coils.coilType",tooltip="chav1961.calc.plugins.details.coils.coilType.tt")
+	@Format("40m")
+	public CoilType coilType = CoilType.SINGLE_LAYER;
+	@LocaleResource(value="chav1961.calc.plugins.details.coils.frequency",tooltip="chav1961.calc.plugins.details.coils.frequency.tt")
+	@Format("9.2pzs")
+	public float frequency = 0;
+	@LocaleResource(value="chav1961.calc.plugins.details.coils.length",tooltip="chav1961.calc.plugins.details.coils.length.tt")
+	@Format("9.2r")
+	public float wireLength = 0;
+	@LocaleResource(value="chav1961.calc.plugins.details.coils.quality",tooltip="chav1961.calc.plugins.details.coils.quality.tt")
+	@Format("9.2r")
+	public float quality = 0;
+	. . .
+} }}}
+
+===Построение по содержимому БД
+При построении модели по содержимому БД также строится двухуровневое дерево. Корень дерева в идентификаторе прикладной логики будет иметь подсхему **table**, листья - подсхему **column**. Группа локализации будет заполнена лишь частично (при наличии комментариев в БД - оператор SQL SET COMMENT...).
+===Построение по формату XML
+Формат файла XML для построения - см схему **XMLDescribedApplication.xsd** из пакета [[/doc/chav1961.purelib/chav1961/purelib/basic/xsd/package-summary.html|purelib.basic.xsd]]. Пример файла:
+
+{{{
+<?xml version="1.0" encoding="UTF-8"?>
+<app:root xmlns:app="http://ui.purelib.chav1961/">
+	<app:i18n location="i18n:xml:root://chav1961.purelibnavigator.admin.Application/chav1961/purelib/admin/i18n/i18n.xml"/>
+	<app:menu id="mainmenu">
+		<app:submenu name="menu.file" caption="menu.file" tooltip="menu.file.tt">
+			<app:item name="menu.file.new" caption="menu.file.new" tooltip="menu.file.new.tt" action="newFile"/>
+			<app:item name="menu.file.open" caption="menu.file.open" tooltip="menu.file.open.tt" action="openFile"/>
+			<app:separator/>
+			<app:item name="menu.file.save" caption="menu.file.save" tooltip="menu.file.save.tt" action="saveFile"/>
+			<app:item name="menu.file.saveas" caption="menu.file.saveAs" tooltip="menu.file.saveAs.tt" action="saveFileAs"/>
+			<app:separator/>
+			<app:submenu name="menu.file.lru" caption="menu.file.lru" tooltip="menu.file.lru.tt">	
+				<app:separator/>
+			</app:submenu>
+			<app:item name="menu.file.exit" caption="menu.file.exit" tooltip="menu.file.exit.tt" action="exit"/>
+		</app:submenu>
+		<app:submenu name="menu.tools" caption="menu.tools" tooltip="menu.tools.tt">
+			<app:item name="menu.tools.preview" caption="menu.tools.preview" tooltip="menu.tools.preview.tt" action="preview"/>
+			<app:builtinSubmenu name="builtin.languages" caption="menu.tools.languages" tooltip="menu.tools.languages.tt"/>
+		</app:submenu>
+		<app:submenu name="menu.help" caption="menu.help" tooltip="menu.help.tt">
+			<app:item name="menu.help.startBrowser" caption="menu.help.startBrowser" tooltip="menu.help.startBrowser.tt" action="startBrowser"/>
+			<app:separator/>
+			<app:item name="menu.help.about" caption="menu.help.about" tooltip="menu.help.about.tt" action="helpAbout"/>
+		</app:submenu>
+	</app:menu>
+	<app:keyset id="mainmenu.keyset">
+		<app:key code="N" ctrl="true" action="newFile"/>
+		<app:key code="O" ctrl="true" action="openFile"/>
+		<app:key code="S" ctrl="true" action="saveFile"/>
+		<app:key code="Q" ctrl="true" action="exit"/>
+	</app:keyset>
+</app:root>
+}}}
+
+==Утилиты пакета
+Утилиты пакета [[/doc/chav1961.purelib/chav1961/purelib/model/package-summary.html|purelib.model]] представлены двумя классами:
+* классом [[/doc/chav1961.purelib/chav1961/purelib/model/ContentMetadataFilter.html|ContentMetadataFilter]], позволяющим назначить фильтр на модель
+* классом [[/doc/chav1961.purelib/chav1961/purelib/model/ModelUtils.html|ModelUtils]], в котором имеется множество методов работы с моделями
+
+===Класс ContentMetadataFilter
+Класс [[/doc/chav1961.purelib/chav1961/purelib/model/ContentMetadataFilter.html|ContentMetadataFilter]] является классом-оберткой над моделью [[/doc/chav1961.purelib/chav1961/purelib/model/interfaces/ContentMetadataInterface.html|ContentMetadataInterface]], и сам реализует интерфейс [[/doc/chav1961.purelib/chav1961/purelib/model/interfaces/ContentMetadataInterface.html|ContentMetadataInterface]], т.е. также является моделью. Его экземпляры можно употреблять во всех местах, где требуется модель. В конструктор данного класса передается //вложенная// модель, а также критерий фильтрации, заданный одним из двух способов:
+* списком разрешенных/запрещенных [[#Идентификаторы вершины|идентификаторов]] с точки зрения пользовательского интерфейса
+* регулярным выражением для разрешенных/запрещенных [[#Идентификаторы вершины|идентификаторов]] с точки зрения пользовательского интерфейса
+
+Конструкторы класса [[/doc/chav1961.purelib/chav1961/purelib/model/ContentMetadataFilter.html|ContentMetadataFilter]] позволяют указывать при создании фильтра две группы условий:
+* "белый" список (список разрешенных идентификаторов или регулярных выражений)
+* "черный" список (список неразрешенных идентификаторов или регулярных выражений)
+
+"Черный" список имеет приоритет над "белым", т.е. сначала из вложенной модели "вычеркиваются" все запрещенные узлы, а затем по оставшейся модели выбираются разрешенные. Если какой-либо узел модели является разрешенным, разрешенными являются также и все его подчиненные узлы. Если необходимо выполнить фильтрацию и среди подчиненных узлов, следует создать еще один экземпляр класса [[/doc/chav1961.purelib/chav1961/purelib/model/ContentMetadataFilter.html|ContentMetadataFilter]], передав ему в конструктор, в качестве вложенной модели, только что созданный экземпляр [[/doc/chav1961.purelib/chav1961/purelib/model/ContentMetadataFilter.html|ContentMetadataFilter]].
+
+===Класс ModelUtils
+
+Класс [[/doc/chav1961.purelib/chav1961/purelib/model/ModelUtils.html|ModelUtils]] содержит большое количество методов, которые можно объединить в несколько групп:
+
+* методы **serializeToJson(...)** и **deserializeFromJson(...)** для сериализации и десериализации описания моделей в формат JSON.
+* метод **clone(...)** для создания копии модели, метод **compare(...)** для сравнения двух моделей и метод **toString(...)** для перевода модели в человекочитаемый формат
+* методы **getValueByGetter(...)** и **setValueBySetter(...)** для доступа к полям классов на основании метаинформации из модели
+* группа методов **buildUriByZZZ(...)** для построения идентификаторов вершины с точки зрения прикладной логики (ими активно пользуется класс [[/doc/chav1961.purelib/chav1961/purelib/model/ContentModelFactory.html|ContentModelFactory]])
+* группа служебных методов
+
+Методы сериализации **serializeToJson(...)** и **deserializeFromJson(...)** пользуются для сериализации и десериализации классами [[/doc/chav1961.purelib/chav1961/purelib/streams/JsonStaxParser.html|JsonStaxParser]] и [[/doc/chav1961.purelib/chav1961/purelib/streams/JsonStaxPrinter.html|JsonStaxPrinter]] из пакета [[/doc/chav1961.purelib/chav1961/purelib/streams/package-summary.html|purelib.streams]]. Сериализованный формат модели подробно описан в документации к классу [[/doc/chav1961.purelib/chav1961/purelib/model/ModelUtils.html|ModelUtils]].
+
+Методы **clone(...)**, **compare(...)** и **toString(...)** позволяют выполнять достаточно сложные манипуляции с моделями. Метод **compare(...)**, в частности, в процессе работы вычисляет //разность// двух моделей, и, в соответствии с вычисленной разностью, вызывает на выполнение программу выхода (callback). Она представляет собой функциональный интерфейс [[/doc/chav1961.purelib/chav1961/purelib/model/ModelUtils.ModelComparisonCallback.html|ModelUtils.ModelComparisonCallback]] (и, следовательно, может быть лямбда-выражением), в которую, в частности, передаются:
+* пара узлов моделей, над которыми выполняется операция сравнения
+* тип разности (узел добавлен, узел изменен, узел удален), представляющую собой нумерацию [[/doc/chav1961.purelib/chav1961/purelib/model/ModelUtils.ModelComparisonCallback.DifferenceType.html|ModelUtils.ModelComparisonCallback.DifferenceType]]
+* список отличающихся элементов узлов модели, представляющий собой множество элементов нумерации [[/doc/chav1961.purelib/chav1961/purelib/model/ModelUtils.ModelComparisonCallback.DifferenceLocalization.html|ModelUtils.ModelComparisonCallback.DifferenceLocalization]]
+
+Методы **getValueByGetter(...)** и **setValueBySetter(...)** аналогичны по своим возможностям механизму рефлексии, но имеют более эффективную реализацию. Группа методов **buildUriByZZZ(...)** особого интереса не представляют.
+
+В группе служебных методов имеются следующие методы:
+* метод **buildMappedClassByModel(...)**, с помощью которого можно по метаинформации создать на лету описание нового класса, который будет содержать все описанные в модели поля. Класс будет реализовывать интерфейс [[https://docs.oracle.com/javase/8/docs/api/java/util/Map.html|Map]], поэтому к его полям можно получить доступ как напрямую, так и через их символьные имена (как это принято в интерфейсе [[https://docs.oracle.com/javase/8/docs/api/java/util/Map.html|Map]])
+* метод **buildMappedWrapperClassByModel(...)**, с с помощью которого можно по метаинформации создать на лету клас-обертку к другому классу, которая реализует интерфейс [[https://docs.oracle.com/javase/8/docs/api/java/util/Map.html|Map]]. С помощью методов класса-обертки можно получать доступ к полям класса через их символьные имена (как это принято в интерфейсе [[https://docs.oracle.com/javase/8/docs/api/java/util/Map.html|Map]])
+
+
+
+

@@ -7,14 +7,14 @@
 <!-- Application menu localization -->
 		<key name="menu.file">File</key>
 		<key name="menu.file.tt">Manage file operations and exit application</key>
-		<key name="menu.file.new">New</key>
-		<key name="menu.file.new.tt">Create new program</key>
+		<key name="menu.file.new">New tab</key>
+		<key name="menu.file.new.tt">Create new tab in the window</key>
 		<key name="menu.file.open">Open</key>
-		<key name="menu.file.open.tt">Open existent program</key>
+		<key name="menu.file.open.tt">Open existent file in the current tab</key>
 		<key name="menu.file.save">Save</key>
-		<key name="menu.file.save.tt">Save program</key>
+		<key name="menu.file.save.tt">Save current tab content</key>
 		<key name="menu.file.saveAs">Save as...</key>
-		<key name="menu.file.saveAs.tt">Save program with another name</key>
+		<key name="menu.file.saveAs.tt">Save current tab content with another name</key>
 		<key name="menu.file.lru">Open last used...</key>
 		<key name="menu.file.lru.tt">Open last used files</key>
 		<key name="menu.file.exit">Exit</key>
@@ -47,14 +47,14 @@
 <!-- Application menu localization -->
 		<key name="menu.file">Файл</key>
 		<key name="menu.file.tt">Работа с файлами и выход из программы</key>
-		<key name="menu.file.new">Новый</key>
-		<key name="menu.file.new.tt">Начать новую программу</key>
+		<key name="menu.file.new">Новая вкладка</key>
+		<key name="menu.file.new.tt">Открыть новую вкладку в окне</key>
 		<key name="menu.file.open">Открыть</key>
-		<key name="menu.file.open.tt">Открыть ранее сохраненную программу</key>
+		<key name="menu.file.open.tt">Загрузить содержимое файла в текущую вкладку</key>
 		<key name="menu.file.save">Сохранить</key>
-		<key name="menu.file.save.tt">Сохранить программу</key>
+		<key name="menu.file.save.tt">Сохранить содержимое текущей вкладкиу</key>
 		<key name="menu.file.saveAs">Сохранить как...</key>
-		<key name="menu.file.saveAs.tt">Сохранить программу под новым именем</key>
+		<key name="menu.file.saveAs.tt">Сохранить содержимое текущей вкладки под новым именем</key>
 		<key name="menu.file.lru">Открыть последние...</key>
 		<key name="menu.file.lru.tt">Открыть последние использованные файлы</key>
 		<key name="menu.file.exit">Выход</key>

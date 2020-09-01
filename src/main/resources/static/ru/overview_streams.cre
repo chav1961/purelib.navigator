@@ -1,49 +1,90 @@
 = Работа с потоками данных (пакет purelib.streams)
-Пакет **purelib.streams** и его подпакеты содержат набор различных потоков (и не только потоков), позволяющих последовательно считывать или последовательно записывать в них данные. Одновременно с чтением (записью) данных потоки этого пакета способны производить и достаточно сложную обработку данных. Ниже приведен список классов, сгруппированных по пакетам, с кратким указаниием их функциональности:
+Пакет [[/doc/chav1961.purelib/chav1961/purelib/streams/package-summary.html|purelib.streams]] и его подпакеты содержат набор различных потоков (и не только потоков), позволяющих последовательно считывать или последовательно записывать в них данные. Одновременно с чтением (записью) данных потоки этого пакета способны производить и достаточно сложную обработку данных. Ниже приведен список классов, сгруппированных по пакетам, с кратким указаниием их функциональности:
 
 * пакет **[[#Пакет purelib.streams|purelib.streams]]**:
-** класс [[|JsonSaxParser]] - аналог [[https://ru.wikipedia.org/wiki/SAX|SAX]]-парсера для данных формата [[https://ru.wikipedia.org/wiki/JSON|JSON]]
-** классы [[|JsonStaxParser]] и [[|JsonStaxPrinter]] - аналоги [[https://en.wikipedia.org/wiki/StAX|StAX]]-парсера и [[https://en.wikipedia.org/wiki/StAX|StAX]]-принтера для данных формата [[https://ru.wikipedia.org/wiki/JSON|JSON]]
-** классы-обертки [[|ReaderWrapper]] и [[|WriterWrapper]] - классы, реализующие шаблон [[https://ru.wikipedia.org/wiki/%D0%A8%D0%B0%D0%B1%D0%BB%D0%BE%D0%BD_%D0%B4%D0%B5%D0%BB%D0%B5%D0%B3%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F|"делегат"]] для входного и выходного потока
+** класс [[/doc/chav1961.purelib/chav1961/purelib/streams/JsonSaxParser.html|JsonSaxParser]] - аналог [[https://ru.wikipedia.org/wiki/SAX|SAX]]-парсера для данных формата [[https://ru.wikipedia.org/wiki/JSON|JSON]]
+** классы [[/doc/chav1961.purelib/chav1961/purelib/streams/JsonStaxParser.html|JsonStaxParser]] и [[/doc/chav1961.purelib/chav1961/purelib/streams/JsonStaxPrinter.html|JsonStaxPrinter]] - аналоги [[https://en.wikipedia.org/wiki/StAX|StAX]]-парсера и [[https://en.wikipedia.org/wiki/StAX|StAX]]-принтера для данных формата [[https://ru.wikipedia.org/wiki/JSON|JSON]]
+** класс [[/doc/chav1961.purelib/chav1961/purelib/streams/CsvSaxParser.html|CsvSaxParser]] - аналог [[https://ru.wikipedia.org/wiki/SAX|SAX]]-парсера для данных формата [[https://ru.wikipedia.org/wiki/CSV|CSV]]
+** класс [[/doc/chav1961.purelib/chav1961/purelib/streams/CsvStaxParser.html|CsvStaxParser]] - аналог [[https://ru.wikipedia.org/wiki/StAX|StAX]]-парсера для данных формата [[https://ru.wikipedia.org/wiki/CSV|CSV]]
+** классы-обертки [[/doc/chav1961.purelib/chav1961/purelib/streams/ReaderWrapper.html|ReaderWrapper]] и [[/doc/chav1961.purelib/chav1961/purelib/streams/WriterWrapper.html|WriterWrapper]] - классы, реализующие шаблон [[https://ru.wikipedia.org/wiki/%D0%A8%D0%B0%D0%B1%D0%BB%D0%BE%D0%BD_%D0%B4%D0%B5%D0%BB%D0%B5%D0%B3%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F|"делегат"]] для входного и выходного потока
 *  пакет **[[#Пакет purelib.streams.byte2byte|purelib.streams.byte2byte]]**:
-** классы [[|ZLibInputStream]] и [[|ZLibOutputStream]], реализующие байтовые потоки с упаковкой по алгоритму [[https://ru.wikipedia.org/wiki/Zlib|Zlib]]
+** классы [[/doc/chav1961.purelib/chav1961/purelib/streams/byte2byte/ZLibInputStream.html|ZLibInputStream]] и [[/doc/chav1961.purelib/chav1961/purelib/streams/byte2byte/ZLibOutputStream.html|ZLibOutputStream]], реализующие байтовые потоки с упаковкой по алгоритму [[https://ru.wikipedia.org/wiki/Zlib|Zlib]]
 *  пакет **[[#Пакет purelib.streams.byte2char|purelib.streams.byte2char]]**:
-** класс [[|BufferedInputStreamReader]] - реализация класса [[https://docs.oracle.com/javase/8/docs/api/java/io/Reader.html|Reader]], использующая возможности пакета **[[https://docs.oracle.com/javase/8/docs/api/java/nio/package-summary.html|java.nio]]** для быстрой сборки символов из байтов
+** класс [[/doc/chav1961.purelib/chav1961/purelib/streams/byte2char/Jdbc2CsvReader.html|Jdbc2CsvReader]] для потокового чтения содержимого таблицы БД в виде потока формата [[https://ru.wikipedia.org/wiki/CSV|CSV]]
+** класс [[/doc/chav1961.purelib/chav1961/purelib/streams/byte2char/Jdbc2JsonReader.html|Jdbc2JsonReader]] для потокового чтения содержимого таблицы БД в виде потока формата [[https://ru.wikipedia.org/wiki/JSON|JSON]]
 * пакет **[[#Пакет purelib.streams.char2byte|purelib.streams.char2byte]]**:
-** класс [[|BufferedOutputStreamWriter]] - реализация класса [[https://docs.oracle.com/javase/8/docs/api/java/io/Writer.html|Writer]], использующая возможности пакета **[[https://docs.oracle.com/javase/8/docs/api/java/nio/package-summary.html|java.nio]]** для быстрой разборки символов на байты
-** класс [[|AsmWriter]] - компилятор ассемблера [[https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-6.html|байт-кода Java]] в файл формата *.class со встроенным макропроцессором
+** класс [[/doc/chav1961.purelib/chav1961/purelib/streams/char2byte/AsmWriter.html|AsmWriter]] - компилятор ассемблера [[https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-6.html|байт-кода Java]] в файл формата** *.class** со встроенным макропроцессором
 * пакет **[[#Пакет purelib.streams.char2char|purelib.streams.char2char]]**:
-** класс [[|CreoleWriter]] - преобразователь данных формата [[http://www.wikicreole.org/|Creole]]
-** класс [[|PreprocessingReader]] - функциональность его похожа на функциональность препроцессора языка C/C++
-** классы-обертки [[|PrintStreamWrapper]] и [[|PrintWriterWrapper]] - классы, реализующие шаблон [[https://ru.wikipedia.org/wiki/%D0%A8%D0%B0%D0%B1%D0%BB%D0%BE%D0%BD_%D0%B4%D0%B5%D0%BB%D0%B5%D0%B3%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F|"делегат"]] для выходного потока соответствующего типа
+** класс [[/doc/chav1961.purelib/chav1961/purelib/streams/char2char/CreoleWriter.html|CreoleWriter]] - преобразователь данных формата [[http://www.wikicreole.org/|Creole]]
+** класс [[/doc/chav1961.purelib/chav1961/purelib/streams/char2char/PreprocessingReader.html|PreprocessingReader]] - функциональность его похожа на функциональность препроцессора языка C/C++
+** классы-обертки [[/doc/chav1961.purelib/chav1961/purelib/streams/char2char/PrintStreamWrapper.html|PrintStreamWrapper]] и [[/doc/chav1961.purelib/chav1961/purelib/streams/char2char/PrintWriterWrapper.html|PrintWriterWrapper]] - классы, реализующие шаблон [[https://ru.wikipedia.org/wiki/%D0%A8%D0%B0%D0%B1%D0%BB%D0%BE%D0%BD_%D0%B4%D0%B5%D0%BB%D0%B5%D0%B3%D0%B8%D1%80%D0%BE%D0%B2%D0%B0%D0%BD%D0%B8%D1%8F|"делегат"]] для выходного потока соответствующего типа
 * пакет **[[#Пакет purelib.streams.charsource|purelib.streams.charsource]]**:
-** классы [[|ArrayCharSource]], [[|ReaderCharSource]] и [[|StringCharSource]], реализующий посимвольный ввод данных из соответствующего источника
+** классы [[/doc/chav1961.purelib/chav1961/purelib/streams/charsource/ArrayCharSource.html|ArrayCharSource]], [[/doc/chav1961.purelib/chav1961/purelib/streams/charsource/ReaderCharSource.html|ReaderCharSource]] и [[/doc/chav1961.purelib/chav1961/purelib/streams/charsource/StringCharSource.html|StringCharSource]], реализующий посимвольный ввод данных из соответствующего источника
 * пакет **[[#Пакет purelib.streams.chartarget|purelib.streams.chartarget]]**:
-** классы [[|ArrayCharSource]], [[|StringBuilderCharSource]] и [[|WriterCharSource]], реализующий посимвольный вывод данных в соответствующий приемник
+** классы [[/doc/chav1961.purelib/chav1961/purelib/streams/chartarget/ArrayCharTarget.html|ArrayCharTarget]], [[/doc/chav1961.purelib/chav1961/purelib/streams/chartarget/StringBuilderCharTarget.html|StringBuilderCharTarget]] и [[/doc/chav1961.purelib/chav1961/purelib/streams/chartarget/WriterCharTarget.html|WriterCharTarget]], реализующий посимвольный вывод данных в соответствующий приемник
+
+Большинство потоков пакета [[/doc/chav1961.purelib/chav1961/purelib/streams/package-summary.html|purelib.streams]] и его подпакетов реализуют интерфейс [[https://docs.oracle.com/javase/8/docs/api/java/io/Closeable.html|Closeable]] и могут применяться в операторе **try-with-resource**.
+
 == Пакет purelib.streams
 
-ы
+Сам пакет [[/doc/chav1961.purelib/chav1961/purelib/streams/package-summary.html|purelib.streams]] содержит следующие классы:
+* класс [[/doc/chav1961.purelib/chav1961/purelib/streams/JsonSaxParser.html|JsonSaxParser]] для чтения JSON с обработкой в стиле [[https://ru.wikipedia.org/wiki/SAX|SAX]]
+* класс [[/doc/chav1961.purelib/chav1961/purelib/streams/JsonStaxParser.html|JsonStaxParser]] для чтения JSON с обработкой в стиле [[https://en.wikipedia.org/wiki/StAX|StAX]]
+* класс [[/doc/chav1961.purelib/chav1961/purelib/streams/JsonStaxPrinter.html|JsonStaxPrinter]] для вывода JSON в стиле [[https://en.wikipedia.org/wiki/StAX|StAX]]
+* классы [[/doc/chav1961.purelib/chav1961/purelib/streams/ReaderWrapper.html|ReaderWrapper]] и [[/doc/chav1961.purelib/chav1961/purelib/streams/WriterWrapper.html|WriterWrapper]], представляющие собой класса-обертки на классами [[https://docs.oracle.com/javase/8/docs/api/java/io/Reader.html|Reader]] и [[https://docs.oracle.com/javase/8/docs/api/java/io/Writer.html|Writer]] соответственно
+* класс [[/doc/chav1961.purelib/chav1961/purelib/streams/CsvSaxParser.html|CsvSaxParser]] для чтения CSV с обработкой в стиле [[https://ru.wikipedia.org/wiki/SAX|SAX]]
+* класс [[/doc/chav1961.purelib/chav1961/purelib/streams/CsvStaxParser.html|CsvStaxParser]] для чтения CSV с обработкой в стиле [[https://ru.wikipedia.org/wiki/StAX|StAX]]
+* утилитный класс [[/doc/chav1961.purelib/chav1961/purelib/streams/StreamsUtil.html|StreamsUtil]] 
+
+Классы [[/doc/chav1961.purelib/chav1961/purelib/streams/JsonSaxParser.html|JsonSaxParser]], [[/doc/chav1961.purelib/chav1961/purelib/streams/JsonStaxParser.html|JsonStaxParser]],[[/doc/chav1961.purelib/chav1961/purelib/streams/CsvSaxParser.html|CsvSaxParser]] и [[/doc/chav1961.purelib/chav1961/purelib/streams/CsvStaxParser.html|CsvStaxParser]] требуют для работы класс [[https://docs.oracle.com/javase/8/docs/api/java/io/Reader.html|Reader]]. Класс [[/doc/chav1961.purelib/chav1961/purelib/streams/JsonStaxPrinter.html|JsonStaxPrinter]] требует для работы класс [[https://docs.oracle.com/javase/8/docs/api/java/io/Writer.html|Writer]]. 
+
+Назначение классов [[/doc/chav1961.purelib/chav1961/purelib/streams/ReaderWrapper.html|ReaderWrapper]] и [[/doc/chav1961.purelib/chav1961/purelib/streams/WriterWrapper.html|WriterWrapper]] - быть заготовкой класса-обертки для классов [[https://docs.oracle.com/javase/8/docs/api/java/io/Reader.html|Reader]] и [[https://docs.oracle.com/javase/8/docs/api/java/io/Writer.html|Writer]], в тех случаях, когда необходимо переопределеить в них тот или иной метод, но воспользоваться механизмом наследования по той или иной причине невозможно (например, при получении инстанции класса Reader через параметры метода)
+
+Класс [[/doc/chav1961.purelib/chav1961/purelib/streams/StreamsUtil.html|StreamsUtil]] содержит набор полезных методов для часто встречающихся в практике операций с потоками пакета [[/doc/chav1961.purelib/chav1961/purelib/streams/package-summary.html|purelib.streams]] и его подпакетов.
 
 == Пакет purelib.streams.byte2byte
 
-ы
+Пакет [[/doc/chav1961.purelib/chav1961/purelib/streams/byte2byte/package-summary.html|purelib.streams.byte2byte]] содержит классы-потоки, преобразующие байтовое содержимое одного типа в байтовое содержимое другого типа. Пакет содержит классы:
+
+* класс [[/doc/chav1961.purelib/chav1961/purelib/streams/byte2byte/ZLibInputStream.html|ZLibInputStream]] для распаковки потока данных, упакованных по аллгоритму [[https://ru.wikipedia.org/wiki/Zlib|ZLib]]
+* класс [[/doc/chav1961.purelib/chav1961/purelib/streams/byte2byte/ZLibOutputStream.html|ZLibOutputStream]] для упаковки потока данных по аллгоритму [[https://ru.wikipedia.org/wiki/Zlib|ZLib]]
+
+Оба класса используются совместно друг с другом. Стиль их использования не отличается от работы с аналогичными классами Java [[https://docs.oracle.com/javase/8/docs/api/java/util/zip/GZIPInputStream.html|GZIPInputStream]] и [[https://docs.oracle.com/javase/8/docs/api/java/util/zip/GZIPOutputStream.html|GZIPOutputStream]]. Примеры работы с этими классами см [[|здесь]].
 
 == Пакет purelib.streams.byte2char
 
-ы
+Пакет [[/doc/chav1961.purelib/chav1961/purelib/streams/byte2char/package-summary.html|purelib.streams.byte2char]] содержит классы-потоки, преобразующие байтовое содержимое потока в символьное содержимое. Пакет содержит классы:
+
+* класс [[/doc/chav1961.purelib/chav1961/purelib/streams/byte2char/Jdbc2CsvReader.html|Jdbc2CsvReader]] для потокового чтения содержимого таблицы БД в виде потока формата [[https://ru.wikipedia.org/wiki/CSV|CSV]]
+* класс [[/doc/chav1961.purelib/chav1961/purelib/streams/byte2char/Jdbc2JsonReader.html|Jdbc2JsonReader]] для потокового чтения содержимого таблицы БД в виде потока формата [[https://ru.wikipedia.org/wiki/JSON|JSON]]
+
+Оба класса являются "дочками" класса [[https://docs.oracle.com/javase/8/docs/api/java/io/Reader.html|Reader]] и требуют для своей работы открытого **курсора** на базе данных (интерфейс [[https://docs.oracle.com/javase/8/docs/api/java/sql/ResultSet.html|ResultSet]]). В процессе работы они преобразуют содержимое курсора в строки соответствующего формата (CSV или JSON). Примеры работы с этими классами см [[|здесь]].
 
 == Пакет purelib.streams.char2byte
-
-ы
+Пакет [[/doc/chav1961.purelib/chav1961/purelib/streams/char2byte/package-summary.html|purelib.streams.char2byte]] содержит класс [[/doc/chav1961.purelib/chav1961/purelib/streams/char2byte/AsmWriter.html|AsmWriter]], являющийся, как уже неоднократно было упомянуто, ассемблером [[https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-6.html|байт-кода Java]] со встроенным макропроцессором. Класс является "дочкой" класса [[https://docs.oracle.com/javase/8/docs/api/java/io/Writer.html|Writer]] и требует для работы класс [[https://docs.oracle.com/javase/8/docs/api/java/io/OutputStream.html|OutputStream]], в котором и образуется в результате файл формата** *.class**. Класс [[/doc/chav1961.purelib/chav1961/purelib/streams/char2byte/CompilerUtils.html|CompilerUtils]], находящийся в этом же пакете, упрощает работу с потоком-ассемблером, позволяя строить символьное представление сигнатур классов, методов, полей и т.д. Примеры работы с этими классами см [[|здесь]].
 
 == Пакет purelib.streams.char2char
 
-ы
+Пакет Пакет [[/doc/chav1961.purelib/chav1961/purelib/streams/char2char/package-summary.html|purelib.streams.char2char]] содержит классы, преобразующие символьный поток одного типа в символьный поток другого типа. Он содержит следующие классы:
+* класс [[/doc/chav1961.purelib/chav1961/purelib/streams/char2char/CreoleWriter.html|CreoleWriter]], преобразующий выходной поток формата [[http://www.wikicreole.org|Creole]] в другие популярные форматы (простой текст, HTML, XML и т.д.)
+* класс [[/doc/chav1961.purelib/chav1961/purelib/streams/char2char/PreprocessingReader.html|PreprocessingReader]], поддерживающий препроцессорную обработку входного потока
+* классы-обертки [[/doc/chav1961.purelib/chav1961/purelib/streams/char2char/PrintStreamWrapper.html|PrintStreamWrapper]] и [[/doc/chav1961.purelib/chav1961/purelib/streams/char2char/PrintWriterWrapper.html|PrintWriterWrapper]] над классами [[https://docs.oracle.com/javase/8/docs/api/java/io/PrintStream.html|PrintStream]] и [[https://docs.oracle.com/javase/8/docs/api/java/io/PrintWriter.html|PrintWriter]] соответственно
+
+Класс [[/doc/chav1961.purelib/chav1961/purelib/streams/char2char/CreoleWriter.html|CreoleWriter]] является "дочкой" класса [[https://docs.oracle.com/javase/8/docs/api/java/io/Writer.html|Writer]] и требует для работы класс [[https://docs.oracle.com/javase/8/docs/api/java/io/Writer.html|Writer]]. Класс [[/doc/chav1961.purelib/chav1961/purelib/streams/char2char/PreprocessingReader.html|PreprocessingReader]] является "дочкой" класса [[https://docs.oracle.com/javase/8/docs/api/java/io/Reader.html|Reader]] и требует для работы класс [[https://docs.oracle.com/javase/8/docs/api/java/io/Reader.html|Reader]]. Примеры работы с этими классами см [[|здесь]].
+
+Классы-обертки [[/doc/chav1961.purelib/chav1961/purelib/streams/char2char/PrintStreamWrapper.html|PrintStreamWrapper]] и [[/doc/chav1961.purelib/chav1961/purelib/streams/char2char/PrintWriterWrapper.html|PrintWriterWrapper]] создавались, в первую очередь, для того, чтобы **отменить** крайне неудачную (на мой взгляд) функциональность исходных классов - практически на всех методах **printZZZ(...)** исходные классы "давят" ошибки ввода-вывода. При работе с консолью это, безусловно, удобно, но в других применениях явлбяется источником постоянной головной боли. В классах-обертках эта функциональностьь исходных классов отменена.
 
 == Пакет purelib.streams.charsource
 
-ы
+Классы пакета [[/doc/chav1961.purelib/chav1961/purelib/streams/charsource/package-summary.html|purelib.streams.charsource]] является не-совсем-потоками, и преджназначены, в первую очередь, для работы совместно с парсерами исходного кода (в частности, они "умеют" автоматически подсчитывать номера строки и позиций в исходноv потоке). Все они реализуют интерфейс [[/doc/chav1961.purelib/chav1961/purelib/streams/interfaces/CharacterSource.html|CharacterSource]]. В данный момент пакет содержит следующие реализации этог интерфейса:
+* класс [[/doc/chav1961.purelib/chav1961/purelib/streams/charsource/ArrayCharSource.html|ArrayCharSource]]
+* класс [[/doc/chav1961.purelib/chav1961/purelib/streams/charsource/ReaderCharSource.html|ReaderCharSource]]
+* класс [[/doc/chav1961.purelib/chav1961/purelib/streams/charsource/StringCharSource.html|StringCharSource]]
+* класс [[/doc/chav1961.purelib/chav1961/purelib/streams/charsource/SyntaxTreeCharacterSource.html|SyntaxTreeCharacterSource]]
 
 == Пакет purelib.streams.chartarget
 
-ы
+Классы пакета [[/doc/chav1961.purelib/chav1961/purelib/streams/chartarget/package-summary.html|purelib.streams.chartarget]] является не-совсем-потоками, и преджназначены, в первую очередь, для работы совместно с парсерами исходного кода (в частности, они "умеют" автоматически подсчитывать номера строки и позиций в выходном потоке). Все они реализуют интерфейс [[/doc/chav1961.purelib/chav1961/purelib/streams/interfaces/CharacterTarget.html|CharacterTarget]]. В данный момент пакет содержит следующие реализации этог интерфейса:
+* класс [[/doc/chav1961.purelib/chav1961/purelib/streams/chartarget/ArrayCharTarget.html|ArrayCharTarget]]
+* класс [[/doc/chav1961.purelib/chav1961/purelib/streams/chartarget/StringBuilderCharTarget.html|StringBuilderCharTarget]]
+* класс [[/doc/chav1961.purelib/chav1961/purelib/streams/chartarget/WriterCharTarget.html|WriterCharTarget]]

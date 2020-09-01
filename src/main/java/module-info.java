@@ -1,5 +1,5 @@
 module chav1961.purelibnavigator {
-	requires chav1961.purelib;
+	requires transitive chav1961.purelib;
 	requires java.desktop;
 	requires java.scripting;
 	requires java.xml;

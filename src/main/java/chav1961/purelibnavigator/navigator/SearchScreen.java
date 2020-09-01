@@ -47,7 +47,7 @@ public class SearchScreen extends JPanel {
 			final JSplitPane	jsp = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
 			final JPanel		leftPanel = new JPanel(new BorderLayout());
 			final ContentMetadataInterface	mdi = ContentModelFactory.forAnnotatedClass(filter.getClass());
-			final JPanel		leftTopPanel = new AutoBuiltForm<NavigationFilter>(mdi,localizer, filter, new FormManager<Object, NavigationFilter>() {
+			final JPanel		leftTopPanel = new AutoBuiltForm<NavigationFilter>(mdi,localizer, PureLibSettings.INTERNAL_LOADER, filter, new FormManager<Object, NavigationFilter>() {
 									@Override
 									public RefreshMode onField(NavigationFilter inst, Object id, String fieldName, Object oldValue) throws FlowException, LocalizationException {
 										return RefreshMode.DEFAULT;

@@ -1,48 +1,48 @@
 = Работа с базами данных (пакет purelib.sql)
-Как отмечалось в описании, основное (но не единственное) назначение данного пакета - построение диагностических наборов данных (в том числе и для использования в JUnit-тестах). Источниками диагностических данных могут быть:
+Как отмечалось в описании, основное (но не единственное) назначение пакета [[/doc/chav1961.purelib/chav1961/purelib/sql/package-summary.html|purelib.sql]] и его подпакетов - построение диагностических наборов данных (в том числе и для использования в JUnit-тестах). Источниками диагностических данных могут быть:
 
-* пустые наборы данных (класс [[|NullReadOnlyResultSet]])
-* наборы данных, основанные на массивах (класс [[|InMemoryReadOnlyResultSet]])
+* пустые наборы данных (класс [[/doc/chav1961.purelib/chav1961/purelib/sql/NullReadOnlyResultSet.html|NullReadOnlyResultSet]])
+* наборы данных, основанные на массивах (класс [[/doc/chav1961.purelib/chav1961/purelib/sql/InMemoryReadOnlyResultSet.html|InMemoryReadOnlyResultSet]])
 * наборы данных, подключаемые по [[https://docs.oracle.com/javase/tutorial/sound/SPI-intro.html|SPI]], среди которых:
 ** наборы данных на основе CSV-формата ([[https://www.ietf.org/rfc/rfc4180.txt|RFC 4180]])
 ** наборы данных на основе JSON-формата ([[https://tools.ietf.org/html/rfc7159|RFC 7159]])
 ** наборы данных на основе XML-формата 
 
-Наборы данных, подключаемые по [[https://docs.oracle.com/javase/tutorial/sound/SPI-intro.html|SPI]], доступны через класс [[|ResultSetFactory]], расположенный в подпакете **purelib.sql.content**. Как и в большинстве других классов-фабрик библиотеки PL, доступ к тому или иному набору данных управляется через механизм URI. Схема всех URI для доступа к наборам данных называется **rsps**, специфическая часть URI имеет вид:
+Наборы данных, подключаемые по [[https://docs.oracle.com/javase/tutorial/sound/SPI-intro.html|SPI]], доступны через класс [[/doc/chav1961.purelib/chav1961/purelib/sql/content/ResultSetFactory.html|ResultSetFactory]], расположенный в подпакете [[/doc/chav1961.purelib/chav1961/purelib/sql/content/package-summary.html|purelib.sql.content]]. Как и в большинстве других классов-фабрик библиотеки PL, доступ к тому или иному набору данных управляется через механизм [[https://docs.oracle.com/javase/8/docs/api/java/net/URI.html|URI]]. Схема всех [[https://docs.oracle.com/javase/8/docs/api/java/net/URI.html|URI]] для доступа к наборам данных называется **rsps**, специфическая часть [[https://docs.oracle.com/javase/8/docs/api/java/net/URI.html|URI]] имеет вид:
 
 |= тип источника |= форма записи URI |= комментарий |
 | CSV-формат | rsps:csv:<URI_источника> | Доступ к набору данных на основе CSV-формата. Первая строка источника данных может содержать  имена полей набора данных |
-| JSON-формат | rsps:json:<URI_источника> | Доступ к набору на основе JSON-формата. Предполагается, что источник данных содержит массив записей, \\ не имеющий внутри записей других вложенных структур |
+| JSON-формат | rsps:json:<URI_источника> | Доступ к набору на основе JSON-формата. Предполагается, что источник данных содержит массив записей, не имеющий внутри записей других вложенных структур |
 | XML-формат | rsps:xml:<URI_источника> | Доступ к набору на основе XML-формата. Предполагается, что источник данных содержит трехуровневое DOM-дерево |
 
-В URI, запрашивающем тот или ииной источник данных, требуется задавать также дополнительную информацию, необходимую для построения набора данных. Информация эта задается в виде (и в синтаксисе) строки запроса (query string). Обязательная ее часть содержит описания будущих полей набора данных, необязательная - дополнительные опции для того или иного построителя наборов данных. Приведем пример такого URI:
+В [[https://docs.oracle.com/javase/8/docs/api/java/net/URI.html|URI]], запрашивающем тот или ииной источник данных, требуется задавать также дополнительную информацию, необходимую для построения набора данных. Информация эта задается в виде (и в синтаксисе) строки запроса (query string). Обязательная ее часть содержит описания будущих полей набора данных, необязательная - дополнительные опции для того или иного построителя наборов данных. Приведем пример такого [[https://docs.oracle.com/javase/8/docs/api/java/net/URI.html|URI]]:
 
 rsps:csv:file:/c:/text.csv?field1=VARCHAR(20)&field2=NUMERIC(12,2)&field3=BOOLEAN&encoding=UTF-8
 
-В приведенном примере опция **encoding** является указанием на кодировку данных во входном потоке, все остальные пары ключ/значение рассматриваются как имена и описания полей. Описания полей и опции могут следовать вперемешку, но относительный порядок расположения полей в результирующем наборе данных будет в точности соответствовать тому порядку, в котором описания полей задавались в строке запроса. Допустимые типы данных в описаниях соответствуют описаниям типов данных в классе [[|jqvq.sql.Types]], регистр символов ни для имени, ни для описания значения не имеет.
+В приведенном примере опция **encoding** является указанием на кодировку данных во входном потоке, все остальные пары ключ/значение рассматриваются как имена и описания полей. Описания полей и опции могут следовать вперемешку, но относительный порядок расположения полей в результирующем наборе данных будет в точности соответствовать тому порядку, в котором описания полей задавались в строке запроса. Допустимые типы данных в описаниях соответствуют описаниям типов данных в классе [[https://docs.oracle.com/javase/8/docs/api/java/sql/Types.html|Types]], регистр символов ни для имени, ни для описания значения не имеет.
 
-Помимо указанных источников данных, в пакете имеется также утилитный класс [[|SQLUtils]], в котором, в частности, имеются методы преобразования различных типов данных друг в друга. Учитывая богатство типов данных современных СУБД, этот класс может быть полезным при программировании именно в этом качестве, и не только для работы с базами данных.
+Помимо указанных источников данных, в пакете имеется также утилитный класс [[/doc/chav1961.purelib/chav1961/purelib/sql/SQLUtils.html|SQLUtils]], в котором, в частности, имеются методы преобразования различных типов данных друг в друга. Учитывая богатство типов данных современных СУБД, этот класс может быть полезным при программировании именно в этом качестве, и не только для работы с базами данных.
 
-В подпакете **purelib.sql.interfaces** содержится полезный интерфейс [[|ORMProvider]], предназначенный, как можно догадаться, для поддержки работы встроенного в библиотеку PL механизма [[https://ru.wikipedia.org/wiki/ORM|ORM]]. Построением экземпляров этого интерфейса "заведует" класс [[|ContentModelFactory]] из пакета **purelib.model**. Детальное описание этого интерфейса см [[|здесь]].
+В подпакете [[/doc/chav1961.purelib/chav1961/purelib/sql/interfaces/package-summary.html|purelib.sql.interfaces]] содержится полезный интерфейс [[/doc/chav1961.purelib/chav1961/purelib/sql/interfaces/ORMProvider.html|ORMProvider]], предназначенный, как можно догадаться, для поддержки работы встроенного в библиотеку PL механизма [[https://ru.wikipedia.org/wiki/ORM|ORM]]. Построением экземпляров этого интерфейса "заведует" класс [[/doc/chav1961.purelib/chav1961/purelib/model/ContentModelFactory.html|ContentModelFactory]] из пакета [[/doc/chav1961.purelib/chav1961/purelib/model/package-summary.html|purelib.model]] (см [[./overview_model.cre|здесь]]).
 
-Отдельно следует сказать о классах, реализующих набор интерфейсов протокола [[https://ru.wikipedia.org/wiki/Java_Database_Connectivity|JDBC]]. Все эти классы - абстрактные, и содержат более-менее полную реализацию функциональности, характерной для интерфейсов протокола JDBC, в части, не связанной с хранением информации и взаимодействием с сервером базы данных. Это набор может быть использован при написании собственного драйвера протокола JDBC. Состав этих классов следующий:
+Отдельно следует сказать о классах, реализующих набор интерфейсов протокола [[https://ru.wikipedia.org/wiki/Java_Database_Connectivity|JDBC]]. Все эти классы - абстрактные, и содержат более-менее полную реализацию функциональности, характерной для интерфейсов протокола JDBC, в части, не связанной с хранением информации и взаимодействием с сервером базы данных. Это набор может быть использован при написании собственного "драйвера" протокола JDBC для использования в JUnit-тестах. Состав этих классов следующий:
 
-* класс [[|AbstractConnection]] (реализует интерфейс [[https://docs.oracle.com/javase/8/docs/api/java/sql/Connection.html|Connection]])
-* класс [[|AbstractStatement]] (реализует интерфейс [[https://docs.oracle.com/javase/8/docs/api/java/sql/Statement.html|Statement]])
-* класс [[|AbstractPreparedStatement]] (реализует интерфейс [[https://docs.oracle.com/javase/8/docs/api/java/sql/PreparedStatement.html|PreparedStatement]])
-* класс [[|AbstractCallableStatement]] (реализует интерфейс [[https://docs.oracle.com/javase/8/docs/api/java/sql/CallableStatement.html|CallableStatement]])
-* класс [[|AbstractReadOnlyResultSet]] (реализует интерфейс [[https://docs.oracle.com/javase/8/docs/api/java/sql/ResultSet.html|ResultSet]])
-* класс [[|AbstractResultSetMetaData]] (реализует интерфейс [[https://docs.oracle.com/javase/8/docs/api/java/sql/ResultSetMetaData.html|ResultSetMetaData]])
+* класс [[/doc/chav1961.purelib/chav1961/purelib/sql/AbstractConnection.html|AbstractConnection]] (реализует интерфейс [[https://docs.oracle.com/javase/8/docs/api/java/sql/Connection.html|Connection]])
+* класс [[/doc/chav1961.purelib/chav1961/purelib/sql/AbstractStatement.html|AbstractStatement]] (реализует интерфейс [[https://docs.oracle.com/javase/8/docs/api/java/sql/Statement.html|Statement]])
+* класс [[/doc/chav1961.purelib/chav1961/purelib/sql/AbstractPreparedStatement.html|AbstractPreparedStatement]] (реализует интерфейс [[https://docs.oracle.com/javase/8/docs/api/java/sql/PreparedStatement.html|PreparedStatement]])
+* класс [[/doc/chav1961.purelib/chav1961/purelib/sql/AbstractCallableStatement.html|AbstractCallableStatement]] (реализует интерфейс [[https://docs.oracle.com/javase/8/docs/api/java/sql/CallableStatement.html|CallableStatement]])
+* класс [[/doc/chav1961.purelib/chav1961/purelib/sql/AbstractReadOnlyResultSet.html|AbstractReadOnlyResultSet]] (реализует интерфейс [[https://docs.oracle.com/javase/8/docs/api/java/sql/ResultSet.html|ResultSet]])
+* класс [[/doc/chav1961.purelib/chav1961/purelib/sql/AbstractResultSetMetaData.html|AbstractResultSetMetaData]] (реализует интерфейс [[https://docs.oracle.com/javase/8/docs/api/java/sql/ResultSetMetaData.html|ResultSetMetaData]])
 
-Для манипуляции содержимым курсоров имеется класс [[|AbstractContent]]. Некоторые из этих классов используются при работе источников диагностических данных.
+Для манипуляции содержимым курсоров имеется класс [[/doc/chav1961.purelib/chav1961/purelib/sql/AbstractContent.html|AbstractContent]]. Некоторые из этих классов используются при работе источников диагностических данных.
 
 Для специфичных форм представления данных в СУБД, в пакете имеются "легкие" версии таких форм. Список их следующий:
 
-* класс [[|InMemoryLittleArray]] (реализует интерфейс [[https://docs.oracle.com/javase/8/docs/api/java/sql/Array.html|Array]])
-* класс [[|InMemoryLittleBlob]] (реализует интерфейс [[https://docs.oracle.com/javase/8/docs/api/java/sql/Blob.html|Blob]])
-* класс [[|InMemoryLittleClob]] (реализует интерфейс [[https://docs.oracle.com/javase/8/docs/api/java/sql/Clob.html|Clob]])
-* класс [[|InMemoryLittleNClob]] (реализует интерфейс [[https://docs.oracle.com/javase/8/docs/api/java/sql/NClob.html|NClob]])
-* класс [[|InMemoryLittleSQLXML]] (реализует интерфейс [[https://docs.oracle.com/javase/8/docs/api/java/sql/SQLXML.html|SQLXML]])
-* класс [[|InMemoryLittleStruct]] (реализует интерфейс [[https://docs.oracle.com/javase/8/docs/api/java/sql/Struct.html|Struct]])
+* класс [[/doc/chav1961.purelib/chav1961/purelib/sql/InMemoryLittleArray.html|InMemoryLittleArray]] (реализует интерфейс [[https://docs.oracle.com/javase/8/docs/api/java/sql/Array.html|Array]])
+* класс [[/doc/chav1961.purelib/chav1961/purelib/sql/InMemoryLittleBlob.html|InMemoryLittleBlob]] (реализует интерфейс [[https://docs.oracle.com/javase/8/docs/api/java/sql/Blob.html|Blob]])
+* класс [[/doc/chav1961.purelib/chav1961/purelib/sql/InMemoryLittleClob.html|InMemoryLittleClob]] (реализует интерфейс [[https://docs.oracle.com/javase/8/docs/api/java/sql/Clob.html|Clob]])
+* класс [[/doc/chav1961.purelib/chav1961/purelib/sql/InMemoryLittleNClob.html|InMemoryLittleNClob]] (реализует интерфейс [[https://docs.oracle.com/javase/8/docs/api/java/sql/NClob.html|NClob]])
+* класс [[/doc/chav1961.purelib/chav1961/purelib/sql/InMemoryLittleSQLXML.html|InMemoryLittleSQLXML]] (реализует интерфейс [[https://docs.oracle.com/javase/8/docs/api/java/sql/SQLXML.html|SQLXML]])
+* класс [[/doc/chav1961.purelib/chav1961/purelib/sql/InMemoryLittleStruct.html|InMemoryLittleStruct]] (реализует интерфейс [[https://docs.oracle.com/javase/8/docs/api/java/sql/Struct.html|Struct]])
 
 Отличительная их особенность - хранение связанных с ними данных непосредственно в памяти приложения. Эти классы также используются при работе источников диагностических данных.

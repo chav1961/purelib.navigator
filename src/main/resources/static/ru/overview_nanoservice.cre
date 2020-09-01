@@ -1,0 +1,177 @@
+= Пакет purelib.nanoservice. Общий обзор
+Классы пакета [[/doc/chav1961.purelib/chav1961/purelib/nanoservice/package-summary.html|purelib.nanoservice]] и его подпакетов обеспечивают функционирование внутри Java-приложения простого HTTP/HTTPS-сервера на базе класса [[https://docs.oracle.com/javase/8/docs/jre/api/net/httpserver/spec/com/sun/net/httpserver/HttpServer.html|com.sun.net.httpserver.HttpServer]], имеющегося в стандартной поставке JRE. Благодаря наличию этого HTTP/HTTPS-сервера, вы можете встраивать в свое приложение полноценную справочную систему по вашему приложению, и обеспечивать к ней доступ из любого браузера. Помимо этой возможности, вы также можете реализовать на его основе небольшой WEB-сервер, если вам для работы не требуются функциональные возможности полноценных WEB-серверов (наподобие TomCat или GlassFish).
+
+Основным классом пакета [[/doc/chav1961.purelib/chav1961/purelib/nanoservice/package-summary.html|purelib.nanoservice]] является класс [[/doc/chav1961.purelib/chav1961/purelib/nanoservice/NanoServiceFactory.html|NanoServiceFactory]], представляющий собой обертку над классом [[https://docs.oracle.com/javase/8/docs/jre/api/net/httpserver/spec/com/sun/net/httpserver/HttpServer.html|com.sun.net.httpserver.HttpServer]]. Он обеспечивает следущую функциональность:
+
+* управление сервером (запуск, пауза, возобновление работы, останов - см интерфейс [[/doc/chav1961.purelib/chav1961/purelib/concurrent/interfaces/ExecutionControl.html|ExecutionControl]])
+* инсталляцию и деинсталляцию классов-обработчиков (аналог механизма [[https://ru.wikipedia.org/wiki/%D0%A1%D0%B5%D1%80%D0%B2%D0%BB%D0%B5%D1%82_(Java)|сервлетов]] в полноценных WEB-серверах).
+* поддержку статического контента (на основе механизма [[./overview_fsys.cre|файловых систем]] библиотеки PL)
+
+Классы-обработчики представляют собой определенным образом аннотированные классы, работа с которыми подобна работе с [[https://ru.wikipedia.org/wiki/REST|RESTFul-сервисами]]. Цели реализовать полный протокол REST я перед собой не ставил - в первую очередь потому, что популярный в REST-сервисах механизм инъекции приводит к тому, что на каждый REST-запрос требуется создавать //новую инстанцию// класса, реализующего REST-сервис, а это идет вразрез с моей концепцией максимальной производительности. Сам класс [[/doc/chav1961.purelib/chav1961/purelib/nanoservice/NanoServiceFactory.html|NanoServiceFactory]] при работе с классом-обработчиком обеспечивает разбор параметров запроса, надлежащий вызов методов класса-обработчика, а также корректную отправку результата работы метода на клиентскую сторону. Для обеспечения максимальной производительности, при инсталляции класса-обработчика для него на лету создается класс-обертка (с помощью класса [[/doc/chav1961.purelib/chav1961/purelib/streams/char2byte/AsmWriter.html|AsmWriter]]), самостоятельно выполняющая все необходимые преобразования параметров и вызовы методов обработки. Это позволило полностью исключить механизм рефлексии при работе с классами-обработчиками, и, соответственно, также повысить производительность.
+
+В классе [[/doc/chav1961.purelib/chav1961/purelib/basic/PureLibSettings.html|PureLibSettings]] уже имеется встроенный экземпляр HTTP/HTTPS-сервера (необходимость его запуска и параметры его запуска можно настроить через этот же класс), а также методы **installHelpContent(...)** и **uninstallHelpContent(...)**, с помощью которых вы можете без больших затрат подсоединять к этому серверу статический контент (на основе механизма [[./overview_fsys.cre|файловых систем]]), реализуя таким образом справочную систему вашего приложения. Класс [[/doc/chav1961.purelib/chav1961/purelib/nanoservice/NanoServiceFactory.html|NanoServiceFactory]] в качестве статического контента поддерживает файлы формата [[http://www.wikicreole.org|Creole]], и организует их автоматическое преобразование в формат HTML при обработке запросов.
+
+==Работа с классами-обработчиками
+Для написания класса-обработчика к HTTP/HTTPS-серверу, необходимо определенным образом проаннотировать любой ваш класс, создать его инстанцию, и передать ее в метод **deploy(...)** класса [[/doc/chav1961.purelib/chav1961/purelib/nanoservice/NanoServiceFactory.html|NanoServiceFactory]]. Для аннотирования класса используются следующие аннотации (сами аннотации определены в пакете [[/doc/chav1961.purelib/chav1961/purelib/nanoservice/interfaces/package-summary.html|purelib.nanoservice.interfaces]]):
+
+|= аннотация |= параметры |= назначение|
+|@RootPath|"корень пути"|Указывает, что все пути в адресной строке браузера для данного класса-обработчика начинаются с заданного пути|
+|@Path|value="путь",type={@QueryType,...}|Указывает, что с к данному методу относятся все пути указанного шаблона, а также, с какими типами запросов связан данный метод|
+|@FromPath|"имя параметра"|Указывает, что значение параметра вызова метода необходимо взять из элемента пути|
+|@FromHeader|"имя заголовка"|Указывает, что значение параметра вызова метода необходимо взять из заголовка запроса с данным именем|
+|@FromQuery|"имя параметра"|Указывает, что значение параметра вызова метода необходимо взять из параметров запроса адресной строки с указанным именем|
+|@FromBody|"MIME-тип контента"|Указывает, что в качестве значения параметра вызова метода необходимо использовать тело запроса|
+|@ToHeader|"имя заголовка"|Указывает, что заголовок ответа с указанным именем необходимо заполнить значением данного параметра вызова метода|
+|@ToBody|"MIME-тип контента"|Указывает, что тело ответа наобходимо сформировать из данного параметра вызова метода|
+
+Все аннотируемые методы класса должны возвращать в качестве результата либо **void**, либо **int**, который в данном случае трактуется как [[https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html|HTTP response code]]. Область видимости методов - **public**. Аннотации **@FromZZZ** и **@ToZZZ** допускаются только для параметров метода, аннотация **@Path** - только для метода, а аннотация **@RootPart** - только для класса. Для аннотаций **@FromZZZ** и **@ToZZZ** cуществуют определенные ограничения на тип аннотируемых параметров:
+|= аннотация |= допустимые типы параметров |
+|@FromPath|String, [[https://docs.oracle.com/javase/8/docs/api/java/util/UUID.html|UUID]], примитивный тип, массив из всего перечисленного |
+|@FromHeader|String, [[https://docs.oracle.com/javase/8/docs/api/java/util/UUID.html|UUID]], примитивный тип, массив из всего перечисленного |
+|@FromQuery|String, [[https://docs.oracle.com/javase/8/docs/api/java/util/UUID.html|UUID]], примитивный тип, массив из всего перечисленного |
+|@FromBody|для формата **text/plain** и **text/html** : String, Reader, InputStream, [[/doc/chav1961.purelib/chav1961/purelib/streams/interfaces/CharacterSource.html|CharacterSource]]\\для формата **text/xml**: то же, что для **text/plain**, плюс [[https://docs.oracle.com/javase/8/docs/api/org/w3c/dom/Document.html|Document]], [[https://docs.oracle.com/javase/8/docs/api/index.html?javax/xml/stream/XMLStreamReader.html|XMLStreamReader]]\\для формата **application/json**: то же, что для **text/plain**, плюс [[/doc/chav1961.purelib/chav1961/purelib/streams/JsonStaxParser.html|JsonStaxParser]], [[/doc/chav1961.purelib/chav1961/purelib/json/JsonSerializer.html|JsonSerializer]]\\для остальных типов: InputStream|
+|@ToHeader|StringBuilder, List<String>|
+|@ToBody|для формата **text/plain** и **text/html** : OutputStream, Writer, StringBuilder, [[/doc/chav1961.purelib/chav1961/purelib/streams/char2char/CreoleWriter.html|CreoleWriter]], [[/doc/chav1961.purelib/chav1961/purelib/streams/interfaces/CharacterTarget.html|CharacterTarget]]\\для формата **text/xml**: то же, что для **text/plain**, плюс [[https://docs.oracle.com/javase/8/docs/api/org/w3c/dom/Document.html|Document]], [[https://docs.oracle.com/javase/8/docs/api/index.html?javax/xml/stream/XMLStreamWriter.html|XMLStreamWriter]]\\для формата **application/json**: то же, что для **text/plain**, плюс [[/doc/chav1961.purelib/chav1961/purelib/streams/JsonStaxPrinter.html|JsonStaxPrinter]], [[/doc/chav1961.purelib/chav1961/purelib/json/JsonSerializer.html|JsonSerializer]]\\для остальных типов: OutputStream|
+
+
+Приведем несколько примеров работы с аннотациями:
+
+===Простой GET-запрос
+//Адресная строка браузера:// **localhost:8080/test/callMyMethod**
+
+//Заголовки запроса:// ...
+
+//Тело запроса://...
+
+//Описание класса://
+{{{@RootPath("/test")
+public class PseudoPlugin {
+	@Path("/callMyMethod")
+	public int ping(@ToBody(mimeType="text/plain") final OutputStream os) throws IOException {
+		os.write("URA!!!");
+		return 200;		// HTTP return code
+	}
+} }}}
+//Параметры вызова метода://
+{{{	PseudoPlugin.ping(os)}}}
+//Заголовки ответа:// ...
+
+//Тело ответа:// **URA!!!**
+
+===GET-запрос с параметрами запроса
+
+//Адресная строка браузера:// **localhost:8080/test/callMyMethod?queryKey=queryValue**
+
+//Заголовки запроса:// ...
+
+//Тело запроса://...
+
+//Описание класса://
+{{{@RootPath("/test")
+public class PseudoPlugin {
+	@Path("/callMyMethod")
+	public int ping(@FromQuery("queryKey") final String key, @ToBody(mimeType="text/plain") final OutputStream os) throws IOException {
+		os.write(String.format("URA %1$s !!!",key);
+		return 200;		// HTTP return code
+	}
+} }}}
+//Параметры вызова метода://
+{{{	PseudoPlugin.ping(key:"queryValue",os)}}}
+//Заголовки ответа:// ...
+
+//Тело ответа:// **URA queryValue !!!**
+
+===GET-запрос с заголовками запроса
+
+//Адресная строка браузера:// **localhost:8080/test/callMyMethod
+
+//Заголовки запроса:// **headerKey=headerValue**
+
+//Тело запроса://...
+
+//Описание класса://
+{{{@RootPath("/test")
+public class PseudoPlugin {
+	@Path("/callMyMethod")
+	public int ping(@FromHeader("headerKey") final String key, @ToBody(mimeType="text/plain") final OutputStream os) throws IOException {
+		os.write(String.format("URA %1$s !!!",key);
+		return 200;		// HTTP return code
+	}
+} }}}
+//Параметры вызова метода://
+{{{	PseudoPlugin.ping(key:"headerValue",os)}}}
+//Заголовки ответа:// ...
+
+//Тело ответа:// **URA headerValue !!!**
+
+===GET-запрос с обработкой путей
+
+//Адресная строка браузера:// **localhost:8080/test/callMyMethod/value12345/test
+
+//Заголовки запроса:// ...
+
+//Тело запроса:// ...
+
+//Описание класса://
+{{{@RootPath("/test")
+public class PseudoPlugin {
+	@Path("/callMyMethod/{paramValue}/test")
+	public int ping(@FromPath("paramValue") final String key, @FromPath("*") final String path, @ToBody(mimeType="text/plain") final OutputStream os) throws IOException {
+		os.write(String.format("URA %1$s %2$s!!!",key,path);
+		return 200;		// HTTP return code
+	}
+} }}}
+//Параметры вызова метода://
+{{{	PseudoPlugin.ping(key:"value12345",path:"/test/callMyMethod/value12345/test",os)}}}
+//Заголовки ответа:// ...
+
+//Тело ответа:// **URA value12345 /test/callMyMethod/value12345/test!!!**
+
+===POST-запрос с обработкой тела
+
+//Адресная строка браузера:// **localhost:8080/test/callMyMethod
+
+//Заголовки запроса:// 
+
+//Тело запроса:// **Hello world!**
+
+//Описание класса://
+{{{@RootPath("/test")
+public class PseudoPlugin {
+	@Path(value="/callMyMethod",type={QueryType.POST})
+	public int ping(@FromBody(mimeType="text/plain") final Reader rdr, @ToBody(mimeType="text/plain") final OutputStream os) throws IOException {
+		BufferedReader brdr = new BufferedReader(rdr);
+		os.write(String.format("URA %1$s !!!",brdr.readLine().toUpperCase());
+		return 200;		// HTTP return code
+	}
+} }}}
+//Параметры вызова метода://
+{{{	PseudoPlugin.ping(rdr:"Hello world!",os)}}}
+//Заголовки ответа:// ...
+
+//Тело ответа:// **URA HELLO WORLD! !!!**
+
+===POST-запрос с обработкой тела и заголовками ответа
+
+//Адресная строка браузера:// **localhost:8080/test/callMyMethod
+
+//Заголовки запроса:// 
+
+//Тело запроса:// **Hello world!**
+
+//Описание класса://
+{{{@RootPath("/test")
+public class PseudoPlugin {
+	@Path(value="/callMyMethod",type={QueryType.POST})
+	public int ping(@FromBody(mimeType="text/plain") final Reader rdr, @ToBody(mimeType="text/plain") final OutputStream os, @ToHeader("responseKey") final StringBuilder sb) throws IOException {
+		sb.append("responseValue");
+		BufferedReader brdr = new BufferedReader(rdr);
+		os.write(String.format("URA %1$s !!!",brdr.readLine().toUpperCase());
+		return 200;		// HTTP return code
+	}
+} }}}
+//Параметры вызова метода://
+{{{	PseudoPlugin.ping(rdr:"Hello world!5",os,sb)}}}
+//Заголовки ответа:// **responseKey=responseValue**
+
+//Тело ответа:// **URA HELLO WORLD! !!!**
