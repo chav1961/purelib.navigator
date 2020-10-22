@@ -158,7 +158,7 @@ public class Application extends JFrame implements LocaleChangeListener {
 		
 		final CreoleEditorTab	currentTab = tabs.get(tabber.getSelectedIndex());
 		
-		if (currentTab.manipulator.openFile(file,state)) {
+		if (currentTab.manipulator.openLRUFile(file,state)) {
 			state.message(Severity.info, localizer.getValue(MESSAGE_FILE_LOADED), currentTab.manipulator.getCurrentPathOfTheFile());
 			currentTab.turnOffDocumentListener();
 			currentTab.manipulator.clearModificationFlag();
