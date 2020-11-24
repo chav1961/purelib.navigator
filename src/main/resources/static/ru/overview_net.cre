@@ -6,6 +6,7 @@
 |**fsys**| [[/doc/chav1961.purelib/chav1961/purelib/net/fsys/FSysHandlerProvider.html|FSysHandlerProvider]] | доступ через URL к файловым системам библиотеки PL |
 |**root**| [[/doc/chav1961.purelib/chav1961/purelib/net/root/RootHandlerProvider.html|RootHandlerProvider]] | доступ через URL к ресурсам как внутри библиотеки PL, так и в других частях приложения |
 |**self**| [[/doc/chav1961.purelib/chav1961/purelib/net/self/SelfHandlerProvider.html|SelfHandlerProvider]] | доступ через URL к ресурсам, непосредственно закодированным в самом URL |
+|**playback**| [[/doc/chav1961.purelib/chav1961/purelib/net/playback/PlaybackHandlerProvider.html|SelfHandlerProvider]] | Воспроизведение потока данных как звукового файла |
 
 Все классы, упомянутые в таблице, являются реализациями интерфейса [[https://docs.oracle.com/javase/9/docs/api/java/net/spi/URLStreamHandlerProvider.html|URLStreamHandlerProvider]] и подключаются в приложение через механизм [[https://docs.oracle.com/javase/tutorial/sound/SPI-intro.html|SPI]]. Пользоваться этими классами напрямую необходимости нет. Все приведенные в таблице схемы работают только на чтение данных.
 
@@ -67,3 +68,32 @@
 } }}}
 
 Эта возможность позволяет упростить формирование содержимого URI для схемы **self**. Этой схемой удобно пользоваться, например, в JUint-тестах (в качестве источника данных для тестирования)
+
+==Схема playback
+
+Схема **playback** позволяет воспроизвести звуковой поток на вашем компьютере. Для схемы **playback** схемно-специфическая часть URI должна выглядеть следующим образом:
+
+"**playback:/**/<устройство>[?**<параметр>= **<значение>]"
+
+В качестве имени устройства допустимо употребление следующих вариантов:
+
+* **audio** - любое устройство, способное воспроизвести звук
+* **speaker** - линейный выход звуковой карты
+* **headset** - выход на телефоны звуковой карты
+
+В качестве параметров допустимо использовать следующие конструкции (значения по умолчанию выделены **жирным**):
+
+* **rate**={96000~|48000~|**44100**~|22050~|16000~|11025~|8000} - скорость воспроизведения
+* **bits**={8~|**16**~|24} - число битов в одном значении выборки
+* **signed**={**signed**~|unsigned} - имеют ли байты выборки знак
+* **endian**={**big**~|little} - как расположены байты в выборке (старшими или младшими байтами вперед)
+* **encoding**={**pcm**~|ulaw~|alaw~|gsm} - тип кодировки выборки (по умолчанию - [[https://ru.wikipedia.org/wiki/%D0%98%D0%BC%D0%BF%D1%83%D0%BB%D1%8C%D1%81%D0%BD%D0%BE-%D0%BA%D0%BE%D0%B4%D0%BE%D0%B2%D0%B0%D1%8F_%D0%BC%D0%BE%D0%B4%D1%83%D0%BB%D1%8F%D1%86%D0%B8%D1%8F|ИКМ]])
+* **volume**=0..100 - уровень громкости (по умолчанию - 80)
+
+При отсутствии параметров схема работает как 
+{{{ playback://speaker?rate=44100&bits=16&&signed=signed&endian=big&encoding=pcm&volume=80
+}}}
+
+
+
+
