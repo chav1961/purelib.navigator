@@ -5,6 +5,7 @@ import java.lang.reflect.Field;
 import java.net.URI;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import chav1961.purelib.basic.exceptions.LocalizationException;
@@ -17,6 +18,7 @@ public class LocalizationKeysTest {
 	public static final String	LOCALIZER_URI = "i18n:xml:root://chav1961.purelibnavigator.admin.Application/chav1961/purelib/admin/i18n/i18n.xml";
 
 	@Test
+	@Ignore
 	public void test() throws LocalizationException, IOException, IllegalAccessException {
 		try(final Localizer	localizer = LocalizerFactory.getLocalizer(URI.create(LOCALIZER_URI))) {
 			for (Field f : LocalizationKeys.class.getFields()) {
