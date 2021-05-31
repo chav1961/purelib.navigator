@@ -7,8 +7,11 @@ import java.awt.Image;
 import java.awt.geom.AffineTransform;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.AttributedCharacterIterator;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import javax.imageio.ImageIO;
 import javax.swing.JComponent;
@@ -137,6 +140,126 @@ public class NP extends JComponent {
 		public String toString() {
 			return "Note [caption=" + caption + ", body=" + body + "]";
 		}
+	}
+
+	private static class Notes implements AttributedCharacterIterator{
+		public Notes(final List<Note> notes) {
+			
+		}
+		
+		@Override
+		public Object clone() {
+			return null;			
+		}
+		
+		@Override
+		public char first() {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+
+		@Override
+		public char last() {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+
+		@Override
+		public char current() {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+
+		@Override
+		public char next() {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+
+		@Override
+		public char previous() {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+
+		@Override
+		public char setIndex(int position) {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+
+		@Override
+		public int getBeginIndex() {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+
+		@Override
+		public int getEndIndex() {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+
+		@Override
+		public int getIndex() {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+
+		@Override
+		public int getRunStart() {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+
+		@Override
+		public int getRunStart(Attribute attribute) {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+
+		@Override
+		public int getRunStart(Set<? extends Attribute> attributes) {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+
+		@Override
+		public int getRunLimit() {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+
+		@Override
+		public int getRunLimit(Attribute attribute) {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+
+		@Override
+		public int getRunLimit(Set<? extends Attribute> attributes) {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+
+		@Override
+		public Map<Attribute, Object> getAttributes() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public Object getAttribute(Attribute attribute) {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public Set<Attribute> getAllAttributeKeys() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+		
 	}
 	
 	private static class NoteRepository {
