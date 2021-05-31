@@ -9,6 +9,7 @@ module chav1961.purelibnavigator {
 	requires jdk.httpserver;
 	requires java.compiler;
 	requires jdk.javadoc;
+	requires java.datatransfer;
 
 	exports chav1961.purelibnavigator.admin; 
 	opens chav1961.purelibnavigator.admin to chav1961.purelib; 
