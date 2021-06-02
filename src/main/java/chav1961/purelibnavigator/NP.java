@@ -2,21 +2,25 @@ package chav1961.purelibnavigator;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Image;
 import java.awt.Stroke;
 import java.awt.font.LineBreakMeasurer;
+import java.awt.font.TextAttribute;
 import java.awt.font.TextLayout;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.GeneralPath;
+import java.awt.im.InputMethodHighlight;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.AttributedCharacterIterator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -24,24 +28,39 @@ import java.util.Set;
 
 import javax.imageio.ImageIO;
 import javax.swing.JComponent;
+import javax.swing.JOptionPane;
+import javax.swing.border.LineBorder;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.AttributeSet.ParagraphAttribute;
 
 import chav1961.purelib.basic.exceptions.PreparationException;
 
 public class NP extends JComponent {
 	private static final long 			serialVersionUID = 1L;
-	private static final String			TEX_NAME = "", ORD1_NAME = "", ORD2_NAME = "", H_BAR_NAME = "";
+	private static final String			TEX_NAME = "background.png", ORD1_NAME = "", ORD2_NAME = "", H_BAR_NAME = "";
 	private static final String			NOTE_REPO_NAME = "";
 	private static final Image			TEX, ORD_1, ORD_2, H_BAR;
 	private static final int			MAX_NOTES = 10;
 	private static final NoteRepository	REPO;
 	
-	private static final float			SCREEN_WIDTH = 100;
-	private static final int			SCREEN_COL = 3;
-	private static final float[][]		MESH_LIST = {{0f,0f,0f,0f}};
-	private static final Color 			MESH_COLOR = Color.BLACK;
-	private static final float			MESH_WIDTH = 0.5f;
+	private static final float			PAGE_WIDTH = 100;
+	private static final float			PAGE_LEFT_LINE = 3;
+	private static final float			PAGE_RIGHT_LINE = 97;
+	private static final float			PAGE_TOP_LINE = 12;
+	private static final float			PAGE_UPPER_LINE = 13;
+	private static final float			PAGE_LOWER_LINE = 96;
+	private static final float			PAGE_LEFT_X_GAP = 1;
+	private static final float			PAGE_RIGHT_X_GAP = 1;
+	private static final float			PAGE_TOP_Y_GAP = 1;
+	private static final float			PAGE_BOTTOM_Y_GAP = 3;
+	private static final float			PAGE_INNER_X_GAP = 1;
+	private static final float			PAGE_INNER_Y_GAP = 1;
+	private static final int			PAGE_COLUMNS = 3;
+	private static final Color 			PAGE_COLOR = new Color(132,78,24);
+	private static final float			MESH_WIDTH = 0.25f;
 	private static final Stroke			MESH_STROKE = new BasicStroke(MESH_WIDTH);
-	private static final GeneralPath	MESH_PATH = new GeneralPath();
+	private static final Font			CAPTION_FONT = new Font("Times New Roman",Font.BOLD,6); 
+	private static final Font			SEASON_FONT = new Font("Times New Roman",Font.PLAIN,2); 
 	
 	
 	static {
@@ -54,17 +73,26 @@ public class NP extends JComponent {
 				REPO = new NoteRepository(is);
 			}
 			
-			for (float[] item : MESH_LIST) {
-				MESH_PATH.moveTo(item[0], item[1]);
-				MESH_PATH.lineTo(item[2], item[3]);
-			}
 		} catch (IOException e) {
 			throw new PreparationException("Image ["+TEX_NAME+"] can't be loaded");
 		} 
 	}
 
 	public enum Quarter {
-		Q1, Q2, Q3, Q4
+		WINTER("Çèìà"), 
+		SPRING("Âåñíà"), 
+		SUMMER("Ëåòî"), 
+		AUTUMN("Îñåíü");
+		
+		private final String	seasonName;
+		
+		private Quarter(final String seasonName) {
+			this.seasonName = seasonName;
+		}
+		
+		public String getSeasonName() {
+			return seasonName;
+		}
 	}
 	
 	public enum NoteType {
@@ -72,10 +100,9 @@ public class NP extends JComponent {
 	}
 	
 	private final List<Note>	notes = new ArrayList<>();
-	private final Font			headerFont = new Font("Courier",Font.PLAIN,1);
-	private int					year = 0;
-	private Quarter				quarter = Quarter.Q1;
-	private Notes				toDraw = null;
+	private final List<AttributedCharacterIterator>	toDraw = new ArrayList<>();
+	private int					year = 1800;
+	private Quarter				quarter = Quarter.SPRING;
 	
 	public NP() {
 		
@@ -133,7 +160,10 @@ public class NP extends JComponent {
 	}
 
 	public void complete() {
-		toDraw = new Notes(notes);
+		for (Note note : notes) {
+			toDraw.add(new NoteItem(note.getCaption(),true));
+			toDraw.add(new NoteItem(note.getBody(),false));
+		}
 		repaint();
 	}
 	
@@ -141,80 +171,160 @@ public class NP extends JComponent {
 	protected void paintComponent(final Graphics g) {
 		final Graphics2D		g2d = (Graphics2D)g;
 		final AffineTransform	oldAt = g2d.getTransform();
+		final AffineTransform	newAt = pickCoordinates(g2d);
 
-		pickCoordinates(g2d);
+		g2d.setTransform(newAt);
 		paintBackground(g2d);
-		paintTopBar(g2d);
+		paintMeshAndCaption(g2d);
+		
 		if (toDraw != null) {
-			paintMesh(g2d);
 			paintColumn(g2d, toDraw);
 		}
 		g2d.setTransform(oldAt);
 	}
 
-	private void pickCoordinates(final Graphics2D g2d) {
-		final AffineTransform	at = new AffineTransform();
-		final float				kx = 1.0f * getWidth() / SCREEN_WIDTH;
-		final float				ky = 1.0f * getHeight() / getWidth();
-		
-		at.scale(kx, kx*ky);
-		g2d.setTransform(at);
+	private float getYSize() {
+		return 1.0f * getHeight() / getWidth();
+	}
+	
+	private AffineTransform pickCoordinates(final Graphics2D g2d) {
+		final AffineTransform	at = new AffineTransform(g2d.getTransform());
+		final float				kx = 1.0f * getWidth() / PAGE_WIDTH;
+		final float				ky = getYSize();
+
+		at.scale(kx, kx);
+		return at;
 	}
 
 	private void paintBackground(final Graphics2D g2d) {
 		final AffineTransform	at = new AffineTransform();
+		final int				w = TEX.getWidth(null), h = TEX.getHeight(null);
+		final float				kx = PAGE_WIDTH / w, ky = PAGE_WIDTH * getYSize() / h;
 		
+		at.scale(kx, ky);
 		g2d.drawImage(TEX, at, null);
 	}
 
-	private void paintMesh(final Graphics2D g2d) {
-		final Color		oldColor = g2d.getColor();
-		final Stroke	oldStroke = g2d.getStroke();
+	private void paintMeshAndCaption(final Graphics2D g2d) {
+		final Color			oldColor = g2d.getColor();
+		final Stroke		oldStroke = g2d.getStroke();
+		final String		caption = REPO.getCaption();
+		final String		season = currentQuarter().getSeasonName()+" "+currentYear()+" ã.";
+		final GeneralPath	path = new GeneralPath();
+		final TextLayout	captionLayout = new TextLayout(caption, CAPTION_FONT, g2d.getFontRenderContext());
+		final TextLayout	seasonLayout = new TextLayout(season, SEASON_FONT, g2d.getFontRenderContext());
+		final float			columnWidth = PAGE_WIDTH / PAGE_COLUMNS;
 		
-		g2d.setColor(MESH_COLOR);
+		path.moveTo(PAGE_LEFT_LINE, PAGE_TOP_LINE);		
+		path.lineTo(PAGE_RIGHT_LINE, PAGE_TOP_LINE);
+		for (int index = 1; index < PAGE_COLUMNS; index++) {
+			path.moveTo(index * columnWidth, PAGE_UPPER_LINE);
+			path.lineTo(index * columnWidth, PAGE_LOWER_LINE * getYSize());
+		}
+		
+		g2d.setColor(PAGE_COLOR);
 		g2d.setStroke(MESH_STROKE);
-		g2d.draw(MESH_PATH);
+		g2d.draw(path);
+		captionLayout.draw(g2d, 8, 10);
+		seasonLayout.draw(g2d, 87, 11.5f);
 		g2d.setStroke(oldStroke);
 		g2d.setColor(oldColor);
 	}
 	
-	private void paintTopBar(final Graphics2D g2d) {
-		final AffineTransform	oldAt = new AffineTransform();
-		final AffineTransform	at = new AffineTransform();
-		final AffineTransform	atText = new AffineTransform(oldAt);
-		final Font				oldFont = g2d.getFont();
-		
-		g2d.drawImage(ORD_1, at, null);
-		g2d.drawImage(ORD_2, at, null);
-		g2d.setTransform(atText);
-		g2d.setFont(headerFont);
-		g2d.drawString(REPO.getCaption(), MAX_NOTES, MAX_NOTES);
-		g2d.setFont(oldFont);
-	}
-
-	private void paintColumn(final Graphics2D g2d, final AttributedCharacterIterator columns) {
-	    final float		width = SCREEN_WIDTH;
+	private void paintColumn(final Graphics2D g2d, final Iterable<AttributedCharacterIterator> iterableText) {
+	    final float		width = PAGE_WIDTH;
 	    final float 	height = width * getHeight() / getWidth();
-	    final float 	colWidth = width/SCREEN_COL;
-	    final LineBreakMeasurer	lbm = new LineBreakMeasurer(columns, g2d.getFontRenderContext());
-	    final int 		start = columns.getBeginIndex();
-	    final int 		end = columns.getEndIndex();
-		
-	    float  			Y = 0, Xstart = 0;
-		
-	    lbm.setPosition(start);
-	    while (lbm.getPosition() < end) {
-	        while (lbm.getPosition() < end && Y < height) {
-			    final TextLayout 	textLayout = lbm.nextLayout(colWidth);
-			    
-			    Y += textLayout.getAscent();
-			    textLayout.draw(g2d, Xstart, Y);
-				Y += textLayout.getDescent() + textLayout.getLeading();
-	        }
-	        Xstart += colWidth;
-	        Y = 0;
+	    final float 	colWidth = width/PAGE_COLUMNS;
+
+	    float	yLine = PAGE_UPPER_LINE + PAGE_TOP_Y_GAP, xStart = PAGE_LEFT_LINE + PAGE_LEFT_X_GAP;
+	    int		colNo = 0;
+
+all:	for (AttributedCharacterIterator columns : iterableText) {
+		    final LineBreakMeasurer	lbm = new LineBreakMeasurer(columns, g2d.getFontRenderContext());
+		    final int 	start = columns.getBeginIndex();
+		    final int 	end = columns.getEndIndex();
+		    final float	currentWidth = (colNo+1)*colWidth - xStart - (colNo == PAGE_COLUMNS - 1 ? PAGE_RIGHT_X_GAP : PAGE_INNER_X_GAP); 
+		    
+		    lbm.setPosition(start);
+		    while (lbm.getPosition() < end) {
+		        while (lbm.getPosition() < end && yLine < height - PAGE_BOTTOM_Y_GAP) {
+				    final TextLayout 	textLayout = lbm.nextLayout(currentWidth);
+				    
+				    yLine += textLayout.getAscent();
+				    textLayout.draw(g2d, xStart, yLine);
+					yLine += textLayout.getDescent() + textLayout.getLeading();
+		        }
+		        if (yLine >= height - PAGE_BOTTOM_Y_GAP) {
+			        if (++colNo >= PAGE_COLUMNS) {
+			        	break all;
+			        }
+			        else {
+				        xStart = colNo * colWidth + PAGE_INNER_X_GAP;
+				        yLine = PAGE_UPPER_LINE + PAGE_TOP_Y_GAP;
+			        }
+		        }
+		        else {
+		        	yLine += PAGE_INNER_Y_GAP;
+		        }
+		    }
 	    }
 	} 
+
+	public static void main(final String[] args) {
+		final NP	np = new NP();
+		
+		np.setPreferredSize(new Dimension(1024,768));
+		np.setBorder(new LineBorder(Color.RED));
+		np.startNotifications(1800, Quarter.AUTUMN);
+		np.notify("Caption1","Body1 dklfjklsdjfkl  sdfjkljsdfkjsdfkl   sdfkljsdfj   sdfklsdklfjksjdfkjsdfkl  sdflsdkljfsdjfkljsdfklj");
+		np.notify("Caption2","Body2");
+		np.notify("Caption1","Body1 dklfjklsdjfkl  sdfjkljsdfkjsdfkl   sdfkljsdfj   sdfklsdklfjksjdfkjsdfkl  sdflsdkljfsdjfkljsdfklj");
+		np.notify("Caption2","Body2");
+		np.notify("Caption1","Body1 dklfjklsdjfkl  sdfjkljsdfkjsdfkl   sdfkljsdfj   sdfklsdklfjksjdfkjsdfkl  sdflsdkljfsdjfkljsdfklj");
+		np.notify("Caption2","Body2");
+		np.notify("Caption1","Body1 dklfjklsdjfkl  sdfjkljsdfkjsdfkl   sdfkljsdfj   sdfklsdklfjksjdfkjsdfkl  sdflsdkljfsdjfkljsdfklj");
+		np.notify("Caption2","Body2");
+		np.notify("Caption1","Body1 dklfjklsdjfkl  sdfjkljsdfkjsdfkl   sdfkljsdfj   sdfklsdklfjksjdfkjsdfkl  sdflsdkljfsdjfkljsdfklj");
+		np.notify("Caption2","Body2");
+		np.notify("Caption1","Body1 dklfjklsdjfkl  sdfjkljsdfkjsdfkl   sdfkljsdfj   sdfklsdklfjksjdfkjsdfkl  sdflsdkljfsdjfkljsdfklj");
+		np.notify("Caption2","Body2");
+		np.notify("Caption1","Body1 dklfjklsdjfkl  sdfjkljsdfkjsdfkl   sdfkljsdfj   sdfklsdklfjksjdfkjsdfkl  sdflsdkljfsdjfkljsdfklj");
+		np.notify("Caption2","Body2");
+		np.notify("Caption1","Body1 dklfjklsdjfkl  sdfjkljsdfkjsdfkl   sdfkljsdfj   sdfklsdklfjksjdfkjsdfkl  sdflsdkljfsdjfkljsdfklj");
+		np.notify("Caption2","Body2");
+		np.notify("Caption1","Body1 dklfjklsdjfkl  sdfjkljsdfkjsdfkl   sdfkljsdfj   sdfklsdklfjksjdfkjsdfkl  sdflsdkljfsdjfkljsdfklj");
+		np.notify("Caption2","Body2");
+		np.notify("Caption1","Body1 dklfjklsdjfkl  sdfjkljsdfkjsdfkl   sdfkljsdfj   sdfklsdklfjksjdfkjsdfkl  sdflsdkljfsdjfkljsdfklj");
+		np.notify("Caption2","Body2");
+		np.notify("Caption1","Body1 dklfjklsdjfkl  sdfjkljsdfkjsdfkl   sdfkljsdfj   sdfklsdklfjksjdfkjsdfkl  sdflsdkljfsdjfkljsdfklj");
+		np.notify("Caption2","Body2");
+		np.notify("Caption1","Body1 dklfjklsdjfkl  sdfjkljsdfkjsdfkl   sdfkljsdfj   sdfklsdklfjksjdfkjsdfkl  sdflsdkljfsdjfkljsdfklj");
+		np.notify("Caption2","Body2");
+		np.notify("Caption1","Body1 dklfjklsdjfkl  sdfjkljsdfkjsdfkl   sdfkljsdfj   sdfklsdklfjksjdfkjsdfkl  sdflsdkljfsdjfkljsdfklj");
+		np.notify("Caption2","Body2");
+		np.notify("Caption1","Body1 dklfjklsdjfkl  sdfjkljsdfkjsdfkl   sdfkljsdfj   sdfklsdklfjksjdfkjsdfkl  sdflsdkljfsdjfkljsdfklj");
+		np.notify("Caption2","Body2");
+		np.notify("Caption1","Body1 dklfjklsdjfkl  sdfjkljsdfkjsdfkl   sdfkljsdfj   sdfklsdklfjksjdfkjsdfkl  sdflsdkljfsdjfkljsdfklj");
+		np.notify("Caption2","Body2");
+		np.notify("Caption1","Body1 dklfjklsdjfkl  sdfjkljsdfkjsdfkl   sdfkljsdfj   sdfklsdklfjksjdfkjsdfkl  sdflsdkljfsdjfkljsdfklj");
+		np.notify("Caption2","Body2");
+		np.notify("Caption1","Body1 dklfjklsdjfkl  sdfjkljsdfkjsdfkl   sdfkljsdfj   sdfklsdklfjksjdfkjsdfkl  sdflsdkljfsdjfkljsdfklj");
+		np.notify("Caption2","Body2");
+		np.notify("Caption1","Body1 dklfjklsdjfkl  sdfjkljsdfkjsdfkl   sdfkljsdfj   sdfklsdklfjksjdfkjsdfkl  sdflsdkljfsdjfkljsdfklj");
+		np.notify("Caption2","Body2");
+		np.notify("Caption1","Body1 dklfjklsdjfkl  sdfjkljsdfkjsdfkl   sdfkljsdfj   sdfklsdklfjksjdfkjsdfkl  sdflsdkljfsdjfkljsdfklj");
+		np.notify("Caption2","Body2");
+		np.notify("Caption1","Body1 dklfjklsdjfkl  sdfjkljsdfkjsdfkl   sdfkljsdfj   sdfklsdklfjksjdfkjsdfkl  sdflsdkljfsdjfkljsdfklj");
+		np.notify("Caption2","Body2");
+		np.notify("Caption1","Body1 dklfjklsdjfkl  sdfjkljsdfkjsdfkl   sdfkljsdfj   sdfklsdklfjksjdfkjsdfkl  sdflsdkljfsdjfkljsdfklj");
+		np.notify("Caption2","Body2");
+		np.notify("Caption1","Body1 dklfjklsdjfkl  sdfjkljsdfkjsdfkl   sdfkljsdfj   sdfklsdklfjksjdfkjsdfkl  sdflsdkljfsdjfkljsdfklj");
+		np.notify("Caption2","Body2");
+		np.complete();
+		
+		JOptionPane.showMessageDialog(null, np);
+	}
+	
 	
 	private static class Note {
 		private final String	caption;
@@ -254,11 +364,17 @@ public class NP extends JComponent {
 		}
 	}
 
-	private static class Notes implements AttributedCharacterIterator {
-		private static final Attribute[]					CAPTION_KEYS = {}; 
-		private static final Map.Entry<Attribute, Object>[]	CAPTION_ATTR = null; 
-		private static final Attribute[]					BODY_KEYS = {}; 
-		private static final Map.Entry<Attribute, Object>[]	BODY_ATTR = null;
+	private static class NoteItem implements AttributedCharacterIterator {
+		private static final Attribute[]					CAPTION_KEYS = {TextAttribute.SIZE, 
+																			TextAttribute.FAMILY, 
+																			TextAttribute.WEIGHT,
+																			TextAttribute.FOREGROUND}; 
+		private static final Map<Attribute, Object>			CAPTION_ATTR = new HashMap<>(); 
+		private static final Attribute[]					BODY_KEYS = {TextAttribute.SIZE, 
+																			TextAttribute.FAMILY,
+																			TextAttribute.WEIGHT,
+																			TextAttribute.FOREGROUND};
+		private static final Map<Attribute, Object>			BODY_ATTR = new HashMap<>();
 		private static final Set<Attribute>					ALL_ATTR; 
 		
 		static {
@@ -267,6 +383,16 @@ public class NP extends JComponent {
 			temp.addAll(Arrays.asList(CAPTION_KEYS));
 			temp.addAll(Arrays.asList(BODY_KEYS));
 			ALL_ATTR = Collections.unmodifiableSet(temp);
+
+			CAPTION_ATTR.put(TextAttribute.SIZE, 2f);
+			CAPTION_ATTR.put(TextAttribute.FAMILY, "Times New Roman");
+			CAPTION_ATTR.put(TextAttribute.WEIGHT, TextAttribute.WEIGHT_ULTRABOLD);
+			CAPTION_ATTR.put(TextAttribute.FOREGROUND, PAGE_COLOR);
+
+			BODY_ATTR.put(TextAttribute.SIZE, 1.6f);
+			BODY_ATTR.put(TextAttribute.FAMILY, "Times New Roman");
+			BODY_ATTR.put(TextAttribute.WEIGHT, TextAttribute.WEIGHT_SEMIBOLD);
+			BODY_ATTR.put(TextAttribute.FOREGROUND, PAGE_COLOR);
 		}
 		
 		private final char[]				content;
@@ -274,27 +400,25 @@ public class NP extends JComponent {
 		private final int[][]				attrRanges;
 		private int							currentPos = 0;
 		
-		public Notes(final List<Note> notes) {
-			if (notes == null || notes.isEmpty()) {
+		public NoteItem(final String note, final boolean isCaption) {
+			if (note == null) {
 				throw new IllegalArgumentException("Noted list can't be null or empty"); 
 			}
 			else {
-				final StringBuilder		sb = new StringBuilder();
-				final List<Map.Entry<Attribute, Object>[]>	attrs = new ArrayList<>();
+				final List<Map<Attribute, Object>>	attrs = new ArrayList<>();
 				final List<int[]>		ranges = new ArrayList<>();
 				
-				for (Note item : notes) {
+				if (isCaption) {
 					attrs.add(CAPTION_ATTR);
-					ranges.add(new int[] {sb.length(),sb.length() + item.getCaption().length()});
-					sb.append(item.getCaption());
+					ranges.add(new int[] {0,note.length() - 1});
+				}
+				else {
 					attrs.add(BODY_ATTR);
-					ranges.add(new int[] {sb.length(),sb.length() + item.getBody().length()});
-					sb.append(item.getBody());
+					ranges.add(new int[] {0,note.length() - 1});
 				}
 				this.attributes = attrs.toArray(new Map[attrs.size()]);
 				this.attrRanges = ranges.toArray(new int[ranges.size()][]);
-				this.content = new char[sb.length()];
-				sb.getChars(0, this.content.length, this.content, 0);
+				this.content = note.toCharArray();
 			}
 		}
 		
@@ -385,12 +509,12 @@ public class NP extends JComponent {
 
 		@Override
 		public int getRunStart() {
-			return attrRanges[getRange(current())][0];
+			return attrRanges[getRange(getIndex())][0];
 		}
 
 		@Override
 		public int getRunStart(final Attribute attribute) {
-			for (int index = getRange(current()); index >= 0; index--) {
+			for (int index = getRange(getIndex()); index >= 0; index--) {
 				if (!attributes[index].containsKey(attribute)) {
 					return index + 1;
 				}
@@ -400,7 +524,7 @@ public class NP extends JComponent {
 
 		@Override
 		public int getRunStart(final Set<? extends Attribute> attr) {
-			for (int index = getRange(current()); index >= 0; index--) {
+			for (int index = getRange(getIndex()); index >= 0; index--) {
 				if (!attributes[index].keySet().contains(attr)) {
 					return attrRanges[index + 1][0];
 				}
@@ -410,14 +534,14 @@ public class NP extends JComponent {
 
 		@Override
 		public int getRunLimit() {
-			return attrRanges[getRange(current())][1];
+			return attrRanges[getRange(getIndex())][1]+1;
 		}
 
 		@Override
 		public int getRunLimit(final Attribute attribute) {
-			for (int index = getRange(current()); index < attributes.length; index++) {
+			for (int index = getRange(getIndex()); index < attributes.length; index++) {
 				if (!attributes[index].containsKey(attribute)) {
-					return attrRanges[index - 1][1];
+					return attrRanges[index - 1][1]+1;
 				}
 			}
 			return attrRanges[attributes.length-1][1];
@@ -425,7 +549,7 @@ public class NP extends JComponent {
 
 		@Override
 		public int getRunLimit(final Set<? extends Attribute> attr) {
-			for (int index = getRange(current()); index < attributes.length; index++) {
+			for (int index = getRange(getIndex()); index < attributes.length; index++) {
 				if (!attributes[index].keySet().contains(attr)) {
 					return attrRanges[index - 1][1];
 				}
@@ -435,7 +559,7 @@ public class NP extends JComponent {
 
 		@Override
 		public Map<Attribute, Object> getAttributes() {
-			final int	current = current();
+			final int	current = getIndex();
 			
 			for (int index = 0; index < attrRanges.length; index++) {
 				if (current >= attrRanges[index][0] && current <= attrRanges[index][1]) {
@@ -447,7 +571,7 @@ public class NP extends JComponent {
 
 		@Override
 		public Object getAttribute(final Attribute attribute) {
-			return attributes[getRange(current())].get(attribute);
+			return attributes[getRange(getIndex())].get(attribute);
 		}
 
 		@Override
@@ -496,15 +620,15 @@ public class NP extends JComponent {
 		}
 
 		public String getCaption() {
-			return null;
+			return "ÈÌÏÅÐÑÊÀß ÏÐÀÂÄÀ";
 		}
 
 		public int getMinYear() {
-			return 0;
+			return 1800;
 		}
 
 		public int getMaxYear() {
-			return 0;
+			return 1917;
 		}
 		
 		@Override
