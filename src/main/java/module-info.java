@@ -12,6 +12,7 @@ module chav1961.purelibnavigator {
 	requires java.datatransfer;
 
 	exports chav1961.purelibnavigator.admin; 
+	exports chav1961.purelibnavigator.test; 
 	opens chav1961.purelibnavigator.admin to chav1961.purelib; 
 	exports chav1961.purelibnavigator.javadoc; 
 }
