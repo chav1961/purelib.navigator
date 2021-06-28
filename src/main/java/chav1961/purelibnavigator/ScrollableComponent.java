@@ -34,7 +34,7 @@ public class ScrollableComponent extends JComponent {
 	private final JComponent	mini = new ScrollableMini();
 	private final float			logicalWidth, logicalHeight, minimumSize;
 	private boolean				firstResize = false;
-	private float				currentSize = 1;
+	private float				currentSize = -1;
 	private WhatFocused			focus = null;
 	private boolean				processDrag = false;
 	private JViewport			view;
@@ -105,27 +105,6 @@ public class ScrollableComponent extends JComponent {
 		customizedPaint(this, (Graphics2D)g, view != null ? view.getVisibleRect() : null, false);
 	}
 	
-	private void prepareShow() {
-		if ((view = findViewport()) != null) {
-			final Rectangle	viewRect = view.getVisibleRect();
-			final float		viewRatio = 1.0f * viewRect.height / viewRect.width;
-			final float		wantedRatio = logicalHeight / logicalWidth;
-			final Rectangle	wantedRect;
-			
-			if (wantedRatio < viewRatio) {
-				wantedRect = new Rectangle(0, 0, (int)(viewRatio * viewRect.width / wantedRatio), viewRect.height);
-			}
-			else {
-				wantedRect = new Rectangle(0, 0, viewRect.width, (int)(wantedRatio * viewRect.height / viewRatio));
-			}
-			final Dimension	newSize = new Dimension(wantedRect.width, wantedRect.height); 
-			
-			setPreferredSize(newSize);
-			revalidate();
-			repaint();
-		}
-	}
-	
 	private void startDrag(final MouseEvent e) {
 		if (view != null) {
 			processDrag = true;
@@ -152,19 +131,26 @@ public class ScrollableComponent extends JComponent {
 	
 	private void resizing(final MouseWheelEvent e) {
 		if (view != null) {
+			if (currentSize < 0) {
+				currentSize = Math.min(getWidth()/logicalWidth,getHeight()/logicalHeight);
+			}
+			
 			final Point		windowAnchor = e.getPoint();
-			final Point		viewAnchor = SwingUtilities.convertPoint(this, e.getPoint(), view);
+			final Point		viewAnchor = SwingUtilities.convertPoint(this, windowAnchor, view);
+			final Rectangle	windowRect = this.getBounds();
 			final Rectangle	viewRect = view.getVisibleRect();
-			final Rectangle	ownRect = getBounds();
-			final Rectangle	visibleRect = SwingUtilities.convertRectangle(view, viewRect, this);
-			final float		xRatio = 1.0f * e.getPoint().x / ownRect.width, yRatio = 1.0f * e.getPoint().y / ownRect.height;   
-			final float		xViewRatio = 1.0f * viewAnchor.x / viewRect.width, yViewRatio = 1.0f * viewAnchor.y / viewRect.height;
+			final Point		viewUL = view.getViewPosition();
+			final float		oldSize = currentSize;
+			final int		rotation = e.getWheelRotation();
+
+			final float		xPerc = (float) (windowAnchor.getX() / windowRect.getWidth()); 
+			final float		yPerc = (float) (windowAnchor.getY() / windowRect.getHeight()); 
+
+			System.err.println("Old anchor="+windowAnchor+", point="+viewUL);
 			
-			System.err.println("W ratio="+xRatio+"/"+yRatio+", V ratio="+xViewRatio+"/"+yViewRatio);
-			System.err.println("Window anchor="+windowAnchor);
-			
-			int				rotation = e.getWheelRotation();
-			float			oldSize = currentSize;
+			windowAnchor.x /= currentSize;
+			windowAnchor.y /= currentSize;
+			System.err.println("Old x%="+xPerc+", y%="+yPerc+",size="+getSize()+", oldSize="+oldSize+", windowAnchor="+windowAnchor+", rect="+windowRect+", viewAnchor="+viewAnchor);
 			
 			if (rotation > 0) {
 				for (int index = rotation; index > 0; index--) {
@@ -176,64 +162,19 @@ public class ScrollableComponent extends JComponent {
 					currentSize = Math.min(currentSize + WHEEL_STEP, 1);
 				}
 			}
-			final Dimension	newSize = new Dimension((int)(1.0f * viewRect.width / currentSize), (int)(1.0f * viewRect.height / currentSize)); 
+			final double	xSize = logicalWidth * currentSize, ySize = logicalHeight * currentSize; 
+			final Dimension	newSize = new Dimension((int)xSize, (int)ySize); 
+
+			windowAnchor.x *= currentSize;
+			windowAnchor.y *= currentSize;
 			
-			setSize(newSize);
+			viewRect.x = (int) (windowAnchor.getX() - (viewAnchor.getX() - viewRect.getX()));
+			viewRect.y = (int) (windowAnchor.getY() - (viewAnchor.getY() - viewRect.getY()));
+			
 			setPreferredSize(newSize);
-			System.err.println("New windowAnchor="+windowAnchor);
-			windowAnchor.x = (int)(1.0f * windowAnchor.x * (1 - oldSize / currentSize));  
-			windowAnchor.y = (int)(1.0f * windowAnchor.y * (1 - oldSize / currentSize));
-			System.err.println("New windowAnchor="+windowAnchor);
-			
-			final Point		newViewAnchor = SwingUtilities.convertPoint(this, windowAnchor, view);
-			
-			viewRect.x = newViewAnchor.x - viewAnchor.x; 
-			viewRect.y = newViewAnchor.y - viewAnchor.y; 
-			
 			scrollRectToVisible(viewRect);
-			System.err.println("SCroll: "+viewRect+" windowAnchor="+windowAnchor+", size="+newSize+", anch="+newViewAnchor);
+			System.err.println("Scroll: "+viewRect+" windowAnchor="+windowAnchor+", size="+newSize);
 			revalidate();
-//			
-//			final Rectangle	viewRect = view.getVisibleRect();
-//			final Point		viewPoint = view.getViewPosition();
-//			final float		viewRatio = 1.0f * viewRect.height / viewRect.width;
-//			final float		wantedRatio = logicalHeight / logicalWidth;
-//			final Rectangle	wantedRect;
-//			
-//			System.err.println("Size: "+getSize()+", point="+e.getPoint()+", view="+view.getVisibleRect()+", point="+viewPoint);
-//			
-//			int				rotation = e.getWheelRotation();
-//			float			oldSize = currentSize;
-//			
-//			if (rotation > 0) {
-//				for (int index = rotation; index > 0; index--) {
-//					currentSize = Math.max(currentSize - WHEEL_STEP, minimumSize);
-//				}
-//			}
-//			else {
-//				for (int index = -rotation; index > 0; index--) {
-//					currentSize = Math.min(currentSize + WHEEL_STEP, 1);
-//				}
-//			}
-//
-//			if (wantedRatio < viewRatio) {
-//				wantedRect = new Rectangle(0, 0, (int)(viewRatio * viewRect.width / wantedRatio), viewRect.height);
-//			}
-//			else {
-//				wantedRect = new Rectangle(0, 0, viewRect.width, (int)(wantedRatio * viewRect.height / viewRatio));
-//			}
-//			wantedRect.setSize((int)(1.0f * wantedRect.width / currentSize), (int)(1.0f * wantedRect.height / currentSize));
-//			
-//			final Dimension	dim = new Dimension(wantedRect.width, wantedRect.height); 
-//			
-//			setPreferredSize(dim);
-//			viewPoint.x += (int) (viewRect.width * oldSize / ( 2 * currentSize) );
-//			viewPoint.y -= (int) (viewRect.height * oldSize / ( 2 * currentSize) );
-//			
-//			System.err.println("new size="+dim+", new point = "+viewPoint);
-//			scrollRectToVisible(wantedRect);
-//			
-//			revalidate();
 		}
 	}
 
