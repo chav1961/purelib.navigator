@@ -25,7 +25,7 @@ import javax.swing.SwingUtilities;
 
 public class ScrollableComponent extends JComponent {
 	private static final long 	serialVersionUID = 1L;
-	private static final float	WHEEL_STEP = 0.1f;
+	private static final float	WHEEL_STEP = 0.02f;
 	
 	private enum WhatFocused {
 		MAIN, MINI
@@ -34,7 +34,7 @@ public class ScrollableComponent extends JComponent {
 	private final JComponent	mini = new ScrollableMini();
 	private final float			logicalWidth, logicalHeight, minimumSize;
 	private boolean				firstResize = false;
-	private float				currentSize = -1;
+	private float				currentSize = 0.5f;
 	private WhatFocused			focus = null;
 	private boolean				processDrag = false;
 	private JViewport			view;
@@ -79,6 +79,7 @@ public class ScrollableComponent extends JComponent {
 				@Override public void mousePressed(MouseEvent e) {}
 				@Override public void mouseClicked(MouseEvent e) {miniClicked(e);}
 			});
+			setPreferredSize(new Dimension((int)(logicalWidth * currentSize), (int)(logicalHeight * currentSize)));
 		}
 	}
 
@@ -88,7 +89,6 @@ public class ScrollableComponent extends JComponent {
 
 	protected void customizedPaint(final JComponent component, final Graphics2D g2d, final Rectangle visibleRect, final boolean isMini) {
 		final Rectangle	bound = component.getBounds();
-		System.err.println("Paint: "+bound);
 		final Paint		p = new GradientPaint(new Point(bound.getLocation()), Color.GREEN, new Point(bound.getSize().width, bound.getSize().height), Color.BLUE);
 
 		g2d.setPaint(p);
@@ -143,14 +143,13 @@ public class ScrollableComponent extends JComponent {
 			final float		oldSize = currentSize;
 			final int		rotation = e.getWheelRotation();
 
-			final float		xPerc = (float) (windowAnchor.getX() / windowRect.getWidth()); 
-			final float		yPerc = (float) (windowAnchor.getY() / windowRect.getHeight()); 
+			final float		xPerc = (float) windowAnchor.getX() / (logicalWidth * currentSize); 
+			final float		yPerc = (float) windowAnchor.getY() / (logicalHeight * currentSize); 
 
-			System.err.println("Old anchor="+windowAnchor+", point="+viewUL);
+			System.err.println("Old window anchor="+windowAnchor+", old view anchor="+viewAnchor+", old view UL="+viewUL);
 			
-			windowAnchor.x /= currentSize;
-			windowAnchor.y /= currentSize;
-			System.err.println("Old x%="+xPerc+", y%="+yPerc+",size="+getSize()+", oldSize="+oldSize+", windowAnchor="+windowAnchor+", rect="+windowRect+", viewAnchor="+viewAnchor);
+			System.err.println("Old x%="+xPerc+", y%="+yPerc);
+			System.err.println("Size="+getSize()+", oldSize="+oldSize+", windowAnchor="+windowAnchor+", rect="+windowRect+", viewAnchor="+viewAnchor);
 			
 			if (rotation > 0) {
 				for (int index = rotation; index > 0; index--) {
@@ -162,11 +161,18 @@ public class ScrollableComponent extends JComponent {
 					currentSize = Math.min(currentSize + WHEEL_STEP, 1);
 				}
 			}
+			if (logicalWidth * currentSize  < viewRect.getWidth()) {
+				currentSize = (float) (viewRect.getWidth() / logicalWidth);
+			}
+			if (logicalHeight * currentSize  < viewRect.getHeight()) {
+				currentSize = (float) (viewRect.getHeight() / logicalHeight);
+			}
+			
 			final double	xSize = logicalWidth * currentSize, ySize = logicalHeight * currentSize; 
-			final Dimension	newSize = new Dimension((int)xSize, (int)ySize); 
+			final Dimension	newSize = new Dimension((int)xSize, (int)ySize);
 
-			windowAnchor.x *= currentSize;
-			windowAnchor.y *= currentSize;
+			windowAnchor.x = (int) (currentSize * xPerc);
+			windowAnchor.y = (int) (currentSize * yPerc);
 			
 			viewRect.x = (int) (windowAnchor.getX() - (viewAnchor.getX() - viewRect.getX()));
 			viewRect.y = (int) (windowAnchor.getY() - (viewAnchor.getY() - viewRect.getY()));
