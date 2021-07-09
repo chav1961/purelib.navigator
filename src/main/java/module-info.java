@@ -14,4 +14,6 @@ module chav1961.purelibnavigator {
 	exports chav1961.purelibnavigator.admin; 
 	opens chav1961.purelibnavigator.admin to chav1961.purelib; 
 	exports chav1961.purelibnavigator.javadoc; 
+	exports laf; 
+	opens laf; 
 }
