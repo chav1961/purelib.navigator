@@ -3,12 +3,13 @@
 	<lang name="en">
 <!-- Localization for screen labels  -->
 		<key name="label.luceneNavigator.enterSearch">Enter search</key>
+		<key name="chav1961.purelibnavigator.navigator.Application.tt">tooltip</key>		
 
 <!-- Localization for application menu  -->
-		<key name="menu.file">File</key>
-		<key name="menu.ttFile">File menu</key>
-		<key name="menu.exit">Quit</key>
-		<key name="menu.ttExit">Quit application</key>
+		<key name="navigator.menu.refresh">File</key>
+		<key name="navigator.menu.refresh.tt">File menu</key>
+		<key name="navigator.menu.exit">Quit</key>
+		<key name="navigator.menu.exit.tt">Quit application</key>
 
 		<key name="menu.search">Search</key>
 		<key name="menu.ttSearch">Search content</key> 
@@ -69,12 +70,13 @@
 	<lang name="ru">
 <!-- Локализация меток на экране -->
 		<key name="label.luceneNavigator.enterSearch">Введите строку поиска</key>
+		<key name="chav1961.purelibnavigator.navigator.Application.tt">Подсказка</key>		
 
 <!-- Локализация меню приложения -->
-		<key name="menu.file">Файл</key>
-		<key name="menu.ttFile">Меню файл</key>
-		<key name="menu.exit">Выход</key>
-		<key name="menu.ttExit">Завершение работы приложения</key>
+		<key name="navigator.menu.refresh">Обновить</key>
+		<key name="navigator.menu.refresh.tt">Обновить</key>
+		<key name="navigator.menu.exit">Выход</key>
+		<key name="navigator.menu.exit.tt">Выход</key>
 
 		<key name="menu.search">Поиск</key>
 		<key name="menu.ttSearch">Поиск контента</key> 

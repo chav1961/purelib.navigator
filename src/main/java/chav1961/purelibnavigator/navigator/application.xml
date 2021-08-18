@@ -2,25 +2,10 @@
 <app:root xmlns:app="http://ui.purelib.chav1961/">
 	<app:i18n location="i18n:xml:root://chav1961.purelibnavigator.navigator.Application/chav1961/purelib/navigator/i18n/i18n.xml"/>
 	<app:menu id="mainmenu">
-		<app:submenu name="menu.file" caption="menu.file" tooltip="menu.ttFile">
-			<app:item name="menu.file.exit" caption="menu.exit" tooltip="menu.ttExit" action="exit"/>
-		</app:submenu>
-		<app:submenu name="menu.search" caption="menu.search" tooltip="menu.ttSearch">
-			<app:item name="menu.search.luceneNavigator" caption="menu.luceneNavigator" tooltip="menu.ttLuceneNavigator" action="luceneNavigator"/>
-		</app:submenu>
-		<app:submenu name="menu.tools" caption="menu.tools" tooltip="menu.ttTools">
-			<app:builtinSubmenu name="builtin.languages" caption="menu.languages" tooltip="menu.ttLanguages"/>
-			<app:item name="menu.tools.luceneIndex" caption="menu.luceneIndex" tooltip="menu.ttLuceneIndex" action="luceneIndex"/>
-		</app:submenu>
-		<app:submenu name="menu.windows" caption="menu.windows" tooltip="menu.ttWindows">
-			<app:item name="menu.windows.creoleEditor" caption="menu.creoleEditor" tooltip="menu.ttCreoleEditor" action="creoleEditor"/>
-		</app:submenu>
-		<app:submenu name="menu.help" caption="menu.help" tooltip="menu.ttHelp">
-			<app:item name="menu.help.updatesoft" caption="menu.updateSoft" tooltip="menu.ttUpdateSoft" action="softUpdate"/>
-			<app:item name="menu.help.pluginmarket" caption="menu.pluginMarket" tooltip="menu.ttPluginMarket" action="pluginMarket"/>
-			<app:separator/>
-			<app:item name="menu.help.about" caption="menu.about" tooltip="menu.ttAbout" action="helpAbout"/>
-		</app:submenu>
+		<app:item name="navigator.menu.refresh" caption="navigator.menu.refresh" tooltip="navigator.menu.refresh.tt" action="refresh"/>
+		<app:builtinSubmenu name="builtin.languages" caption="menu.languages" tooltip="menu.ttLanguages"/>
+		<app:separator/>
+		<app:item name="navigator.menu.exit" caption="navigator.menu.exit" tooltip="navigator.menu.exit.tt" action="exit"/>
 	</app:menu>
 	<app:menu id="toolbar">
 		<app:item name="menu.project.new" caption="newProject" tooltip="ttNewProject" action="newProject" icon="file:./src/test/resources/chav1961/purelib/ui/swing/wizard.png"/>

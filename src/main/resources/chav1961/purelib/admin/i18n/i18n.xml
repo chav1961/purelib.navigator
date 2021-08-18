@@ -32,6 +32,10 @@
 		<key name="menu.help.about">About</key>
 		<key name="menu.help.about.tt">About application</key>
 
+
+		<key name="editor.toolbar.clear">clear</key>
+		<key name="editor.toolbar.clear.tt">clear</key>
+
 <!-- Application messages localization -->
 		<key name="Application.message.fileLoaded">File %1$s was loaded successfully</key> 
 		<key name="Application.message.fileSaved">File %1$s was saved successfully</key>
@@ -71,6 +75,10 @@
 		<key name="menu.help.startBrowser.tt">Запустить браузер для просмотра статического контента</key>
 		<key name="menu.help.about">О программе</key>
 		<key name="menu.help.about.tt">Информация о программе</key>
+
+		<key name="editor.toolbar.clear">clear</key>
+		<key name="editor.toolbar.clear.tt">clear</key>
+
 
 <!-- Локализация сообщений приложения -->
 		<key name="Application.message.fileLoaded">Файл %1$s успешно загружен</key> 

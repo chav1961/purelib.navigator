@@ -30,4 +30,7 @@
 		<app:key code="S" ctrl="true" action="saveFile"/>
 		<app:key code="Q" ctrl="true" action="exit"/>
 	</app:keyset>
+	<app:menu id="editorToolbar">
+		<app:item name="editor.toolbar.clear" caption="editor.toolbar.clear" tooltip="editor.toolbar.clear.tt" icon="root://chav1961.purelibnavigator.admin.NewApplication/images/favicon.png" action="clear"/>
+	</app:menu>
 </app:root>

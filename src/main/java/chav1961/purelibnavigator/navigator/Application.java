@@ -1,21 +1,39 @@
 package chav1961.purelibnavigator.navigator;
 
+import java.awt.Desktop;
+import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Hashtable;
 import java.util.Locale;
+import java.util.concurrent.CountDownLatch;
+
+import javax.swing.JOptionPane;
+import javax.swing.JPopupMenu;
 
 import chav1961.purelib.basic.ArgParser;
 import chav1961.purelib.basic.NullLoggerFacade;
+import chav1961.purelib.basic.PureLibSettings;
 import chav1961.purelib.basic.SystemErrLoggerFacade;
 import chav1961.purelib.basic.exceptions.CommandLineParametersException;
 import chav1961.purelib.basic.exceptions.ConsoleCommandException;
 import chav1961.purelib.basic.exceptions.ContentException;
 import chav1961.purelib.basic.exceptions.EnvironmentException;
+import chav1961.purelib.basic.exceptions.LocalizationException;
 import chav1961.purelib.basic.interfaces.LoggerFacade;
+import chav1961.purelib.basic.interfaces.LoggerFacade.Severity;
+import chav1961.purelib.i18n.LocalizerFactory;
 import chav1961.purelib.i18n.PureLibLocalizer;
 import chav1961.purelib.i18n.interfaces.Localizer;
+import chav1961.purelib.i18n.interfaces.Localizer.LocaleChangeListener;
+import chav1961.purelib.i18n.interfaces.SupportedLanguages;
 import chav1961.purelib.model.ContentModelFactory;
 import chav1961.purelib.model.interfaces.ContentMetadataInterface;
+import chav1961.purelib.ui.swing.SwingUtils;
+import chav1961.purelib.ui.swing.interfaces.OnAction;
+import chav1961.purelib.ui.swing.useful.JSystemTray;
 
 /**
  * <p>This class is an application class for Pure Library Navigator.</p>
@@ -24,7 +42,7 @@ import chav1961.purelib.model.interfaces.ContentMetadataInterface;
  * @since 0.0.1
  */
 
-public class Application {
+public class Application implements LocaleChangeListener {
 	public static final String	HELP_USING = "Use java -jar purelib.navigator.jar {-http <port>|[<-swing>]} {[-local]|-external} [-shutdown] [-lang {ru|en}]";
 	public static final String	UNKNOWN_ARGUMENT = "Unknown command line argument [%1$s]";
 	public static final String	ILLEGAL_HTTP_PORT = "Illegal HTTP port [%1$s]: need be any valid number in the range 1..65535";
@@ -42,9 +60,24 @@ public class Application {
 	public static final String	KEY_LANG = "lang";
 	
 	public static final String	APPLICATION_XML = "application.xml";
+	public static final String	IMAGE_NAME = "avatar.jpg";
+	public static final String	IMAGE_TOOLTIP = "chav1961.purelibnavigator.navigator.Application.tt";
 
-	public enum Language {
-		en, ru
+	private final Localizer			localizer;
+	private final JSystemTray		tray;
+	private final int				port;
+	private final CountDownLatch	latch = new CountDownLatch(1);
+
+	public Application(final Localizer localizer, final JSystemTray tray, final int port) {
+		this.localizer = localizer;
+		this.tray = tray;
+		this.port = port;
+		localizer.addLocaleChangeListener((o,n)->localeChanged(o, n));
+	}
+
+	@Override
+	public void localeChanged(final Locale oldLocale, final Locale newLocale) throws LocalizationException {
+		tray.localeChanged(oldLocale, newLocale);
 	}
 	
 	/**
@@ -91,7 +124,7 @@ public class Application {
 					System.exit(stopServer(parsedString.getValue(KEY_HTTP,int.class)));
 				}
 				else if (parsedString.isTyped(KEY_HTTP) && !parsedString.isTyped(KEY_SHUTDOWN)) {
-					startServer(parsedString.getValue(KEY_HTTP,int.class),parsedString.getValue(KEY_LANG,Language.class).toString());
+					startServer(parsedString.getValue(KEY_HTTP,int.class),parsedString.getValue(KEY_LANG,SupportedLanguages.class).toString());
 				}
 				else {
 					startGUI(parsedString);
@@ -105,7 +138,7 @@ public class Application {
 	}
 	
 	private static int startGUI(final ArgParser parser) throws CommandLineParametersException {
-		Locale.setDefault(new Locale(parser.getValue(KEY_LANG,Language.class).name()));
+		Locale.setDefault(new Locale(parser.getValue(KEY_LANG,SupportedLanguages.class).name()));
 		
 		try{final Localizer						purelibLocalizer = new PureLibLocalizer();
 			
@@ -122,12 +155,38 @@ public class Application {
 		}
 	}
 
-
 	private static int startServer(final int httpPort, final String lang) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
+		try{final ContentMetadataInterface	mdi = ContentModelFactory.forXmlDescription(Application.class.getResourceAsStream(APPLICATION_XML));
+			final Localizer					localizer = LocalizerFactory.getLocalizer(mdi.getRoot().getLocalizerAssociated());
+			
+			PureLibSettings.PURELIB_LOCALIZER.push(localizer);
+			PureLibSettings.PURELIB_LOCALIZER.setCurrentLocale(Locale.forLanguageTag(lang));
 
+			final JPopupMenu				menu = SwingUtils.toJComponent(mdi.byUIPath(URI.create("ui:/model/navigation.top.mainmenu")), JPopupMenu.class);
+			
+			try(final JSystemTray			tray = new JSystemTray(localizer, "Navigator", Application.class.getResource(IMAGE_NAME).toURI(), IMAGE_TOOLTIP, menu)) {
+				final Application			app = new Application(localizer, tray, httpPort);
+				final ActionListener		al = (e)->app.showHelp(); 
+
+				localizer.setCurrentLocale(Locale.forLanguageTag(lang));
+				SwingUtils.assignActionListeners(menu, app);
+				tray.addActionListener(al);
+				
+				if (!Desktop.isDesktopSupported()) {
+					tray.message(Severity.warning, "Java desktop is not supported. Start browser manually with http://localhost:"+httpPort+" address URI");
+				}
+				else {
+					tray.message(Severity.info, "Test navigator started");
+				}
+				app.waitShutdown();
+				tray.removeActionListener(al);
+			}
+			return 0;
+		} catch (final EnvironmentException | URISyntaxException exc) {
+			exc.printStackTrace();
+			return 129;
+		}
+	}
 
 	private static int stopServer(final int httpPort) {
 		// TODO Auto-generated method stub
@@ -138,7 +197,40 @@ public class Application {
 		System.err.println(HELP_USING);
 		System.exit(1);
 	}
+	
+	private void showHelp() {
+		if (Desktop.isDesktopSupported()) {
+			try{Desktop.getDesktop().browse(URI.create("http://localhost:"+port));
+			} catch (IOException e) {
+				tray.message(Severity.error, "Error starting browser: "+e.getMessage());
+			}
+		}
+	}
 
+	private void waitShutdown() {
+		try {
+			latch.await();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	@OnAction("action:/refresh")
+	private void refresh() {
+		
+	}
+
+	@OnAction("action:/builtin.languages")
+	private void selectLang(final Hashtable<String,String[]> langs) throws LocalizationException {
+		localizer.setCurrentLocale(SupportedLanguages.valueOf(langs.get("lang")[0]).getLocale());
+	}
+	
+	@OnAction("action:/exit")
+	private void exit() {
+		latch.countDown();
+	}
+	
 	private static class ApplicationArgParser extends ArgParser {
 		private static final ArgParser.AbstractArg[]	KEYS = {
 					 new BooleanArg(KEY_DEBUG, false, "turn on debugging trace", false)
@@ -147,11 +239,12 @@ public class Application {
 					,new BooleanArg(KEY_LOCAL, false, "turn on debugging trace", false)
 					,new BooleanArg(KEY_EXTERNAL, false, "turn on debugging trace", false)
 					,new BooleanArg(KEY_SHUTDOWN, false, "turn on debugging trace", false)
-					,new EnumArg<Language>(KEY_LANG, Language.class, false, "turn on debugging trace", Language.ru)
+					,new EnumArg<SupportedLanguages>(KEY_LANG, SupportedLanguages.class, false, "select default language supported", SupportedLanguages.ru)
 				};
 		
 		ApplicationArgParser() {
 			super(KEYS);
 		}
 	}
+
 }
