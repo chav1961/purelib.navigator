@@ -2,6 +2,7 @@ package chav1961.purelibnavigator.admin;
 
 import java.awt.BorderLayout;
 import java.awt.event.KeyEvent;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.ServerSocket;
@@ -32,6 +33,7 @@ import chav1961.purelib.basic.exceptions.EnvironmentException;
 import chav1961.purelib.basic.exceptions.LocalizationException;
 import chav1961.purelib.basic.interfaces.LoggerFacade;
 import chav1961.purelib.basic.interfaces.LoggerFacade.Severity;
+import chav1961.purelib.fsys.FileSystemFactory;
 import chav1961.purelib.i18n.LocalizerFactory;
 import chav1961.purelib.i18n.PureLibLocalizer;
 import chav1961.purelib.i18n.interfaces.Localizer;
@@ -45,26 +47,26 @@ import chav1961.purelib.ui.swing.useful.JCreoleEditor;
 import chav1961.purelib.ui.swing.useful.JStateString;
 
 public class NewApplication extends JFrame implements LocaleChangeListener {
-	private static final long 			serialVersionUID = -3061028320843379171L;
+	private static final long 				serialVersionUID = -3061028320843379171L;
 
-	public static final String			ARG_HELP_PORT = "helpport";
+	public static final String				ARG_HELP_PORT = "helpport";
 	
-	public static final String			APPLICATION_TITLE = "Application.title";
-	public static final String			MESSAGE_FILE_LOADED = "Application.message.fileLoaded";
-	public static final String			MESSAGE_FILE_SAVED = "Application.message.fileSaved";
+	public static final String				APPLICATION_TITLE = "Application.title";
+	public static final String				MESSAGE_FILE_LOADED = "Application.message.fileLoaded";
+	public static final String				MESSAGE_FILE_SAVED = "Application.message.fileSaved";
 	
-	private final ContentMetadataInterface 	app;
-	private final Localizer				localizer;
-	private final int 					localHelpPort;
-	private final CountDownLatch		latch;
-	private final JMenuBar				menu;
-	private final JToolBar				toolbar;
-	private final StaticTreeContent		stc;
-	private final JCreoleEditor			editor;
-	private final JStateString			state;
+	private final ContentMetadataInterface	mdi;
+	private final Localizer					localizer;
+	private final int 						localHelpPort;
+	private final CountDownLatch			latch;
+	private final JMenuBar					menu;
+	private final JToolBar					toolbar;
+	private final StaticTreeContent			stc;
+	private final JCreoleEditor				editor;
+	private final JStateString				state;
 	
-	public NewApplication(final ContentMetadataInterface app, final Localizer parent, final int localHelpPort, final CountDownLatch latch) throws EnvironmentException, NullPointerException, IllegalArgumentException, IOException {
-		if (app == null) {
+	public NewApplication(final ContentMetadataInterface mdi, final Localizer parent, final int localHelpPort, final CountDownLatch latch) throws EnvironmentException, NullPointerException, IllegalArgumentException, IOException, ContentException, ClassNotFoundException {
+		if (mdi == null) {
 			throw new NullPointerException("Application descriptor can't be null");
 		}
 		else if (parent == null) {
@@ -74,16 +76,16 @@ public class NewApplication extends JFrame implements LocaleChangeListener {
 			throw new NullPointerException("Latch to notify closure can't be null");
 		}
 		else {
-			this.app = app;
-			this.localizer = LocalizerFactory.getLocalizer(app.getRoot().getLocalizerAssociated());
+			this.mdi = mdi;
+			this.localizer = LocalizerFactory.getLocalizer(mdi.getRoot().getLocalizerAssociated());
 			this.localHelpPort = localHelpPort;
 			this.latch = latch;
 			this.state = new JStateString(this.localizer,10);
 			
 			parent.push(localizer);
 			localizer.addLocaleChangeListener(this);
-			this.menu = SwingUtils.toJComponent(app.byUIPath(URI.create("ui:/model/navigation.top.mainmenu")), JMenuBar.class);
-			this.toolbar = SwingUtils.toJComponent(app.byUIPath(URI.create("ui:/model/navigation.top.editorToolbar")), JToolBar.class);
+			this.menu = SwingUtils.toJComponent(mdi.byUIPath(URI.create("ui:/model/navigation.top.mainmenu")), JMenuBar.class);
+			this.toolbar = SwingUtils.toJComponent(mdi.byUIPath(URI.create("ui:/model/navigation.top.editorToolbar")), JToolBar.class);
 			this.toolbar.setFloatable(false);
 			
 			SwingUtils.assignActionListeners(menu,this);
@@ -93,7 +95,10 @@ public class NewApplication extends JFrame implements LocaleChangeListener {
 			final JSplitPane	splitter = new JSplitPane();
 			final JPanel		rightPanel = new JPanel(new BorderLayout());
 			
-			this.stc = new StaticTreeContent();
+			this.stc = new StaticTreeContent(mdi, localizer, state, FileSystemFactory.createFileSystem(URI.create("fsys:"+new File("./src/test/resources").toURI()))
+										,(item,node)->{
+											//System.err.println("Node="+node);
+										});
 			this.editor = new JCreoleEditor();
 			
 			rightPanel.add(toolbar, BorderLayout.NORTH);
@@ -138,7 +143,7 @@ public class NewApplication extends JFrame implements LocaleChangeListener {
 		
 	}
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws NullPointerException, IllegalArgumentException, ClassNotFoundException {
 		try{final ArgParser						parser = new ApplicationArgParser().parse(args);
 		
 			final int							helpPort = !parser.isTyped(ARG_HELP_PORT) ? getFreePort() : parser.getValue(ARG_HELP_PORT, int.class);
