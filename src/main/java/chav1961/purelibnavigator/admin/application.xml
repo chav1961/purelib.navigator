@@ -34,11 +34,40 @@
 		<app:item name="editor.toolbar.clear" caption="editor.toolbar.clear" tooltip="editor.toolbar.clear.tt" icon="root://chav1961.purelibnavigator.admin.NewApplication/images/favicon.png" action="clear"/>
 	</app:menu>
 	<app:menu id="rightNodeMenu">
-		<app:item name="editor.toolbar.clear" caption="editor.toolbar.clear" tooltip="editor.toolbar.clear.tt" icon="root://chav1961.purelibnavigator.admin.NewApplication/images/favicon.png" action="clear"/>
+		<app:item name="menu.admin.tree.cut" caption="menu.admin.tree.cut" tooltip="menu.admin.tree.cut.tt" action="nodeCut"/>
+		<app:item name="menu.admin.tree.copy" caption="menu.admin.tree.copy" tooltip="menu.admin.tree.copy.tt" action="nodeCopy"/>
+		<app:item name="menu.admin.tree.paste" caption="menu.admin.tree.paste" tooltip="menu.admin.tree.paste.tt" action="nodePaste"/>
+		<app:separator/>
+		<app:item name="menu.admin.tree.insert.sibling" caption="menu.admin.tree.insert.sibling" tooltip="menu.admin.tree.insert.sibling.tt" action="nodeInsertSibling"/>
+		<app:item name="menu.admin.tree.insert.child" caption="menu.admin.tree.insert.child" tooltip="menu.admin.tree.insert.child.tt" action="nodeInsertChild"/>
+		<app:item name="menu.admin.tree.removeSubtree" caption="menu.admin.tree.removeSubtree" tooltip="menu.admin.tree.removeSubtree.tt" action="nodeRemoveSubtree"/>
+		<app:separator/>
+		<app:item name="menu.admin.tree.properties" caption="menu.admin.tree.properties" tooltip="menu.admin.tree.properties.tt" action="nodeProperties"/>
 	</app:menu>
+	<app:keyset id="rightNodeMenu.keyset">
+		<app:key code="X" ctrl="true" action="nodeCut"/>
+		<app:key code="C" ctrl="true" action="nodeCopy"/>
+		<app:key code="V" ctrl="true" action="nodePaste"/>
+		<app:key code="INSERT" action="nodeInsertChild"/>
+		<app:key code="DELETE" action="nodeRemoveSubtree"/>
+	</app:keyset>
 	<app:menu id="rightLeafMenu">
-		<app:item name="editor.toolbar.clear" caption="editor.toolbar.clear" tooltip="editor.toolbar.clear.tt" icon="root://chav1961.purelibnavigator.admin.NewApplication/images/favicon.png" action="clear"/>
+		<app:item name="menu.admin.tree.cut" caption="menu.admin.tree.cut" tooltip="menu.admin.tree.cut.tt" action="leafCut"/>
+		<app:item name="menu.admin.tree.copy" caption="menu.admin.tree.copy" tooltip="menu.admin.tree.copy.tt" action="leafCopy"/>
+		<app:item name="menu.admin.tree.paste" caption="menu.admin.tree.paste" tooltip="menu.admin.tree.paste.tt" action="leafPaste"/>
+		<app:separator/>
+		<app:item name="menu.admin.tree.duplicateLeaf" caption="menu.admin.tree.duplicateLeaf" tooltip="menu.admin.tree.duplicateLeaf.tt" action="leafDuplicate"/>
+		<app:item name="menu.admin.tree.removeSubtree" caption="menu.admin.tree.removeSubtree" tooltip="menu.admin.tree.removeSubtree.tt" action="leafRemove"/>
+		<app:separator/>
+		<app:item name="menu.admin.tree.properties" caption="menu.admin.tree.properties" tooltip="menu.admin.tree.properties.tt" action="leafProperties"/>
 	</app:menu>
+	<app:keyset id="rightLeafMenu.keyset">
+		<app:key code="X" ctrl="true" action="leafCut"/>
+		<app:key code="C" ctrl="true" action="leafCopy"/>
+		<app:key code="V" ctrl="true" action="leafPaste"/>
+		<app:key code="INSERT" ctrl="true" shift="true" action="leafDuplicate"/>
+		<app:key code="DELETE" action="leafRemove"/>
+	</app:keyset>
 	<app:menu id="rightEmptyMenu">
 		<app:item name="editor.toolbar.clear" caption="editor.toolbar.clear" tooltip="editor.toolbar.clear.tt" icon="root://chav1961.purelibnavigator.admin.NewApplication/images/favicon.png" action="clear"/>
 	</app:menu>

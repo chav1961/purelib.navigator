@@ -1,5 +1,5 @@
-{"id":"1","type":"t1","name":"n1","caption":"c1","content":
- [{"id":"1.1","type":"t1.1","name":"n1.1","caption":"c1.1"},
-  {"id":"1.2","type":"t1.2","name":"n1.2","caption":"c1.2"}
+{"id":"1","type":"SUBTREE","name":"n1","caption":"c1","content":
+ [{"id":"1.1","type":"LEAF","name":"n1.1","caption":"c1.1"},
+  {"id":"1.2","type":"LEAF","name":"n1.2","caption":"c1.2"}
  ]
 }
