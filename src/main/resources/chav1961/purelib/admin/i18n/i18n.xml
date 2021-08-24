@@ -2,7 +2,7 @@
 <localization xmlns="http://www.i18n.purelib.chav1961.ru/">
 	<lang name="en">
 <!-- Application localization -->
-		<key name="Application.title">(c) 2019, A.V.Chernomyrdin aka chav1961, Mercury landing V.R.=1.0, static content editor</key>  
+		<key name="Application.title">(c) 2021, Pure lib navigator, static content editor</key>  
 
 <!-- Application menu localization -->
 		<key name="menu.file">File</key>
@@ -39,6 +39,8 @@
 		
 		
 <!-- Tree content window -->
+		<key name="chav1961.purelibnavigator.admin.StaticTreeContent.fileType.creole">Creole text files</key>
+		<key name="chav1961.purelibnavigator.admin.StaticTreeContent.fileType.image">Images</key>
 		<key name="chav1961.purelibnavigator.admin.StaticTreeContent.removeLeaf.title">Remove leaf</key>
 		<key name="chav1961.purelibnavigator.admin.StaticTreeContent.removeLeaf.message">Remove leaf [%1$s] and it's content?</key>
 		<key name="chav1961.purelibnavigator.admin.StaticTreeContent.removeSubtree.title">Remove subtree</key>
@@ -51,6 +53,8 @@
 		<key name="menu.admin.tree.copy.tt">Copy item</key>
 		<key name="menu.admin.tree.paste">Paste</key>
 		<key name="menu.admin.tree.paste.tt">Paste item</key>
+		<key name="menu.admin.tree.pasteFile">Paste file</key>
+		<key name="menu.admin.tree.pasteFile.tt">Paste file as child</key>
 		<key name="menu.admin.tree.insert.sibling">Add sibling</key>
 		<key name="menu.admin.tree.insert.sibling.tt">Add sibling node to current one</key>
 		<key name="menu.admin.tree.insert.child">Add child</key>
@@ -91,7 +95,7 @@
 	<lang name="ru">
 	
 <!-- Application localization -->
-		<key name="Application.title">(c) 2019, A.V.Chernomyrdin aka chav1961, Mercury landing V.R.=1.0, редактор статического контента</key>  
+		<key name="Application.title">(c) 2021, Pure lib navigator, редактор статического контента</key>  
 
 <!-- Application menu localization -->
 		<key name="menu.file">Файл</key>
@@ -125,6 +129,8 @@
 		<key name="editor.toolbar.clear.tt">clear</key>
 
 <!-- Окно дерева контента -->
+		<key name="chav1961.purelibnavigator.admin.StaticTreeContent.fileType.creole">Файлы формата CREOLE</key>
+		<key name="chav1961.purelibnavigator.admin.StaticTreeContent.fileType.image">Картинки</key>
 		<key name="chav1961.purelibnavigator.admin.StaticTreeContent.removeLeaf.title">Удалить элемент</key>
 		<key name="chav1961.purelibnavigator.admin.StaticTreeContent.removeLeaf.message">Удалить элемент [%1$s] вместе с содержимым?</key>
 		<key name="chav1961.purelibnavigator.admin.StaticTreeContent.removeSubtree.title">Удалить поддерево</key>
@@ -137,6 +143,8 @@
 		<key name="menu.admin.tree.copy.tt">Копировать элемент дерева</key>
 		<key name="menu.admin.tree.paste">Вставить</key>
 		<key name="menu.admin.tree.paste.tt">Вставить элемент дерева</key>
+		<key name="menu.admin.tree.pasteFile">Вставить файл</key>
+		<key name="menu.admin.tree.pasteFile.tt">Вставить файл как дочерний элемент</key>
 		<key name="menu.admin.tree.insert.sibling">Добавить соседа</key>
 		<key name="menu.admin.tree.insert.sibling.tt">Добавить соседа к текущему элементу</key>
 		<key name="menu.admin.tree.insert.child">Добавить дочерний</key>

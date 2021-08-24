@@ -10,6 +10,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
 import javax.swing.JComponent;
@@ -45,6 +46,7 @@ import chav1961.purelib.ui.swing.SwingUtils;
 import chav1961.purelib.ui.swing.interfaces.OnAction;
 import chav1961.purelib.ui.swing.useful.JCreoleEditor;
 import chav1961.purelib.ui.swing.useful.JStateString;
+import chav1961.purelibnavigator.admin.ContentEditorAndViewer.ContentType;
 
 public class NewApplication extends JFrame implements LocaleChangeListener {
 	private static final long 				serialVersionUID = -3061028320843379171L;
@@ -60,9 +62,8 @@ public class NewApplication extends JFrame implements LocaleChangeListener {
 	private final int 						localHelpPort;
 	private final CountDownLatch			latch;
 	private final JMenuBar					menu;
-	private final JToolBar					toolbar;
 	private final StaticTreeContent			stc;
-	private final JCreoleEditor				editor;
+	private final ContentEditorAndViewer	ceav;
 	private final JStateString				state;
 	
 	public NewApplication(final ContentMetadataInterface mdi, final Localizer parent, final int localHelpPort, final CountDownLatch latch) throws EnvironmentException, NullPointerException, IllegalArgumentException, IOException, ContentException, ClassNotFoundException {
@@ -85,12 +86,8 @@ public class NewApplication extends JFrame implements LocaleChangeListener {
 			parent.push(localizer);
 			localizer.addLocaleChangeListener(this);
 			this.menu = SwingUtils.toJComponent(mdi.byUIPath(URI.create("ui:/model/navigation.top.mainmenu")), JMenuBar.class);
-			this.toolbar = SwingUtils.toJComponent(mdi.byUIPath(URI.create("ui:/model/navigation.top.editorToolbar")), JToolBar.class);
-			this.toolbar.setFloatable(false);
 			
 			SwingUtils.assignActionListeners(menu,this);
-			SwingUtils.centerMainWindow(this,0.75f);
-			SwingUtils.assignExitMethod4MainWindow(this,()->{exitApplication();});
 			
 			final JSplitPane	splitter = new JSplitPane();
 			final JPanel		rightPanel = new JPanel(new BorderLayout());
@@ -99,10 +96,9 @@ public class NewApplication extends JFrame implements LocaleChangeListener {
 										,(item,node)->{
 											//System.err.println("Node="+node);
 										});
-			this.editor = new JCreoleEditor();
+			this.ceav = new ContentEditorAndViewer(localizer, state, mdi);
 			
-			rightPanel.add(toolbar, BorderLayout.NORTH);
-			rightPanel.add(new JScrollPane(editor), BorderLayout.CENTER);
+			rightPanel.add(ceav, BorderLayout.CENTER);
 			splitter.setLeftComponent(new JScrollPane(stc));
 			splitter.setRightComponent(rightPanel);
 			splitter.setDividerLocation(200);
@@ -111,6 +107,9 @@ public class NewApplication extends JFrame implements LocaleChangeListener {
 			getContentPane().add(splitter,BorderLayout.CENTER);
 			getContentPane().add(state,BorderLayout.SOUTH);
 
+			SwingUtils.centerMainWindow(this,0.75f);
+			SwingUtils.assignExitMethod4MainWindow(this,()->exitApplication());
+			localizer.addLocaleChangeListener(this);
 			fillLocalizedStrings();
 		}
 	}
@@ -118,29 +117,27 @@ public class NewApplication extends JFrame implements LocaleChangeListener {
 	@OnAction("action:/exit")
 	private void exitApplication () {
 		setVisible(false);
+		localizer.removeLocaleChangeListener(this);
 		dispose();
 		latch.countDown();
 	}
 	
-	@OnAction("builtin.languages:en")
-	private void selectEnglish() throws LocalizationException, NullPointerException {
-		localizer.setCurrentLocale(Locale.forLanguageTag("en"));
+	@OnAction("action:/builtin.languages")
+	private void selectLang(final Map<String,String[]> map) throws LocalizationException, NullPointerException {
+		localizer.getParent().setCurrentLocale(Locale.forLanguageTag(map.get("lang")[0]));
 	}
-	
-	@OnAction("builtin.languages:ru")
-	private void selectRussian() throws LocalizationException, NullPointerException {
-		localizer.setCurrentLocale(Locale.forLanguageTag("ru"));
-	}
-	
 	
 	@Override
 	public void localeChanged(final Locale oldLocale, final Locale newLocale) throws LocalizationException {
 		fillLocalizedStrings();
+		SwingUtils.refreshLocale(menu, oldLocale, newLocale);
+		SwingUtils.refreshLocale(stc, oldLocale, newLocale);
+		SwingUtils.refreshLocale(ceav, oldLocale, newLocale);
+		SwingUtils.refreshLocale(state, oldLocale, newLocale);
 	}
 
-	private void fillLocalizedStrings() {
-		// TODO Auto-generated method stub
-		
+	private void fillLocalizedStrings() throws LocalizationException {
+		setTitle(localizer.getValue(APPLICATION_TITLE));
 	}
 
 	public static void main(String[] args) throws NullPointerException, IllegalArgumentException, ClassNotFoundException {

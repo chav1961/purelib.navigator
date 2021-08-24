@@ -4,7 +4,9 @@ import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.net.URI;
 
+import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JToolBar;
 
 import chav1961.purelib.basic.interfaces.LoggerFacade;
@@ -38,10 +40,14 @@ public class ContentEditorAndViewer extends JPanel {
 	private final LoggerFacade				logger;
 	private final ContentMetadataInterface	mdi;
 	private final CardLayout				layout = new CardLayout();
+	private final JToolBar					creoleToolBar;
 	private final JCreoleEditor				editor = new JCreoleEditor();
+	private final JToolBar					imageToolBar;
 	private final JBackgroundComponent		image;
+	private final JToolBar					commonToolBar;
+	private final JLabel					common = new JLabel("sdsd");
 	
-	private ContentType	contentType = ContentType.CREOLE;
+	private ContentType						contentType = ContentType.CREOLE;
 	
 	public ContentEditorAndViewer(final Localizer localizer, final LoggerFacade logger, final ContentMetadataInterface mdi) throws NullPointerException {
 		if (localizer == null) {
@@ -61,24 +67,27 @@ public class ContentEditorAndViewer extends JPanel {
 			setLayout(layout);
 			
 			final JPanel	creolePanel = new JPanel(new BorderLayout());
-			final JToolBar	creoleToolBar = SwingUtils.toJComponent(mdi.byUIPath(URI.create("")), JToolBar.class);
+			this.creoleToolBar = SwingUtils.toJComponent(mdi.byUIPath(URI.create("ui:/model/navigation.top.editorToolbar")), JToolBar.class);
 			
+			creoleToolBar.setFloatable(false);
 			creolePanel.add(creoleToolBar, BorderLayout.NORTH);
-			creolePanel.add(editor, BorderLayout.NORTH);
+			creolePanel.add(new JScrollPane(editor), BorderLayout.CENTER);
 			SwingUtils.assignActionListeners(creoleToolBar, this);
 			
 			final JPanel	imagePanel = new JPanel(new BorderLayout());
-			final JToolBar	imageToolBar = SwingUtils.toJComponent(mdi.byUIPath(URI.create("")), JToolBar.class);
+			this.imageToolBar = SwingUtils.toJComponent(mdi.byUIPath(URI.create("ui:/model/navigation.top.editorToolbar")), JToolBar.class);
 			
+			imageToolBar.setFloatable(false);
 			imagePanel.add(imageToolBar, BorderLayout.NORTH);
-			imagePanel.add(image, BorderLayout.NORTH);
+			imagePanel.add(image, BorderLayout.CENTER);
 			SwingUtils.assignActionListeners(imageToolBar, this);
 			
 			final JPanel	commonPanel = new JPanel(new BorderLayout());
-			final JToolBar	commonToolBar = SwingUtils.toJComponent(mdi.byUIPath(URI.create("")), JToolBar.class);
+			this.commonToolBar = SwingUtils.toJComponent(mdi.byUIPath(URI.create("ui:/model/navigation.top.editorToolbar")), JToolBar.class);
 
+			commonToolBar.setFloatable(false);
 			commonPanel.add(commonToolBar, BorderLayout.NORTH);
-			commonPanel.add(editor, BorderLayout.NORTH);
+			commonPanel.add(common, BorderLayout.CENTER);
 			SwingUtils.assignActionListeners(commonToolBar, this);
 			
 			add(creolePanel, ContentType.CREOLE.getCardName());

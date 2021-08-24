@@ -37,6 +37,7 @@
 		<app:item name="menu.admin.tree.cut" caption="menu.admin.tree.cut" tooltip="menu.admin.tree.cut.tt" action="nodeCut"/>
 		<app:item name="menu.admin.tree.copy" caption="menu.admin.tree.copy" tooltip="menu.admin.tree.copy.tt" action="nodeCopy"/>
 		<app:item name="menu.admin.tree.paste" caption="menu.admin.tree.paste" tooltip="menu.admin.tree.paste.tt" action="nodePaste"/>
+		<app:item name="menu.admin.tree.pasteFile" caption="menu.admin.tree.pasteFile" tooltip="menu.admin.tree.pasteFile.tt" action="nodePasteFile"/>
 		<app:separator/>
 		<app:item name="menu.admin.tree.insert.sibling" caption="menu.admin.tree.insert.sibling" tooltip="menu.admin.tree.insert.sibling.tt" action="nodeInsertSibling"/>
 		<app:item name="menu.admin.tree.insert.child" caption="menu.admin.tree.insert.child" tooltip="menu.admin.tree.insert.child.tt" action="nodeInsertChild"/>

@@ -1,7 +1,6 @@
 package chav1961.purelibnavigator.admin;
 
 import java.awt.Component;
-import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.KeyboardFocusManager;
 import java.awt.Point;
@@ -23,6 +22,7 @@ import java.io.Reader;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.TimerTask;
 import java.util.UUID;
 
@@ -34,7 +34,6 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JTree;
-import javax.swing.KeyStroke;
 import javax.swing.ToolTipManager;
 import javax.swing.TransferHandler;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -48,8 +47,10 @@ import chav1961.purelib.basic.exceptions.ContentException;
 import chav1961.purelib.basic.exceptions.LocalizationException;
 import chav1961.purelib.basic.interfaces.LoggerFacade;
 import chav1961.purelib.basic.interfaces.LoggerFacade.Severity;
+import chav1961.purelib.fsys.FileSystemFactory;
 import chav1961.purelib.fsys.interfaces.FileSystemInterface;
 import chav1961.purelib.i18n.interfaces.Localizer;
+import chav1961.purelib.i18n.interfaces.Localizer.LocaleChangeListener;
 import chav1961.purelib.json.JsonNode;
 import chav1961.purelib.json.JsonUtils;
 import chav1961.purelib.json.interfaces.JsonNodeType;
@@ -59,11 +60,13 @@ import chav1961.purelib.streams.JsonStaxParser;
 import chav1961.purelib.ui.swing.AutoBuiltForm;
 import chav1961.purelib.ui.swing.SwingUtils;
 import chav1961.purelib.ui.swing.interfaces.OnAction;
+import chav1961.purelib.ui.swing.useful.JFileSelectionDialog;
+import chav1961.purelib.ui.swing.useful.JFileSelectionDialog.FilterCallback;
 import chav1961.purelib.ui.swing.useful.JLocalizedOptionPane;
 import chav1961.purelib.ui.swing.useful.LocalizedFormatter;
 import chav1961.purelibnavigator.interfaces.ContentNodeType;
 
-public class StaticTreeContent extends JTree {
+public class StaticTreeContent extends JTree implements LocaleChangeListener {
 	private static final long 				serialVersionUID = 1L;
 	private static final long				TT_DELAY = 500;
 	
@@ -78,13 +81,14 @@ public class StaticTreeContent extends JTree {
 	private static final String				AC_COPY;
 	private static final String				AC_PASTE;
 
+	private static final String				FILE_TYPE_CREOLE = "chav1961.purelibnavigator.admin.StaticTreeContent.fileType.creole";
+	private static final String				FILE_TYPE_IMAGE = "chav1961.purelibnavigator.admin.StaticTreeContent.fileType.image";
 	private static final String				REMOVE_LEAF_TITLE = "chav1961.purelibnavigator.admin.StaticTreeContent.removeLeaf.title";
 	private static final String				REMOVE_LEAF_MESSAGE = "chav1961.purelibnavigator.admin.StaticTreeContent.removeLeaf.message";
 	private static final String				REMOVE_SUBTREE_TITLE = "chav1961.purelibnavigator.admin.StaticTreeContent.removeSubtree.title";
 	private static final String				REMOVE_SUBTREE_MESSAGE = "chav1961.purelibnavigator.admin.StaticTreeContent.removeSubtree.message";
 	
 	private static final DataFlavor[]		FLAVORS;
-	
 	
 	private final ContentMetadataInterface	mdi;
 	private final Localizer					localizer;
@@ -99,11 +103,7 @@ public class StaticTreeContent extends JTree {
 	private final AutoBuiltForm<NodeSettings>	form;
 	
 	private int								uniqueNameSuffix = 1;
-	private DefaultMutableTreeNode			lastPopupItem;
-	private JsonNode						lastPopupNode;
-	private Cursor							oldCursor;
 	private TimerTask						tt = null;
-	private boolean							dragged = false;
 	private JComponent 						focusOwner = null;
 	
 	public interface TreeSelectionCallback {
@@ -233,13 +233,9 @@ public class StaticTreeContent extends JTree {
 							break;
 						case MouseEvent.BUTTON3 :
 							if (sel == null) {
-								lastPopupItem = null;
-								lastPopupNode = null;
 								showPopup(e.getPoint(), emptyMenu);
 							}
 							else {
-								lastPopupItem = sel.item;
-								lastPopupNode = sel.node;
 								showPopup(e.getPoint(), sel.node.hasName(F_CONTENT) ? nodeMenu : leafMenu);
 							}
 							break;
@@ -257,13 +253,9 @@ public class StaticTreeContent extends JTree {
 							final ItemAndNode	sel = getSelection();
 							
 							if (sel == null) {
-								lastPopupItem = null;
-								lastPopupNode = null;
 								showPopup(getRectCenter(getVisibleRect()), emptyMenu);
 							}
 							else {
-								lastPopupItem = sel.item;
-								lastPopupNode = sel.node;
 								showPopup(getRectCenter(getPathBounds(getSelectionPath())), sel.node.hasName(F_CONTENT) ? nodeMenu : leafMenu);
 							}
 							break;
@@ -319,6 +311,14 @@ public class StaticTreeContent extends JTree {
 		}
 	}
 
+	@Override
+	public void localeChanged(final Locale oldLocale, final Locale newLocale) throws LocalizationException {
+		SwingUtils.refreshLocale(nodeMenu, oldLocale, newLocale);
+		SwingUtils.refreshLocale(leafMenu, oldLocale, newLocale);
+		SwingUtils.refreshLocale(emptyMenu, oldLocale, newLocale);
+		SwingUtils.refreshLocale(form, oldLocale, newLocale);
+	}
+	
 	@Override
 	public String getToolTipText(final MouseEvent event) {
 		final ItemAndNode	sel = getSelection(event.getPoint());
@@ -380,6 +380,24 @@ public class StaticTreeContent extends JTree {
 		TransferHandler.getPasteAction().actionPerformed(new ActionEvent(this, ActionEvent.ACTION_PERFORMED, AC_PASTE));
 	}
 
+	@OnAction("action:/nodePasteFile")
+	private void nodePasteFile() {
+		final ItemAndNode	sel = getSelection();
+		
+		if (sel != null) {
+			try(final FileSystemInterface	fsi = FileSystemFactory.createFileSystem(URI.create("fsys:file:./"))) {
+				
+				for (String item : JFileSelectionDialog.select((JFrame)null, localizer, logger, fsi,
+										JFileSelectionDialog.OPTIONS_CAN_SELECT_FILE | JFileSelectionDialog.OPTIONS_FOR_OPEN | JFileSelectionDialog.OPTIONS_FILE_MUST_EXISTS, 
+										FilterCallback.of(localizer.getValue(FILE_TYPE_CREOLE), "*.cre"), FilterCallback.of(localizer.getValue(FILE_TYPE_IMAGE), "*.png"))) {
+					insertFile(new File(item), sel.item, sel.node);
+				}
+			} catch (LocalizationException | IOException exc) {
+				printError(exc);
+			}
+		}
+	}
+	
 	@OnAction("action:/nodeInsertSibling")
 	private void nodeInsertSibling() {
 		final ItemAndNode	sel = getSelection();
@@ -400,7 +418,8 @@ public class StaticTreeContent extends JTree {
 							, new JsonNode(ns.caption).setName(F_CAPTION)
 					));
 				}
-			} catch (LocalizationException e) {
+			} catch (LocalizationException exc) {
+				printError(exc);
 			}
 		}
 	}
@@ -425,7 +444,8 @@ public class StaticTreeContent extends JTree {
 							, new JsonNode(ns.caption).setName(F_CAPTION)
 					));
 				}
-			} catch (LocalizationException e) {
+			} catch (LocalizationException exc) {
+				printError(exc);
 			}
 		}
 	}
@@ -435,9 +455,10 @@ public class StaticTreeContent extends JTree {
 		try{final ItemAndNode	sel = getSelection();
 			
 			if (sel != null && new JLocalizedOptionPane(localizer).confirm(this, new LocalizedFormatter(REMOVE_SUBTREE_MESSAGE, sel.node.getChild(F_NAME).getStringValue()), REMOVE_SUBTREE_TITLE, JOptionPane.QUESTION_MESSAGE, JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
-				
+				removeItem(sel.item, sel.node);
 			}
-		} catch (LocalizationException e) {
+		} catch (LocalizationException exc) {
+			printError(exc);
 		}
 	}
 	
@@ -488,11 +509,9 @@ public class StaticTreeContent extends JTree {
 					insertChild((DefaultMutableTreeNode)sel.item.getParent(),(JsonNode)((DefaultMutableTreeNode)sel.item.getParent()).getUserObject(),newNode);
 				}
 			} catch (LocalizationException exc) {
-				logger.message(Severity.error, "Error showing settings: "+exc.getLocalizedMessage(), exc);
+				printError(exc);
 			}
 		}
-		
-		JOptionPane.showMessageDialog(this, "duplicate leaf");
 	}
 
 	@OnAction("action:/leafRemove")
@@ -502,7 +521,8 @@ public class StaticTreeContent extends JTree {
 			if (sel != null && new JLocalizedOptionPane(localizer).confirm(this, new LocalizedFormatter(REMOVE_LEAF_MESSAGE, sel.node.getChild(F_NAME).getStringValue()), REMOVE_LEAF_TITLE, JOptionPane.QUESTION_MESSAGE, JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
 				removeItem(sel.item, sel.node);
 			}
-		} catch (LocalizationException e) {
+		} catch (LocalizationException exc) {
+			printError(exc);
 		}
 	}
 
@@ -530,7 +550,7 @@ public class StaticTreeContent extends JTree {
 				((DefaultTreeModel)getModel()).nodeChanged(item);
 			}
 		} catch (LocalizationException exc) {
-			logger.message(Severity.error, "Error showing settings: "+exc.getLocalizedMessage(), exc);
+			printError(exc);
 		}
 	}
 
@@ -554,19 +574,27 @@ public class StaticTreeContent extends JTree {
 							, new JsonNode(ns.caption).setName(F_CAPTION)
 					));
 				}
-			} catch (LocalizationException e) {
+			} catch (LocalizationException exc) {
+				printError(exc);
 			}
 		}
 	}	
 
 	private ItemAndNode getSelection(final Point point) {
-		final TreePath	path = getPathForLocation(point.x, point.x);
+		final int 		row = getRowForLocation(point.x, point.y);
 		
-		if (path != null) {
-			final DefaultMutableTreeNode	item = (DefaultMutableTreeNode)path.getLastPathComponent();
-			final JsonNode					node = (JsonNode) item.getUserObject();
+		if (row >= 0) {
+			final TreePath	path = getPathForRow(row);
 			
-			return new ItemAndNode(item, node);
+			if (path != null) {
+				final DefaultMutableTreeNode	item = (DefaultMutableTreeNode)path.getLastPathComponent();
+				final JsonNode					node = (JsonNode) item.getUserObject();
+				
+				return new ItemAndNode(item, node);
+			}
+			else {
+				return null;
+			}
 		}
 		else {
 			return null;
@@ -597,7 +625,11 @@ public class StaticTreeContent extends JTree {
 		settings.name = node.getChild(F_NAME).getStringValue();
 		settings.caption = node.getChild(F_CAPTION).getStringValue();
 	}
+
 	
+	private void printError(final Throwable exc) {
+		logger.message(Severity.error, exc.getLocalizedMessage(), exc);
+	}
 	
 	static DefaultMutableTreeNode buildContentTree(final JsonNode node, final List<JsonNode> path, final StringBuilder sb) throws ContentException {
 		path.add(node);
