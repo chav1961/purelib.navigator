@@ -41,7 +41,9 @@ import chav1961.purelib.i18n.interfaces.Localizer;
 import chav1961.purelib.i18n.interfaces.Localizer.LocaleChangeListener;
 import chav1961.purelib.model.ContentModelFactory;
 import chav1961.purelib.model.interfaces.ContentMetadataInterface;
+import chav1961.purelib.model.interfaces.ContentMetadataInterface.ContentNodeMetadata;
 import chav1961.purelib.nanoservice.NanoServiceFactory;
+import chav1961.purelib.ui.interfaces.UIItemState;
 import chav1961.purelib.ui.swing.SwingUtils;
 import chav1961.purelib.ui.swing.interfaces.OnAction;
 import chav1961.purelib.ui.swing.useful.JCreoleEditor;
@@ -85,7 +87,7 @@ public class NewApplication extends JFrame implements LocaleChangeListener {
 			
 			parent.push(localizer);
 			localizer.addLocaleChangeListener(this);
-			this.menu = SwingUtils.toJComponent(mdi.byUIPath(URI.create("ui:/model/navigation.top.mainmenu")), JMenuBar.class);
+			this.menu = SwingUtils.toJComponent(mdi.byUIPath(URI.create("ui:/model/navigation.top.mainmenu")), JMenuBar.class, (meta)->getAccessAndVisibility(meta));
 			
 			SwingUtils.assignActionListeners(menu,this);
 			
@@ -134,6 +136,10 @@ public class NewApplication extends JFrame implements LocaleChangeListener {
 		SwingUtils.refreshLocale(stc, oldLocale, newLocale);
 		SwingUtils.refreshLocale(ceav, oldLocale, newLocale);
 		SwingUtils.refreshLocale(state, oldLocale, newLocale);
+	}
+
+	private UIItemState.AvailableAndVisible getAccessAndVisibility(final ContentNodeMetadata meta) {
+		return UIItemState.AvailableAndVisible.DEFAULT;
 	}
 
 	private void fillLocalizedStrings() throws LocalizationException {

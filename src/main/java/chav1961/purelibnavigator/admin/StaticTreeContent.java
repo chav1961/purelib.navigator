@@ -56,7 +56,9 @@ import chav1961.purelib.json.JsonUtils;
 import chav1961.purelib.json.interfaces.JsonNodeType;
 import chav1961.purelib.model.ContentModelFactory;
 import chav1961.purelib.model.interfaces.ContentMetadataInterface;
+import chav1961.purelib.model.interfaces.ContentMetadataInterface.ContentNodeMetadata;
 import chav1961.purelib.streams.JsonStaxParser;
+import chav1961.purelib.ui.interfaces.UIItemState;
 import chav1961.purelib.ui.swing.AutoBuiltForm;
 import chav1961.purelib.ui.swing.SwingUtils;
 import chav1961.purelib.ui.swing.interfaces.OnAction;
@@ -139,9 +141,9 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 			this.logger = logger;
 			this.fsi = fsi;
 			this.callback = callback;
-			this.nodeMenu = SwingUtils.toJComponent(mdi.byUIPath(URI.create("ui:/model/navigation.top.rightNodeMenu")), JPopupMenu.class);
-			this.leafMenu = SwingUtils.toJComponent(mdi.byUIPath(URI.create("ui:/model/navigation.top.rightLeafMenu")), JPopupMenu.class);
-			this.emptyMenu = SwingUtils.toJComponent(mdi.byUIPath(URI.create("ui:/model/navigation.top.rightEmptyMenu")), JPopupMenu.class);
+			this.nodeMenu = SwingUtils.toJComponent(mdi.byUIPath(URI.create("ui:/model/navigation.top.rightNodeMenu")), JPopupMenu.class, (meta)->getAccessAndVisibility(meta));
+			this.leafMenu = SwingUtils.toJComponent(mdi.byUIPath(URI.create("ui:/model/navigation.top.rightLeafMenu")), JPopupMenu.class, (meta)->getAccessAndVisibility(meta));
+			this.emptyMenu = SwingUtils.toJComponent(mdi.byUIPath(URI.create("ui:/model/navigation.top.rightEmptyMenu")), JPopupMenu.class, (meta)->getAccessAndVisibility(meta));
 			SwingUtils.assignActionListeners(this.nodeMenu,this);
 			SwingUtils.assignActionListeners(this.leafMenu,this);
 			SwingUtils.assignActionListeners(this.emptyMenu,this);
@@ -291,7 +293,7 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 			});
 
 			this.ns = new NodeSettings(logger);
-			this.form = new AutoBuiltForm<NodeSettings>(ContentModelFactory.forAnnotatedClass(NodeSettings.class), localizer, PureLibSettings.INTERNAL_LOADER, ns, ns);
+			this.form = new AutoBuiltForm<NodeSettings>(ContentModelFactory.forAnnotatedClass(NodeSettings.class), localizer, PureLibSettings.INTERNAL_LOADER, ns, ns, (meta)->getAccessAndVisibility(meta));
 			this.form.setPreferredSize(new Dimension(300,120));
 			
 			setRootVisible(true);
@@ -629,6 +631,11 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 	
 	private void printError(final Throwable exc) {
 		logger.message(Severity.error, exc.getLocalizedMessage(), exc);
+	}
+
+	private UIItemState.AvailableAndVisible getAccessAndVisibility(final ContentNodeMetadata meta) {
+		System.err.println("Name: "+meta.getApplicationPath()+", "+meta.getName());
+		return UIItemState.AvailableAndVisible.DEFAULT;
 	}
 	
 	static DefaultMutableTreeNode buildContentTree(final JsonNode node, final List<JsonNode> path, final StringBuilder sb) throws ContentException {
