@@ -1,39 +1,30 @@
 package chav1961.purelibnavigator.admin;
 
 import java.awt.BorderLayout;
-import java.awt.event.KeyEvent;
+import java.awt.Dimension;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.ServerSocket;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
+import java.net.URISyntaxException;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
-import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JMenuBar;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
-import javax.swing.JTabbedPane;
-import javax.swing.JToolBar;
-import javax.swing.KeyStroke;
 
 import chav1961.purelib.basic.ArgParser;
 import chav1961.purelib.basic.SubstitutableProperties;
-import chav1961.purelib.basic.SystemErrLoggerFacade;
 import chav1961.purelib.basic.Utils;
 import chav1961.purelib.basic.exceptions.CommandLineParametersException;
-import chav1961.purelib.basic.exceptions.ConsoleCommandException;
 import chav1961.purelib.basic.exceptions.ContentException;
 import chav1961.purelib.basic.exceptions.EnvironmentException;
 import chav1961.purelib.basic.exceptions.LocalizationException;
-import chav1961.purelib.basic.interfaces.LoggerFacade;
-import chav1961.purelib.basic.interfaces.LoggerFacade.Severity;
 import chav1961.purelib.fsys.FileSystemFactory;
 import chav1961.purelib.i18n.LocalizerFactory;
 import chav1961.purelib.i18n.PureLibLocalizer;
@@ -46,14 +37,15 @@ import chav1961.purelib.nanoservice.NanoServiceFactory;
 import chav1961.purelib.ui.interfaces.UIItemState;
 import chav1961.purelib.ui.swing.SwingUtils;
 import chav1961.purelib.ui.swing.interfaces.OnAction;
-import chav1961.purelib.ui.swing.useful.JCreoleEditor;
 import chav1961.purelib.ui.swing.useful.JStateString;
-import chav1961.purelibnavigator.admin.ContentEditorAndViewer.ContentType;
 
 public class NewApplication extends JFrame implements LocaleChangeListener {
 	private static final long 				serialVersionUID = -3061028320843379171L;
 
 	public static final String				ARG_HELP_PORT = "helpport";
+	
+	public static final String				APPLICATION_HELP_TITLE = "Application.help.title";
+	public static final String				APPLICATION_HELP_CONTENT = "Application.help.content";
 	
 	public static final String				APPLICATION_TITLE = "Application.title";
 	public static final String				MESSAGE_FILE_LOADED = "Application.message.fileLoaded";
@@ -127,6 +119,11 @@ public class NewApplication extends JFrame implements LocaleChangeListener {
 	@OnAction("action:/builtin.languages")
 	private void selectLang(final Map<String,String[]> map) throws LocalizationException, NullPointerException {
 		localizer.getParent().setCurrentLocale(Locale.forLanguageTag(map.get("lang")[0]));
+	}
+
+	@OnAction("action:/helpAbout")
+	private void about() throws LocalizationException, URISyntaxException {
+		SwingUtils.showAboutScreen(this, localizer, APPLICATION_HELP_TITLE, APPLICATION_HELP_CONTENT, this.getClass().getResource("favicon.png").toURI(), new Dimension(300,300));
 	}
 	
 	@Override

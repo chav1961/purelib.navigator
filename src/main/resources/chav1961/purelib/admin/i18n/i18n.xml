@@ -3,6 +3,8 @@
 	<lang name="en">
 <!-- Application localization -->
 		<key name="Application.title">(c) 2021, Pure lib navigator, static content editor</key>  
+		<key name="Application.help.title">About</key>
+		<key name="Application.help.content">About content</key>
 
 <!-- Application menu localization -->
 		<key name="menu.file">File</key>
@@ -96,6 +98,8 @@
 	
 <!-- Application localization -->
 		<key name="Application.title">(c) 2021, Pure lib navigator, редактор статического контента</key>  
+		<key name="Application.help.title">About</key>
+		<key name="Application.help.content">About content</key>
 
 <!-- Application menu localization -->
 		<key name="menu.file">Файл</key>

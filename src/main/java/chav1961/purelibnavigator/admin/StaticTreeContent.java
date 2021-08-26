@@ -5,6 +5,7 @@ import java.awt.Dimension;
 import java.awt.KeyboardFocusManager;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.ClipboardOwner;
 import java.awt.datatransfer.DataFlavor;
@@ -23,6 +24,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.TimerTask;
 import java.util.UUID;
 
@@ -34,6 +36,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPopupMenu;
 import javax.swing.JTree;
+import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
 import javax.swing.TransferHandler;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -42,8 +45,12 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
+import chav1961.purelib.basic.FSM;
 import chav1961.purelib.basic.PureLibSettings;
+import chav1961.purelib.basic.Utils;
+import chav1961.purelib.basic.FSM.FSMLine;
 import chav1961.purelib.basic.exceptions.ContentException;
+import chav1961.purelib.basic.exceptions.FlowException;
 import chav1961.purelib.basic.exceptions.LocalizationException;
 import chav1961.purelib.basic.interfaces.LoggerFacade;
 import chav1961.purelib.basic.interfaces.LoggerFacade.Severity;
@@ -91,6 +98,77 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 	private static final String				REMOVE_SUBTREE_MESSAGE = "chav1961.purelibnavigator.admin.StaticTreeContent.removeSubtree.message";
 	
 	private static final DataFlavor[]		FLAVORS;
+
+	private static enum FormEditTerminal {
+		INSERT_SIBLING,
+		INSERT_CHILDREN,
+		INSERT_FILE,
+		DUPLICATE_LEAF,
+		SHOW_PROPERTIES,
+		COMPLETE,
+		CANCEL
+	}
+	
+	private static enum FormEditState {
+		ORDINAL(Utils.mkMap("type", UIItemState.AvailableAndVisible.DEFAULT, "name", UIItemState.AvailableAndVisible.DEFAULT, "caption", UIItemState.AvailableAndVisible.DEFAULT)),
+		NEW_SUBTREE(Utils.mkMap("type", UIItemState.AvailableAndVisible.AVAILABLE, "name", UIItemState.AvailableAndVisible.AVAILABLE, "caption", UIItemState.AvailableAndVisible.AVAILABLE)),
+		NEW_LEAF(Utils.mkMap("type", UIItemState.AvailableAndVisible.NOTAVAILABLE, "name", UIItemState.AvailableAndVisible.AVAILABLE, "caption", UIItemState.AvailableAndVisible.AVAILABLE)),
+		DUPLICATE_LEAF(Utils.mkMap("type", UIItemState.AvailableAndVisible.NOTAVAILABLE, "name", UIItemState.AvailableAndVisible.AVAILABLE, "caption", UIItemState.AvailableAndVisible.AVAILABLE)),
+		EDIT_LEAF(Utils.mkMap("type", UIItemState.AvailableAndVisible.NOTAVAILABLE, "name", UIItemState.AvailableAndVisible.AVAILABLE, "caption", UIItemState.AvailableAndVisible.AVAILABLE));
+		
+		private final Map<String,UIItemState.AvailableAndVisible> props;
+		
+		private FormEditState(final Map<String,UIItemState.AvailableAndVisible> props) {
+			this.props = props;
+		}
+		
+		public Map<String, UIItemState.AvailableAndVisible> getProps() {
+			return props;
+		}
+	}
+
+	private static enum SelectionTerminal {
+		SELECT_SUBTREE,
+		SELECT_LEAF,
+		UNSELECT
+	}
+
+	private static enum SelectionState {
+		ORDINAL,
+		PROCESS_SUBTREE,
+		PROCESS_LEAF;
+	}
+	
+	@SuppressWarnings("unchecked")
+	private static FSMLine<FormEditTerminal, FormEditState, FormEditState>[]	FSM_PROP = new FSMLine[]{
+																					new FSMLine<>(FormEditState.ORDINAL, FormEditTerminal.INSERT_SIBLING, FormEditState.NEW_SUBTREE),
+																					new FSMLine<>(FormEditState.NEW_SUBTREE, FormEditTerminal.COMPLETE, FormEditState.ORDINAL),
+																					new FSMLine<>(FormEditState.NEW_SUBTREE, FormEditTerminal.CANCEL, FormEditState.ORDINAL),
+																					new FSMLine<>(FormEditState.ORDINAL, FormEditTerminal.INSERT_CHILDREN, FormEditState.NEW_SUBTREE),
+																					new FSMLine<>(FormEditState.NEW_SUBTREE, FormEditTerminal.COMPLETE, FormEditState.ORDINAL),
+																					new FSMLine<>(FormEditState.NEW_SUBTREE, FormEditTerminal.CANCEL, FormEditState.ORDINAL),
+																					new FSMLine<>(FormEditState.ORDINAL, FormEditTerminal.INSERT_FILE, FormEditState.NEW_LEAF),
+																					new FSMLine<>(FormEditState.NEW_LEAF, FormEditTerminal.COMPLETE, FormEditState.ORDINAL),
+																					new FSMLine<>(FormEditState.NEW_LEAF, FormEditTerminal.CANCEL, FormEditState.ORDINAL),
+																					new FSMLine<>(FormEditState.ORDINAL, FormEditTerminal.DUPLICATE_LEAF, FormEditState.DUPLICATE_LEAF),
+																					new FSMLine<>(FormEditState.DUPLICATE_LEAF, FormEditTerminal.COMPLETE, FormEditState.ORDINAL),
+																					new FSMLine<>(FormEditState.DUPLICATE_LEAF, FormEditTerminal.CANCEL, FormEditState.ORDINAL),
+																					new FSMLine<>(FormEditState.ORDINAL, FormEditTerminal.SHOW_PROPERTIES, FormEditState.EDIT_LEAF),
+																					new FSMLine<>(FormEditState.EDIT_LEAF, FormEditTerminal.COMPLETE, FormEditState.ORDINAL),
+																					new FSMLine<>(FormEditState.EDIT_LEAF, FormEditTerminal.CANCEL, FormEditState.ORDINAL),
+																				};
+	@SuppressWarnings("unchecked")
+	private static FSMLine<SelectionTerminal, SelectionState, SelectionState>[]	FSM_MENU = new FSMLine[]{
+																					new FSMLine<>(SelectionState.ORDINAL, SelectionTerminal.SELECT_SUBTREE, SelectionState.PROCESS_SUBTREE),
+																					new FSMLine<>(SelectionState.ORDINAL, SelectionTerminal.SELECT_LEAF, SelectionState.PROCESS_LEAF),
+																					new FSMLine<>(SelectionState.PROCESS_SUBTREE, SelectionTerminal.UNSELECT, SelectionState.ORDINAL),
+																					new FSMLine<>(SelectionState.PROCESS_SUBTREE, SelectionTerminal.SELECT_LEAF, SelectionState.PROCESS_LEAF),
+																					new FSMLine<>(SelectionState.PROCESS_LEAF, SelectionTerminal.UNSELECT, SelectionState.ORDINAL),
+																					new FSMLine<>(SelectionState.PROCESS_LEAF, SelectionTerminal.SELECT_SUBTREE, SelectionState.PROCESS_SUBTREE),
+																				};
+	
+	private FSM<FormEditTerminal, FormEditState, FormEditState, Object>			fsmProp = new FSM<>((fsm,terminal,fromState,toState,action,parameter)->{}, FormEditState.ORDINAL, FSM_PROP);
+	private FSM<SelectionTerminal, SelectionState, SelectionState, Object>		fsmMenu = new FSM<>((fsm,terminal,fromState,toState,action,parameter)->{}, SelectionState.ORDINAL, FSM_MENU);
 	
 	private final ContentMetadataInterface	mdi;
 	private final Localizer					localizer;
@@ -189,29 +267,37 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 			SwingUtils.assignActionKey(this, SwingUtils.KS_COPY, al, AC_COPY);
 			SwingUtils.assignActionKey(this, SwingUtils.KS_PASTE, al, AC_PASTE);
 			SwingUtils.assignActionKey(this, SwingUtils.KS_DELETE, (e)->{
-				final ItemAndNode	sel = getSelection();
-				
-				if (sel != null) {
-					if (sel.node.hasName(F_CONTENT)) {
-						nodeRemoveSubtree();
-					}
-					else {
+				switch (fsmMenu.getCurrentState()) {
+					case ORDINAL			:
+						break;
+					case PROCESS_LEAF		:
 						leafRemove();
-					}
+						break;
+					case PROCESS_SUBTREE	:
+						nodeRemoveSubtree();
+						break;
+					default : throw new UnsupportedOperationException("Current menu state ["+fsmMenu.getCurrentState()+"] is not supported yet"); 
 				}
 			}, SwingUtils.ACTION_DELETE);
 			SwingUtils.assignActionKey(this, SwingUtils.KS_INSERT, (e)->{
-				final ItemAndNode	sel = getSelection();
-				
-				if (sel != null && sel.node.hasName(F_CONTENT)) {
-					nodeInsertChild();
+				switch (fsmMenu.getCurrentState()) {
+					case ORDINAL : case PROCESS_LEAF :
+						leafRemove();
+						break;
+					case PROCESS_SUBTREE	:
+						nodeInsertChild();
+						break;
+					default : throw new UnsupportedOperationException("Current menu state ["+fsmMenu.getCurrentState()+"] is not supported yet"); 
 				}
 			}, SwingUtils.ACTION_INSERT);
 			SwingUtils.assignActionKey(this, SwingUtils.KS_DUPLICATE, (e)->{
-				final ItemAndNode	sel = getSelection();
-				
-				if (sel != null && !sel.node.hasName(F_CONTENT)) {
-					leafDuplicate();
+				switch (fsmMenu.getCurrentState()) {
+					case ORDINAL : case PROCESS_SUBTREE :
+						break;
+					case PROCESS_LEAF		:
+						leafDuplicate();
+						break;
+					default : throw new UnsupportedOperationException("Current menu state ["+fsmMenu.getCurrentState()+"] is not supported yet"); 
 				}
 			}, SwingUtils.ACTION_DUPLICATE);
 			
@@ -227,19 +313,39 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 					
 					switch (e.getButton()) {
 						case MouseEvent.BUTTON1 :
-							if (sel != null && e.getClickCount() >= 2) {
-								showSettings(sel.item, sel.node);
+							switch (fsmMenu.getCurrentState()) {
+								case ORDINAL			:
+									break;
+								case PROCESS_LEAF : case PROCESS_SUBTREE	:
+									if (e.getClickCount() >= 2) {
+										showSettings(sel.item, sel.node);
+									}
+									break;
+								default : throw new UnsupportedOperationException("Current menu state ["+fsmMenu.getCurrentState()+"] is not supported yet"); 
 							}
 							break;
 						case MouseEvent.BUTTON2 :
 							break;
 						case MouseEvent.BUTTON3 :
-							if (sel == null) {
-								showPopup(e.getPoint(), emptyMenu);
+							final int	row = getRowForLocation(e.getPoint().x, e.getPoint().y);
+							
+							if (row != getLeadSelectionRow()) {
+								setSelectionRow(row);
 							}
-							else {
-								showPopup(e.getPoint(), sel.node.hasName(F_CONTENT) ? nodeMenu : leafMenu);
-							}
+							SwingUtilities.invokeLater(()->{
+								switch (fsmMenu.getCurrentState()) {
+									case ORDINAL			:
+										showPopup(getRectCenter(getVisibleRect()), emptyMenu);
+										break;
+									case PROCESS_LEAF		:
+										showPopup(getRectCenter(getPathBounds(getSelectionPath())), leafMenu);
+										break;
+									case PROCESS_SUBTREE	:
+										showPopup(getRectCenter(getPathBounds(getSelectionPath())), nodeMenu);
+										break;
+									default : throw new UnsupportedOperationException("Current menu state ["+fsmMenu.getCurrentState()+"] is not supported yet"); 
+								}
+							});
 							break;
 					}
 				}
@@ -252,20 +358,29 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 				public void keyPressed(final KeyEvent e) {
 					switch (e.getKeyCode()) {
 						case KeyEvent.VK_CONTEXT_MENU :
-							final ItemAndNode	sel = getSelection();
-							
-							if (sel == null) {
-								showPopup(getRectCenter(getVisibleRect()), emptyMenu);
-							}
-							else {
-								showPopup(getRectCenter(getPathBounds(getSelectionPath())), sel.node.hasName(F_CONTENT) ? nodeMenu : leafMenu);
+							switch (fsmMenu.getCurrentState()) {
+								case ORDINAL			:
+									showPopup(getRectCenter(getVisibleRect()), emptyMenu);
+									break;
+								case PROCESS_LEAF		:
+									showPopup(getRectCenter(getPathBounds(getSelectionPath())), leafMenu);
+									break;
+								case PROCESS_SUBTREE	:
+									showPopup(getRectCenter(getPathBounds(getSelectionPath())), nodeMenu);
+									break;
+								default : throw new UnsupportedOperationException("Current menu state ["+fsmMenu.getCurrentState()+"] is not supported yet"); 
 							}
 							break;
 						case KeyEvent.VK_ENTER :
-							final ItemAndNode	selEnter = getSelection();
-							
-							if (selEnter != null) {
-								showSettings(selEnter.item, selEnter.node);
+							switch (fsmMenu.getCurrentState()) {
+								case ORDINAL	:
+									break;
+								case PROCESS_LEAF : case PROCESS_SUBTREE	:
+									final ItemAndNode	selEnter = getSelection();
+									
+									showSettings(selEnter.item, selEnter.node);
+									break;
+								default : throw new UnsupportedOperationException("Current menu state ["+fsmMenu.getCurrentState()+"] is not supported yet"); 
 							}
 							break;
 					}
@@ -290,6 +405,21 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 					}
 				};
 				PureLibSettings.COMMON_MAINTENANCE_TIMER.schedule(tt, TT_DELAY);
+				
+				try{final ItemAndNode	sel = getSelection();
+
+					if (sel == null) {
+						fsmMenu.processTerminal(SelectionTerminal.UNSELECT, null);
+					}
+					else if (sel.node.hasName(F_CONTENT)) {
+						fsmMenu.processTerminal(SelectionTerminal.SELECT_SUBTREE, null);
+					}
+					else {
+						fsmMenu.processTerminal(SelectionTerminal.SELECT_LEAF, null);
+					}
+				} catch (FlowException exc) {
+					printError(exc);
+				}
 			});
 
 			this.ns = new NodeSettings(logger);
@@ -411,7 +541,11 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 			ns.name = sel.node.getChild(F_NAME).getStringValue()+suffix;
 			ns.caption = sel.node.getChild(F_CAPTION).getStringValue()+suffix;
 			
-			try{if (AutoBuiltForm.ask((JFrame)null, localizer, form)) {
+			try{fsmProp.processTerminal(FormEditTerminal.INSERT_SIBLING, null);
+			
+				if (AutoBuiltForm.ask((JFrame)null, localizer, form)) {
+					fsmProp.processTerminal(FormEditTerminal.COMPLETE, null);
+					
 					ns.id = UUID.randomUUID().toString();
 					insertSibling(sel.item, sel.node, new JsonNode(JsonNodeType.JsonObject 
 							, new JsonNode(ns.id).setName(F_ID)
@@ -420,7 +554,10 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 							, new JsonNode(ns.caption).setName(F_CAPTION)
 					));
 				}
-			} catch (LocalizationException exc) {
+				else {
+					fsmProp.processTerminal(FormEditTerminal.CANCEL, null);
+				}
+			} catch (LocalizationException | FlowException exc) {
 				printError(exc);
 			}
 		}
@@ -437,7 +574,11 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 			ns.name = "name"+suffix;
 			ns.caption = "caption"+suffix;
 			
-			try{if (AutoBuiltForm.ask((JFrame)null, localizer, form)) {
+			try{fsmProp.processTerminal(FormEditTerminal.INSERT_SIBLING, null);
+				
+				if (AutoBuiltForm.ask((JFrame)null, localizer, form)) {
+					fsmProp.processTerminal(FormEditTerminal.COMPLETE, null);
+					
 					ns.id = UUID.randomUUID().toString();
 					insertChild(sel.item, sel.node, new JsonNode(JsonNodeType.JsonObject 
 							, new JsonNode(ns.id).setName(F_ID)
@@ -446,7 +587,10 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 							, new JsonNode(ns.caption).setName(F_CAPTION)
 					));
 				}
-			} catch (LocalizationException exc) {
+				else {
+					fsmProp.processTerminal(FormEditTerminal.CANCEL, null);
+				}
+			} catch (LocalizationException | FlowException exc) {
 				printError(exc);
 			}
 		}
@@ -499,9 +643,12 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 				ns.name = sel.node.getChild(F_NAME).getStringValue()+suffix;
 				ns.caption = sel.node.getChild(F_CAPTION).getStringValue()+suffix;
 				
+				fsmProp.processTerminal(FormEditTerminal.DUPLICATE_LEAF, null);
+
 				if (AutoBuiltForm.ask((JFrame)null, localizer, form)) {
-					ns.id = UUID.randomUUID().toString();
+					fsmProp.processTerminal(FormEditTerminal.COMPLETE, null);
 					
+					ns.id = UUID.randomUUID().toString();					
 					final JsonNode	newNode = new JsonNode(JsonNodeType.JsonObject 
 														, new JsonNode(UUID.randomUUID().toString()).setName(F_ID)
 														, new JsonNode(ContentNodeType.LEAF.toString()).setName(F_TYPE)
@@ -510,7 +657,10 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 														);
 					insertChild((DefaultMutableTreeNode)sel.item.getParent(),(JsonNode)((DefaultMutableTreeNode)sel.item.getParent()).getUserObject(),newNode);
 				}
-			} catch (LocalizationException exc) {
+				else {
+					fsmProp.processTerminal(FormEditTerminal.CANCEL, null);
+				}
+			} catch (LocalizationException | FlowException exc) {
 				printError(exc);
 			}
 		}
@@ -544,14 +694,20 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 
 	private void showSettings(final DefaultMutableTreeNode item, final JsonNode node) {
 		try{fillSettings(ns, node);
+			fsmProp.processTerminal(FormEditTerminal.SHOW_PROPERTIES, null);
 			
 			if (AutoBuiltForm.ask((JFrame)null, localizer, form)) {
+				fsmProp.processTerminal(FormEditTerminal.COMPLETE, null);
+				
 				node.getChild(F_TYPE).setValue(ns.type.toString());
 				node.getChild(F_NAME).setValue(ns.name);
 				node.getChild(F_CAPTION).setValue(ns.caption);
 				((DefaultTreeModel)getModel()).nodeChanged(item);
 			}
-		} catch (LocalizationException exc) {
+			else {
+				fsmProp.processTerminal(FormEditTerminal.CANCEL, null);
+			}
+		} catch (LocalizationException | FlowException exc) {
 			printError(exc);
 		}
 	}
@@ -566,7 +722,10 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 			ns.name = item.getName()+suffix;
 			ns.caption = item.getName()+suffix;
 			
-			try{if (AutoBuiltForm.ask((JFrame)null, localizer, form)) {
+			try{fsmProp.processTerminal(FormEditTerminal.INSERT_FILE, null);
+				
+				if (AutoBuiltForm.ask((JFrame)null, localizer, form)) {
+					fsmProp.processTerminal(FormEditTerminal.COMPLETE, null);
 					ns.id = UUID.randomUUID().toString();
 					
 					insertChild(sel.item, sel.node, new JsonNode(JsonNodeType.JsonObject 
@@ -576,7 +735,10 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 							, new JsonNode(ns.caption).setName(F_CAPTION)
 					));
 				}
-			} catch (LocalizationException exc) {
+				else {
+					fsmProp.processTerminal(FormEditTerminal.CANCEL, null);
+				}
+			} catch (LocalizationException | FlowException exc) {
 				printError(exc);
 			}
 		}
@@ -604,7 +766,7 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 	}
 
 	private ItemAndNode getSelection() {
-		final TreePath	path = getSelectionPath();
+		final TreePath	path = getSelectionModel().getSelectionPath();
 		
 		if (path != null) {
 			final DefaultMutableTreeNode	item = (DefaultMutableTreeNode)path.getLastPathComponent();
@@ -634,8 +796,19 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 	}
 
 	private UIItemState.AvailableAndVisible getAccessAndVisibility(final ContentNodeMetadata meta) {
-		System.err.println("Name: "+meta.getApplicationPath()+", "+meta.getName());
-		return UIItemState.AvailableAndVisible.DEFAULT;
+//		System.err.println("Name: "+meta.getApplicationPath()+", "+meta.getName());
+		
+		final Map<String,UIItemState.AvailableAndVisible>	aav = fsmProp.getCurrentState().getProps();
+		
+		if (aav.containsKey(meta.getName())) {
+			return aav.get(meta.getName());
+		}
+		else if (URI.create("app:action:/leafPaste").equals(meta.getApplicationPath()) || URI.create("app:action:/nodePaste").equals(meta.getApplicationPath())) {
+			return Toolkit.getDefaultToolkit().getSystemClipboard().isDataFlavorAvailable(FLAVORS[0]) ? UIItemState.AvailableAndVisible.AVAILABLE : UIItemState.AvailableAndVisible.NOTAVAILABLE;  
+		}
+		else {
+			return UIItemState.AvailableAndVisible.DEFAULT;
+		}
 	}
 	
 	static DefaultMutableTreeNode buildContentTree(final JsonNode node, final List<JsonNode> path, final StringBuilder sb) throws ContentException {

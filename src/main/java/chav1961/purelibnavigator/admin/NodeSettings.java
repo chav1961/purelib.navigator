@@ -58,4 +58,9 @@ public class NodeSettings implements FormManager<Object,NodeSettings>, ModuleAcc
 			this.getClass().getModule().addExports(this.getClass().getPackageName(),item);
 		}
 	}
+
+	@Override
+	public String toString() {
+		return "NodeSettings [type=" + type + ", name=" + name + ", caption=" + caption + ", id=" + id + "]";
+	}
 }
