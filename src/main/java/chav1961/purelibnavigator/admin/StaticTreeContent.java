@@ -282,7 +282,6 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 			SwingUtils.assignActionKey(this, SwingUtils.KS_INSERT, (e)->{
 				switch (fsmMenu.getCurrentState()) {
 					case ORDINAL : case PROCESS_LEAF :
-						leafRemove();
 						break;
 					case PROCESS_SUBTREE	:
 						nodeInsertChild();
@@ -411,7 +410,7 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 					if (sel == null) {
 						fsmMenu.processTerminal(SelectionTerminal.UNSELECT, null);
 					}
-					else if (sel.node.hasName(F_CONTENT)) {
+					else if (ContentNodeType.valueOf(sel.node.getChild(F_TYPE).getStringValue()) == ContentNodeType.SUBTREE) {
 						fsmMenu.processTerminal(SelectionTerminal.SELECT_SUBTREE, null);
 					}
 					else {
@@ -435,7 +434,7 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 				public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
 					final JLabel	label = (JLabel) super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
 
-					label.setText(((JsonNode)((DefaultMutableTreeNode)value).getUserObject()).getChild(F_NAME).getStringValue());
+					label.setText(((MyTreeNode)value).getUserObject().getChild(F_NAME).getStringValue());
 					return label;
 				}
 			});
@@ -463,19 +462,45 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 		}
 	}
 
-	protected void insertSibling(final DefaultMutableTreeNode parentItem, final JsonNode parentNode, final JsonNode newNode) {
-		// TODO Auto-generated method stub
-//		((DefaultTreeModel)getModel()).nodeStructureChanged(parentItem);
+	protected void insertSibling(final MyTreeNode parentItem, final JsonNode parentNode, final JsonNode newNode) {
+		final MyTreeNode	grandParentItem = (MyTreeNode)parentItem.getParent();
+		final JsonNode		grandParentNode = (JsonNode)grandParentItem.getUserObject(); 
+		
+		insertChild(grandParentItem, grandParentNode, newNode);
 	}
 	
-	protected void insertChild(final DefaultMutableTreeNode parentItem, final JsonNode parentNode, final JsonNode newNode) {
-		// TODO Auto-generated method stub
-//		((DefaultTreeModel)getModel()).nodeStructureChanged(parentItem);
+	protected void insertChild(final MyTreeNode parentItem, final JsonNode parentNode, final JsonNode newNode) {
+		final MyTreeNode	newItem = new MyTreeNode(newNode);
+		
+		if (!parentNode.hasName(F_CONTENT)) {
+			parentNode.addChild(new JsonNode(JsonNodeType.JsonArray).setName(F_CONTENT));
+		}
+		parentNode.getChild(F_CONTENT).addChild(newNode);
+		parentItem.add(newItem);
+		((DefaultTreeModel)getModel()).nodeStructureChanged(parentItem);
 	}
 
-	protected void removeItem(final DefaultMutableTreeNode item, final JsonNode node) {
-		// TODO Auto-generated method stub
-//		((DefaultTreeModel)getModel()).nodeStructureChanged(parentItem);
+	protected void removeItem(final MyTreeNode item, final JsonNode node) {
+		final MyTreeNode	parentItem = (MyTreeNode)item.getParent();
+		final JsonNode		parentNode = (JsonNode)parentItem.getUserObject(); 
+		
+		if (parentNode.hasName(F_CONTENT)) {
+			final JsonNode	arr = parentNode.getChild(F_CONTENT);
+			
+			for (int index = 0; index < arr.childrenCount(); index++) {
+				if (node.equals(arr.getChild(index))) {
+					arr.removeChild(index);
+					break;
+				}
+			}
+			for (int index = 0; index < parentItem.getChildCount(); index++) {
+				if (node.equals(((DefaultMutableTreeNode)parentItem.getChildAt(index)).getUserObject())) {
+					parentItem.remove(index);
+					break;
+				}
+			}			
+			((DefaultTreeModel)getModel()).nodeStructureChanged(parentItem);
+		}
 	}
 	
 	private void processCCP(final TransferHandler th, final ActionEvent ae) {
@@ -655,7 +680,7 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 														, new JsonNode(ns.name).setName(F_NAME)
 														, new JsonNode(ns.caption).setName(F_CAPTION)
 														);
-					insertChild((DefaultMutableTreeNode)sel.item.getParent(),(JsonNode)((DefaultMutableTreeNode)sel.item.getParent()).getUserObject(),newNode);
+					insertChild(sel.item.getParent(),sel.item.getParent().getUserObject(),newNode);
 				}
 				else {
 					fsmProp.processTerminal(FormEditTerminal.CANCEL, null);
@@ -687,7 +712,7 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 		}
 	}
 	
-	private void processDragAndDrop(final boolean move, final DefaultMutableTreeNode fromItem, final JsonNode fromNode, final DefaultMutableTreeNode toItem, final JsonNode toNode) {
+	private void processDragAndDrop(final boolean move, final MyTreeNode fromItem, final JsonNode fromNode, final MyTreeNode toItem, final JsonNode toNode) {
 		// TODO Auto-generated method stub
 		JOptionPane.showMessageDialog(this, "drag: "+fromNode+" to "+toNode+" with move="+move);
 	}
@@ -751,8 +776,8 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 			final TreePath	path = getPathForRow(row);
 			
 			if (path != null) {
-				final DefaultMutableTreeNode	item = (DefaultMutableTreeNode)path.getLastPathComponent();
-				final JsonNode					node = (JsonNode) item.getUserObject();
+				final MyTreeNode	item = (MyTreeNode)path.getLastPathComponent();
+				final JsonNode		node = item.getUserObject();
 				
 				return new ItemAndNode(item, node);
 			}
@@ -769,8 +794,8 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 		final TreePath	path = getSelectionModel().getSelectionPath();
 		
 		if (path != null) {
-			final DefaultMutableTreeNode	item = (DefaultMutableTreeNode)path.getLastPathComponent();
-			final JsonNode					node = (JsonNode) item.getUserObject();
+			final MyTreeNode	item = (MyTreeNode)path.getLastPathComponent();
+			final JsonNode		node = item.getUserObject();
 			
 			return new ItemAndNode(item, node);
 		}
@@ -806,6 +831,9 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 		else if (URI.create("app:action:/leafPaste").equals(meta.getApplicationPath()) || URI.create("app:action:/nodePaste").equals(meta.getApplicationPath())) {
 			return Toolkit.getDefaultToolkit().getSystemClipboard().isDataFlavorAvailable(FLAVORS[0]) ? UIItemState.AvailableAndVisible.AVAILABLE : UIItemState.AvailableAndVisible.NOTAVAILABLE;  
 		}
+		else if (URI.create("app:action:/nodeInsertSibling").equals(meta.getApplicationPath())) {
+			return !((MyTreeNode)getModel().getRoot()).equals(getSelection().item) ? UIItemState.AvailableAndVisible.AVAILABLE : UIItemState.AvailableAndVisible.NOTAVAILABLE;  
+		}
 		else {
 			return UIItemState.AvailableAndVisible.DEFAULT;
 		}
@@ -816,7 +844,7 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 		if (node.getType() == JsonNodeType.JsonObject) {
 			if (JsonUtils.checkJsonMandatories(node, sb, F_ID, F_TYPE, F_NAME, F_CAPTION)) {
 				if (JsonUtils.checkJsonFieldTypes(node, sb, F_ID+"/"+JsonUtils.JSON_TYPE_STR, F_TYPE+"/"+JsonUtils.JSON_TYPE_STR, F_NAME+"/"+JsonUtils.JSON_TYPE_STR, F_CAPTION+"/"+JsonUtils.JSON_TYPE_STR, F_CONTENT+"/"+JsonUtils.JSON_TYPE_ARR)) {
-					final DefaultMutableTreeNode	treeItem = new DefaultMutableTreeNode(node);
+					final MyTreeNode	treeItem = new MyTreeNode(node);
 
 					if (node.hasName(F_CONTENT)) {
 						for (JsonNode item : node.getChild(F_CONTENT).children()) {
@@ -869,10 +897,10 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 	     
 	    public boolean importData(final TransferHandler.TransferSupport info) {
 	        if (!info.isDrop()) {
-	    		try{final TreePath					path = ((JTree)info.getComponent()).getSelectionPath();
-		    		final Transferable				t = info.getTransferable();
-					final DefaultMutableTreeNode	toItem = (DefaultMutableTreeNode)path.getLastPathComponent();  
-					final JsonNode					toNode = (JsonNode) (toItem).getUserObject();
+	    		try{final TreePath		path = ((JTree)info.getComponent()).getSelectionPath();
+		    		final Transferable	t = info.getTransferable();
+					final MyTreeNode	toItem = (MyTreeNode)path.getLastPathComponent();  
+					final JsonNode		toNode = toItem.getUserObject();
 		    		
 		    		if (t.isDataFlavorSupported(FLAVORS[0])) {
 						final JsonNode					fromNode = (JsonNode) t.getTransferData(FLAVORS[0]);
@@ -888,11 +916,11 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 				}
 	        }
 	        else {
-	    		try{final Point						point = info.getDropLocation().getDropPoint();
-		    		final TreePath					path = ((JTree)info.getComponent()).getPathForLocation(point.x, point.y);
-		    		final Transferable				t = info.getTransferable();
-					final DefaultMutableTreeNode	toItem = (DefaultMutableTreeNode)path.getLastPathComponent();  
-					final JsonNode					toNode = (JsonNode) (toItem).getUserObject();
+	    		try{final Point			point = info.getDropLocation().getDropPoint();
+		    		final TreePath		path = ((JTree)info.getComponent()).getPathForLocation(point.x, point.y);
+		    		final Transferable	t = info.getTransferable();
+					final MyTreeNode	toItem = (MyTreeNode)path.getLastPathComponent();  
+					final JsonNode		toNode = toItem.getUserObject();
 					
 		    		if (t.isDataFlavorSupported(FLAVORS[0])) {
 						final JsonNode				fromNode = (JsonNode) t.getTransferData(FLAVORS[0]);
@@ -973,10 +1001,10 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 	}
 	
 	private static class ItemAndNode {
-		private final DefaultMutableTreeNode	item;
-		private final JsonNode					node;
+		private final MyTreeNode	item;
+		private final JsonNode		node;
 		
-		public ItemAndNode(DefaultMutableTreeNode item, JsonNode node) {
+		public ItemAndNode(MyTreeNode item, JsonNode node) {
 			this.item = item;
 			this.node = node;
 		}
@@ -984,6 +1012,29 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 		@Override
 		public String toString() {
 			return "ItemAndNode [item=" + item + ", node=" + node + "]";
+		}
+	}
+	
+	private static class MyTreeNode extends DefaultMutableTreeNode {
+		private static final long serialVersionUID = 1L;
+
+		public MyTreeNode(final JsonNode node) {
+			super(node);
+		}
+		
+		@Override
+		public JsonNode getUserObject() {
+			return (JsonNode)super.getUserObject();
+		}
+		
+		@Override
+		public boolean isLeaf() {
+			return ContentNodeType.valueOf(getUserObject().getChild(F_TYPE).getStringValue()) != ContentNodeType.SUBTREE;
+		}
+		
+		@Override
+		public MyTreeNode getParent() {
+			return (MyTreeNode)super.getParent();
 		}
 	}
 }
