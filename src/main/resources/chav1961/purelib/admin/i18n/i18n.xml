@@ -34,11 +34,17 @@
 		<key name="menu.help.about">About</key>
 		<key name="menu.help.about.tt">About application</key>
 
-
-		<key name="editor.toolbar.clear">clear</key>
-		<key name="editor.toolbar.clear.tt">clear</key>
+<!-- Creole editor toolbar -->
+		<key name="creoleeditor.toolbar.clear">clear</key>
+		<key name="creoleeditor.toolbar.clear.tt">clear editor content</key>
+		<key name="creoleeditor.toolbar.save">save</key>
+		<key name="creoleeditor.toolbar.save.tt">save editor content</key>
 		
-		
+<!-- Image view toolbar -->
+		<key name="imageview.toolbar.fill">fill</key>
+		<key name="imageview.toolbar.fill.tt">Fill image content to the window</key>
+		<key name="imageview.toolbar.original">original</key>
+		<key name="imageview.toolbar.original.tt">Use original image size to show image</key>
 		
 <!-- Tree content window -->
 		<key name="chav1961.purelibnavigator.admin.StaticTreeContent.fileType.creole">Creole text files</key>
@@ -131,6 +137,18 @@
 
 		<key name="editor.toolbar.clear">clear</key>
 		<key name="editor.toolbar.clear.tt">clear</key>
+
+<!-- ПАнель редактора Creole -->
+		<key name="creoleeditor.toolbar.clear">Очистить</key>
+		<key name="creoleeditor.toolbar.clear.tt">Очистить содержимое редактора</key>
+		<key name="creoleeditor.toolbar.save">Сохранить</key>
+		<key name="creoleeditor.toolbar.save.tt">Сохранить содержимое редактора</key>
+
+<!-- ПАнель просмотрщика изображений -->
+		<key name="imageview.toolbar.fill">Заполнить</key>
+		<key name="imageview.toolbar.fill.tt">Заполнить изображение на все окно</key>
+		<key name="imageview.toolbar.original">Исходное</key>
+		<key name="imageview.toolbar.original.tt">Показывать исходный размер изображения</key>
 
 <!-- Окно дерева контента -->
 		<key name="chav1961.purelibnavigator.admin.StaticTreeContent.fileType.creole">Файлы формата CREOLE</key>

@@ -2,9 +2,14 @@ package chav1961.purelibnavigator.admin;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.Image;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Reader;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.net.ServerSocket;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -12,6 +17,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 
+import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 import javax.swing.JMenuBar;
 import javax.swing.JPanel;
@@ -19,13 +25,16 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 
 import chav1961.purelib.basic.ArgParser;
+import chav1961.purelib.basic.PureLibSettings;
 import chav1961.purelib.basic.SubstitutableProperties;
 import chav1961.purelib.basic.Utils;
 import chav1961.purelib.basic.exceptions.CommandLineParametersException;
 import chav1961.purelib.basic.exceptions.ContentException;
 import chav1961.purelib.basic.exceptions.EnvironmentException;
 import chav1961.purelib.basic.exceptions.LocalizationException;
+import chav1961.purelib.basic.interfaces.LoggerFacade.Severity;
 import chav1961.purelib.fsys.FileSystemFactory;
+import chav1961.purelib.fsys.interfaces.FileSystemInterface;
 import chav1961.purelib.i18n.LocalizerFactory;
 import chav1961.purelib.i18n.PureLibLocalizer;
 import chav1961.purelib.i18n.interfaces.Localizer;
@@ -38,6 +47,8 @@ import chav1961.purelib.ui.interfaces.UIItemState;
 import chav1961.purelib.ui.swing.SwingUtils;
 import chav1961.purelib.ui.swing.interfaces.OnAction;
 import chav1961.purelib.ui.swing.useful.JStateString;
+import chav1961.purelibnavigator.admin.ContentEditorAndViewer.ContentType;
+import chav1961.purelibnavigator.interfaces.ContentNodeType;
 
 public class NewApplication extends JFrame implements LocaleChangeListener {
 	private static final long 				serialVersionUID = -3061028320843379171L;
@@ -59,6 +70,8 @@ public class NewApplication extends JFrame implements LocaleChangeListener {
 	private final StaticTreeContent			stc;
 	private final ContentEditorAndViewer	ceav;
 	private final JStateString				state;
+	private FileSystemInterface				fsi;
+	private String							creoleContent = null;
 	
 	public NewApplication(final ContentMetadataInterface mdi, final Localizer parent, final int localHelpPort, final CountDownLatch latch) throws EnvironmentException, NullPointerException, IllegalArgumentException, IOException, ContentException, ClassNotFoundException {
 		if (mdi == null) {
@@ -86,11 +99,49 @@ public class NewApplication extends JFrame implements LocaleChangeListener {
 			final JSplitPane	splitter = new JSplitPane();
 			final JPanel		rightPanel = new JPanel(new BorderLayout());
 			
-			this.stc = new StaticTreeContent(mdi, localizer, state, FileSystemFactory.createFileSystem(URI.create("fsys:"+new File("./src/test/resources").toURI()))
+			this.fsi = FileSystemFactory.createFileSystem(URI.create("fsys:"+new File("./src/test/resources").toURI()));
+			this.ceav = new ContentEditorAndViewer(localizer, state, mdi, (t)->saveCreoleContent(t));
+			this.stc = new StaticTreeContent(mdi, localizer, state, fsi
 										,(item,node)->{
-											//System.err.println("Node="+node);
+											if (creoleContent != null && ceav.creoleContentWasChanged()) {
+												ceav.saveCreoleContent();
+											}
+											
+											if (ContentNodeType.valueOf(node.getChild(StaticTreeContent.F_TYPE).getStringValue()) == ContentNodeType.LEAF) {
+												try(final FileSystemInterface	content = fsi.clone().open(node.getChild(StaticTreeContent.F_NAME).getStringValue())) {
+													if (content.exists() && content.isFile()) {
+														if (content.getName().endsWith(".png")) {
+															try(final InputStream	is = content.read()) {
+																final Image			image = ImageIO.read(is);
+																
+																ceav.getImageContainer().setBackground(image);
+																ceav.setContentType(ContentType.IMAGE);
+																creoleContent = null; 
+															}
+														}
+														else if (content.getName().endsWith(".cre")) {
+															creoleContent = content.getPath();
+															
+															try(final Reader		rdr = content.charRead(PureLibSettings.DEFAULT_CONTENT_ENCODING)) {
+																
+																ceav.getCreoleEditor().setText(Utils.fromResource(rdr));
+																ceav.setContentType(ContentType.CREOLE);
+															}
+														}
+														else {
+															creoleContent = null; 
+															ceav.setContentType(ContentType.COMMON);
+														}
+													}
+													else {
+														creoleContent = null; 
+														ceav.setContentType(ContentType.COMMON);
+													}
+												} catch (IOException exc) {
+													state.message(Severity.error, exc.getLocalizedMessage(), exc);
+												}
+											}
 										});
-			this.ceav = new ContentEditorAndViewer(localizer, state, mdi);
 			
 			rightPanel.add(ceav, BorderLayout.CENTER);
 			splitter.setLeftComponent(new JScrollPane(stc));
@@ -108,6 +159,14 @@ public class NewApplication extends JFrame implements LocaleChangeListener {
 		}
 	}
 	
+	private void saveCreoleContent(final String content) throws IOException {
+		try(final FileSystemInterface	creole = fsi.clone().open(creoleContent)) {
+			try(final Writer			wr = creole.create().charWrite(PureLibSettings.DEFAULT_CONTENT_ENCODING)) {
+				Utils.copyStream(new StringReader(content), wr);
+			}
+		}
+	}
+
 	@OnAction("action:/exit")
 	private void exitApplication () {
 		setVisible(false);

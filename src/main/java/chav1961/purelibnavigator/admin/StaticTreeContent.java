@@ -79,12 +79,13 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 	private static final long 				serialVersionUID = 1L;
 	private static final long				TT_DELAY = 500;
 	
+	static final String						F_ID = "id";
+	static final String						F_TYPE = "type";
+	static final String						F_NAME = "name";
+	static final String						F_CAPTION = "caption";
+	static final String						F_CONTENT = "content";
+
 	private static final String				CONTENT_FILE = "content.json";
-	private static final String				F_ID = "id";
-	private static final String				F_TYPE = "type";
-	private static final String				F_NAME = "name";
-	private static final String				F_CAPTION = "caption";
-	private static final String				F_CONTENT = "content";
 	
 	private static final String				AC_CUT;
 	private static final String				AC_COPY;

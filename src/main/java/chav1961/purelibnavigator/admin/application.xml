@@ -30,8 +30,13 @@
 		<app:key code="S" ctrl="true" action="saveFile"/>
 		<app:key code="Q" ctrl="true" action="exit"/>
 	</app:keyset>
-	<app:menu id="editorToolbar">
-		<app:item name="editor.toolbar.clear" caption="editor.toolbar.clear" tooltip="editor.toolbar.clear.tt" icon="root://chav1961.purelibnavigator.admin.NewApplication/images/favicon.png" action="clear"/>
+	<app:menu id="creoleEditorToolbar">
+		<app:item name="creoleeditor.toolbar.clear" caption="creoleeditor.toolbar.clear" tooltip="creoleeditor.toolbar.clear.tt" icon="root://chav1961.purelibnavigator.admin.NewApplication/images/favicon.png" action="creoleClear"/>
+		<app:item name="creoleeditor.toolbar.save" caption="creoleeditor.toolbar.save" tooltip="creoleeditor.toolbar.save.tt" icon="root://chav1961.purelibnavigator.admin.NewApplication/images/favicon.png" action="creoleSave"/>
+	</app:menu>
+	<app:menu id="imageViewToolbar">
+		<app:item name="imageview.toolbar.fill" caption="imageview.toolbar.fill" tooltip="imageview.toolbar.fill.tt" icon="root://chav1961.purelibnavigator.admin.NewApplication/images/favicon.png" action="imageFill"/>
+		<app:item name="imageview.toolbar.original" caption="imageview.toolbar.original" tooltip="imageview.toolbar.original.tt" icon="root://chav1961.purelibnavigator.admin.NewApplication/images/favicon.png" action="imageOriginal"/>
 	</app:menu>
 	<app:menu id="rightNodeMenu">
 		<app:item name="menu.admin.tree.cut" caption="menu.admin.tree.cut" tooltip="menu.admin.tree.cut.tt" action="nodeCut"/>
