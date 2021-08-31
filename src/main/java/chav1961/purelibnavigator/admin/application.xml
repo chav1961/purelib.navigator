@@ -15,7 +15,7 @@
 			<app:item name="menu.file.exit" caption="menu.file.exit" tooltip="menu.file.exit.tt" action="exit"/>
 		</app:submenu>
 		<app:submenu name="menu.tools" caption="menu.tools" tooltip="menu.tools.tt">
-			<app:item name="menu.tools.preview" caption="menu.tools.preview" tooltip="menu.tools.preview.tt" action="preview"/>
+			<app:item name="menu.tools.pack" caption="menu.tools.pack" tooltip="menu.tools.pack.tt" action="pack"/>
 			<app:builtinSubmenu name="builtin.languages" caption="menu.tools.languages" tooltip="menu.tools.languages.tt"/>
 		</app:submenu>
 		<app:submenu name="menu.help" caption="menu.help" tooltip="menu.help.tt">
@@ -75,6 +75,6 @@
 		<app:key code="DELETE" action="leafRemove"/>
 	</app:keyset>
 	<app:menu id="rightEmptyMenu">
-		<app:item name="editor.toolbar.clear" caption="editor.toolbar.clear" tooltip="editor.toolbar.clear.tt" icon="root://chav1961.purelibnavigator.admin.NewApplication/images/favicon.png" action="clear"/>
+		<app:item name="creoleeditor.toolbar.clear2" caption="creoleeditor.toolbar.clear" tooltip="creoleeditor.toolbar.clear.tt" icon="root://chav1961.purelibnavigator.admin.NewApplication/images/favicon.png" action="clear"/>
 	</app:menu>
 </app:root>

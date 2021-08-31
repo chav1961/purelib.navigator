@@ -5,12 +5,16 @@
 		<key name="Application.title">(c) 2021, Pure lib navigator, static content editor</key>  
 		<key name="Application.help.title">About</key>
 		<key name="Application.help.content">About content</key>
+		<key name="Application.save.title">Save changes</key>
+		<key name="Application.save.content">There are unsaved changes in your content. Save it?</key>
+		<key name="Application.help.projects">Help projects</key>
+		
 
 <!-- Application menu localization -->
 		<key name="menu.file">File</key>
 		<key name="menu.file.tt">Manage file operations and exit application</key>
-		<key name="menu.file.new">New tab</key>
-		<key name="menu.file.new.tt">Create new tab in the window</key>
+		<key name="menu.file.new">New</key>
+		<key name="menu.file.new.tt">Create new file in the window</key>
 		<key name="menu.file.open">Open</key>
 		<key name="menu.file.open.tt">Open existent file in the current tab</key>
 		<key name="menu.file.save">Save</key>
@@ -23,8 +27,8 @@
 		<key name="menu.file.exit.tt">Exit application</key>
 		<key name="menu.tools">Tools</key>
 		<key name="menu.tools.tt">Tools and settings</key>
-		<key name="menu.tools.preview">Preview</key>
-		<key name="menu.tools.preview.tt">Preview current file content</key>
+		<key name="menu.tools.pack">Pack project</key>
+		<key name="menu.tools.pack.tt">Pack project to zip file</key>
 		<key name="menu.tools.languages">Language</key>
 		<key name="menu.tools.languages.tt">Select language for user interface</key>
 		<key name="menu.help">Help</key>
@@ -75,8 +79,10 @@
 		<key name="menu.admin.tree.duplicateLeaf.tt">Duplicate leaf element</key>
 
 <!-- ContentNodeType enumeration -->
-		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.leaf">Leaf</key>
-		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.leaf.tt">This node is leaf</key>
+		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.creole">Creole</key>
+		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.creole.tt">This node is Creole file</key>
+		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.image">Image</key>
+		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.image.tt">This node is image file</key>
 		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.subtree">Subtree</key>
 		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.subtree.tt">This node is subtree</key>
 		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.unknown">Unknown</key>
@@ -104,14 +110,17 @@
 	
 <!-- Application localization -->
 		<key name="Application.title">(c) 2021, Pure lib navigator, редактор статического контента</key>  
-		<key name="Application.help.title">About</key>
-		<key name="Application.help.content">About content</key>
+		<key name="Application.help.title">О программе</key>
+		<key name="Application.help.content">О программе</key>
+		<key name="Application.save.title">Сохранить изменения</key>
+		<key name="Application.save.content">В программе есть несохраненные изменения. Сохранить их?</key>
+		<key name="Application.help.projects">Проекты справки</key>
 
 <!-- Application menu localization -->
 		<key name="menu.file">Файл</key>
 		<key name="menu.file.tt">Работа с файлами и выход из программы</key>
-		<key name="menu.file.new">Новая вкладка</key>
-		<key name="menu.file.new.tt">Открыть новую вкладку в окне</key>
+		<key name="menu.file.new">Новый</key>
+		<key name="menu.file.new.tt">Открыть новый файл в окне</key>
 		<key name="menu.file.open">Открыть</key>
 		<key name="menu.file.open.tt">Загрузить содержимое файла в текущую вкладку</key>
 		<key name="menu.file.save">Сохранить</key>
@@ -124,8 +133,8 @@
 		<key name="menu.file.exit.tt">Выход из программы</key>
 		<key name="menu.tools">Инструменты</key>
 		<key name="menu.tools.tt">Инструменты и настройки</key>
-		<key name="menu.tools.preview">Просмотр</key>
-		<key name="menu.tools.preview.tt">Предварительный просмотр редактируемого файла</key>
+		<key name="menu.tools.pack">Упаковать</key>
+		<key name="menu.tools.pack.tt">Упаковать проект в zip-архиф</key>
 		<key name="menu.tools.languages">Язык</key>
 		<key name="menu.tools.languages.tt">Выбрать язык взаимодействия с программой</key>
 		<key name="menu.help">Помощь</key>
@@ -134,9 +143,6 @@
 		<key name="menu.help.startBrowser.tt">Запустить браузер для просмотра статического контента</key>
 		<key name="menu.help.about">О программе</key>
 		<key name="menu.help.about.tt">Информация о программе</key>
-
-		<key name="editor.toolbar.clear">clear</key>
-		<key name="editor.toolbar.clear.tt">clear</key>
 
 <!-- ПАнель редактора Creole -->
 		<key name="creoleeditor.toolbar.clear">Очистить</key>
@@ -180,12 +186,14 @@
 
 
 <!-- НУмерация ContentNodeType -->
-		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.leaf">Leaf</key>
-		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.leaf.tt">This node is leaf</key>
-		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.subtree">Subtree</key>
-		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.subtree.tt">This node is subtree</key>
-		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.unknown">Unknown</key>
-		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.unknown.tt">Type of the node is unknown</key>
+		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.creole">Creole</key>
+		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.creole.tt">Это файл Creole</key>
+		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.image">Изображение</key>
+		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.image.tt">Это изображение</key>
+		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.subtree">Поддерево</key>
+		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.subtree.tt">Это поддерево</key>
+		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.unknown">Неизвестно</key>
+		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.unknown.tt">Тип узла неизвестен</key>
 
 
 <!-- Кадр свойств узла -->

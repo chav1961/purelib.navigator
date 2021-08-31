@@ -59,7 +59,7 @@ public class ContentEditorAndViewer extends JPanel {
 	private final JCreoleEditor				editor = new JCreoleEditor();
 	private final JToolBar					imageToolBar;
 	private final JBackgroundComponent		image;
-	private final JLabel					common = new JLabel("<not selected>");
+	private final JLabel					common = new JLabel("<not selected>", JLabel.CENTER);
 	
 	private ContentType						contentType = ContentType.CREOLE;
 	private boolean							editorContentChanged = false;

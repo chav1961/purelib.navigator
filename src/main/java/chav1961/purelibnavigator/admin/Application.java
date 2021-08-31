@@ -1,42 +1,43 @@
 package chav1961.purelibnavigator.admin;
 
 import java.awt.BorderLayout;
-import java.awt.Desktop;
 import java.awt.Dimension;
-import java.awt.Toolkit;
-import java.awt.event.ComponentEvent;
-import java.awt.event.ComponentListener;
-import java.awt.event.KeyEvent;
+import java.awt.Image;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.Reader;
+import java.io.StringReader;
+import java.io.Writer;
 import java.net.ServerSocket;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
+import java.net.URISyntaxException;
+import java.util.HashSet;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 
-import javax.swing.JComponent;
+import javax.imageio.ImageIO;
 import javax.swing.JFrame;
-import javax.swing.JMenu;
 import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTabbedPane;
-import javax.swing.KeyStroke;
-import javax.swing.SwingUtilities;
+import javax.swing.JSplitPane;
 
 import chav1961.purelib.basic.ArgParser;
+import chav1961.purelib.basic.PureLibSettings;
 import chav1961.purelib.basic.SubstitutableProperties;
-import chav1961.purelib.basic.SystemErrLoggerFacade;
 import chav1961.purelib.basic.Utils;
 import chav1961.purelib.basic.exceptions.CommandLineParametersException;
-import chav1961.purelib.basic.exceptions.ConsoleCommandException;
 import chav1961.purelib.basic.exceptions.ContentException;
 import chav1961.purelib.basic.exceptions.EnvironmentException;
 import chav1961.purelib.basic.exceptions.LocalizationException;
-import chav1961.purelib.basic.interfaces.LoggerFacade;
 import chav1961.purelib.basic.interfaces.LoggerFacade.Severity;
+import chav1961.purelib.fsys.FileSystemFactory;
+import chav1961.purelib.fsys.interfaces.FileSystemInterface;
 import chav1961.purelib.i18n.LocalizerFactory;
 import chav1961.purelib.i18n.PureLibLocalizer;
 import chav1961.purelib.i18n.interfaces.Localizer;
@@ -45,30 +46,49 @@ import chav1961.purelib.model.ContentModelFactory;
 import chav1961.purelib.model.interfaces.ContentMetadataInterface;
 import chav1961.purelib.model.interfaces.ContentMetadataInterface.ContentNodeMetadata;
 import chav1961.purelib.nanoservice.NanoServiceFactory;
+import chav1961.purelib.ui.interfaces.UIItemState;
 import chav1961.purelib.ui.swing.SwingUtils;
 import chav1961.purelib.ui.swing.interfaces.OnAction;
+import chav1961.purelib.ui.swing.useful.JFileSelectionDialog;
+import chav1961.purelib.ui.swing.useful.JFileSelectionDialog.FilterCallback;
+import chav1961.purelib.ui.swing.useful.JLocalizedOptionPane;
 import chav1961.purelib.ui.swing.useful.JStateString;
+import chav1961.purelibnavigator.admin.ContentEditorAndViewer.ContentType;
+import chav1961.purelibnavigator.interfaces.ContentNodeGroup;
+import chav1961.purelibnavigator.interfaces.ContentNodeType;
 
-public class Application extends JFrame implements LocaleChangeListener {
-	private static final long 			serialVersionUID = -3061028320843379171L;
+public class Application extends JFrame implements LocaleChangeListener, AutoCloseable {
+	private static final long 				serialVersionUID = -3061028320843379171L;
 
-	public static final String			ARG_HELP_PORT = "helpport";
+	public static final String				ARG_HELP_PORT = "helpport";
+
+	public static final String				APPLICATION_TITLE = "Application.title";
+	public static final String				MESSAGE_FILE_LOADED = "Application.message.fileLoaded";
+	public static final String				MESSAGE_FILE_SAVED = "Application.message.fileSaved";
 	
-	public static final String			APPLICATION_TITLE = "Application.title";
-	public static final String			MESSAGE_FILE_LOADED = "Application.message.fileLoaded";
-	public static final String			MESSAGE_FILE_SAVED = "Application.message.fileSaved";
+	public static final String				APPLICATION_HELP_TITLE = "Application.help.title";
+	public static final String				APPLICATION_HELP_CONTENT = "Application.help.content";
+
+	public static final String				APPLICATION_SAVE_TITLE = "Application.save.title";
+	public static final String				APPLICATION_SAVE_CONTENT = "Application.save.content";
+	public static final String				APPLICATION_HELP_PROJECTS = "Application.help.projects";
 	
-	private final ContentMetadataInterface 	app;
-	private final Localizer				localizer;
-	private final int 					localHelpPort;
-	private final CountDownLatch		latch;
-	private final JMenuBar				menu;
-	private final JTabbedPane			tabber = new JTabbedPane(); 
-	private final List<CreoleEditorTab>	tabs = new ArrayList<>();
-	private final JStateString			state;
 	
-	public Application(final ContentMetadataInterface app, final Localizer parent, final int localHelpPort, final CountDownLatch latch) throws EnvironmentException, NullPointerException, IllegalArgumentException, IOException {
-		if (app == null) {
+	private final ContentMetadataInterface	mdi;
+	private final Localizer					localizer;
+	private final int 						localHelpPort;
+	private final CountDownLatch			latch;
+	private final JMenuBar					menu;
+	private final StaticTreeContent			stc;
+	private final ContentEditorAndViewer	ceav;
+	private final JStateString				state;
+	private final Set<File>					temporaries = new HashSet<>();
+	
+	private FileSystemInterface				fsi;
+	private String							creoleContent = null;
+	
+	public Application(final ContentMetadataInterface mdi, final Localizer parent, final int localHelpPort, final CountDownLatch latch) throws EnvironmentException, NullPointerException, IllegalArgumentException, IOException, ContentException {
+		if (mdi == null) {
 			throw new NullPointerException("Application descriptor can't be null");
 		}
 		else if (parent == null) {
@@ -78,220 +98,311 @@ public class Application extends JFrame implements LocaleChangeListener {
 			throw new NullPointerException("Latch to notify closure can't be null");
 		}
 		else {
-			this.app = app;
-			this.localizer = LocalizerFactory.getLocalizer(app.getRoot().getLocalizerAssociated());
+			this.mdi = mdi;
+			this.localizer = LocalizerFactory.getLocalizer(mdi.getRoot().getLocalizerAssociated());
 			this.localHelpPort = localHelpPort;
 			this.latch = latch;
 			this.state = new JStateString(this.localizer,10);
 			
 			parent.push(localizer);
 			localizer.addLocaleChangeListener(this);
-			this.menu = SwingUtils.toJComponent(app.byUIPath(URI.create("ui:/model/navigation.top.mainmenu")), JMenuBar.class);
+			this.menu = SwingUtils.toJComponent(mdi.byUIPath(URI.create("ui:/model/navigation.top.mainmenu")), JMenuBar.class, (meta)->getAccessAndVisibility(meta));
 			
 			SwingUtils.assignActionListeners(menu,this);
-			SwingUtils.centerMainWindow(this,0.75f);
-			SwingUtils.assignExitMethod4MainWindow(this,()->{exitApplication();});
-			SwingUtils.assignActionKey((JComponent)this.getContentPane(),JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT,KeyStroke.getKeyStroke(KeyEvent.VK_F4,KeyEvent.CTRL_DOWN_MASK),(e)->changeTab(+1),"nextTab");
-			SwingUtils.assignActionKey((JComponent)this.getContentPane(),JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT,KeyStroke.getKeyStroke(KeyEvent.VK_F4,KeyEvent.CTRL_DOWN_MASK|KeyEvent.SHIFT_DOWN_MASK),(e)->changeTab(-1),"prevTab");
+			
+			final JSplitPane	splitter = new JSplitPane();
+			final JPanel		rightPanel = new JPanel(new BorderLayout());
+			
+			this.fsi = null;
+			this.ceav = new ContentEditorAndViewer(localizer, state, mdi, (t)->saveCreoleContent(t));
+			this.stc = new StaticTreeContent(mdi, localizer, state
+										,(item,node)->{
+											if (creoleContent != null && ceav.creoleContentWasChanged()) {
+												ceav.saveCreoleContent();
+											}
+											
+											ContentNodeType	type;
+											
+											if (node != null && (type = ContentNodeType.valueOf(node.getChild(StaticTreeContent.F_TYPE).getStringValue())).getGroup() == ContentNodeGroup.LEAF) {
+												
+												try(final FileSystemInterface	content = fsi.clone().open("/"+node.getChild(StaticTreeContent.F_ID).getStringValue()+type.getFileNameSuffix())) {
+													if (content.exists() && content.isFile()) {
+														switch (type) {
+															case CREOLE	:
+																creoleContent = content.getPath();
+																
+																try(final Reader		rdr = content.charRead(PureLibSettings.DEFAULT_CONTENT_ENCODING)) {
+																	
+																	ceav.getCreoleEditor().setText(Utils.fromResource(rdr));
+																	ceav.setContentType(ContentType.CREOLE);
+																}
+																break;
+															case IMAGE	:
+																try(final InputStream	is = content.read()) {
+																	final Image			image = ImageIO.read(is);
+																	
+																	ceav.getImageContainer().setBackground(image);
+																	creoleContent = null; 
+																	ceav.setContentType(ContentType.IMAGE);
+																}
+																break;
+															default:
+																creoleContent = null; 
+																ceav.setContentType(ContentType.COMMON);
+																break;
+														}
+													}
+													else {
+														creoleContent = null; 
+														ceav.setContentType(ContentType.COMMON);
+													}
+												} catch (IOException exc) {
+													state.message(Severity.error, exc.getLocalizedMessage(), exc);
+												}
+											}
+											else {
+												ceav.setContentType(ContentType.COMMON);
+											}
+										});
+			
+			rightPanel.add(ceav, BorderLayout.CENTER);
+			splitter.setLeftComponent(new JScrollPane(stc));
+			splitter.setRightComponent(rightPanel);
+			splitter.setDividerLocation(200);
 			
 			getContentPane().add(menu,BorderLayout.NORTH);
-			getContentPane().add(tabber,BorderLayout.CENTER);
+			getContentPane().add(splitter,BorderLayout.CENTER);
 			getContentPane().add(state,BorderLayout.SOUTH);
 
+			SwingUtils.centerMainWindow(this,0.75f);
+			SwingUtils.assignExitMethod4MainWindow(this,()->exitApplication());
+			localizer.addLocaleChangeListener(this);
 			fillLocalizedStrings();
+			
+			newFile();
 		}
+	}
+
+	@Override
+	public void close() throws RuntimeException {
+		localizer.removeLocaleChangeListener(this);
+		for (File item : temporaries) {
+			Utils.deleteDir(item);
+		}
+		latch.countDown();
 	}
 	
 	@Override
 	public void localeChanged(final Locale oldLocale, final Locale newLocale) throws LocalizationException {
 		fillLocalizedStrings();
+		SwingUtils.refreshLocale(menu, oldLocale, newLocale);
+		SwingUtils.refreshLocale(stc, oldLocale, newLocale);
+		SwingUtils.refreshLocale(ceav, oldLocale, newLocale);
+		SwingUtils.refreshLocale(state, oldLocale, newLocale);
 	}
-
-	@OnAction(value="action:/newFile",async=true)
-	private void newFile () throws IOException {
-		final CreoleEditorTab	newTab = new CreoleEditorTab(localizer, state);
-		final JScrollPane		newScroll = new JScrollPane(newTab.editor); 
-		
-		newScroll.addComponentListener(new ComponentListener() {
-			@Override public void componentShown(final ComponentEvent e) {}
-			@Override public void componentMoved(final ComponentEvent e) {}
-			@Override public void componentHidden(final ComponentEvent e) {}
-			
-			@Override
-			public void componentResized(final ComponentEvent e) {
-				final Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
-				
-				newTab.editor.setPreferredSize(new Dimension(newScroll.getPreferredSize() != null ? newScroll.getPreferredSize().width : screen.width, newTab.editor.getPreferredSize() != null ? newTab.editor.getPreferredSize().height : screen.height));
+	
+	private void saveCreoleContent(final String content) throws IOException {
+		try(final FileSystemInterface	creole = fsi.clone().open(creoleContent)) {
+			try(final Writer			wr = creole.create().charWrite(PureLibSettings.DEFAULT_CONTENT_ENCODING)) {
+				Utils.copyStream(new StringReader(content), wr);
 			}
+		}
+	}
+
+	@OnAction("action:/newFile")
+	private void newFile() {
+		if (saveAndNeedContinue()) {
+			try{final File	f = new File(System.getProperty("java.io.tmpdir"), "nav"+System.currentTimeMillis());
 			
-		});
-		tabs.add(newTab);
-		tabber.addTab("(*)",newScroll);
-		tabber.setSelectedIndex(tabs.size()-1);
-		newTab.manipulator.newFile();
-		newTab.editor.requestFocusInWindow();
-	}
-
-	@OnAction(value="action:/openFile",async=true)
-	private void openFile() throws IOException, LocalizationException {
-		if (tabber.getTabCount() == 0) {
-			newFile();
-		}
-		
-		final CreoleEditorTab	currentTab = tabs.get(tabber.getSelectedIndex()); 
-		
-		if (currentTab.manipulator.openFile(state)) {
-			state.message(Severity.info, localizer.getValue(MESSAGE_FILE_LOADED), currentTab.manipulator.getCurrentPathOfTheFile());
-			currentTab.turnOffDocumentListener();
-			currentTab.manipulator.clearModificationFlag();
-			SwingUtilities.invokeLater(()->{currentTab.turnOnDocumentListener();});
-			tabber.setTitleAt(tabber.getSelectedIndex(), currentTab.manipulator.getCurrentNameOfTheFile());
-			tabber.setToolTipTextAt(tabber.getSelectedIndex(), currentTab.manipulator.getCurrentPathOfTheFile());
-			refillLru();
-		}
-	}
-
-	private void openFile(final String file) throws IOException, LocalizationException {
-		if (tabber.getTabCount() == 0) {
-			newFile();
-		}
-		
-		final CreoleEditorTab	currentTab = tabs.get(tabber.getSelectedIndex());
-		
-		if (currentTab.manipulator.openLRUFile(file,state)) {
-			state.message(Severity.info, localizer.getValue(MESSAGE_FILE_LOADED), currentTab.manipulator.getCurrentPathOfTheFile());
-			currentTab.turnOffDocumentListener();
-			currentTab.manipulator.clearModificationFlag();
-			SwingUtilities.invokeLater(()->{currentTab.turnOnDocumentListener();});
-			tabber.setTitleAt(tabber.getSelectedIndex(), currentTab.manipulator.getCurrentNameOfTheFile());
-			tabber.setToolTipTextAt(tabber.getSelectedIndex(), currentTab.manipulator.getCurrentPathOfTheFile());
+				f.mkdirs();
+				temporaries.add(f);
+				
+				setFileSystem(FileSystemFactory.createFileSystem(URI.create(FileSystemInterface.FILESYSTEM_URI_SCHEME+":"+f.toURI())));
+			} catch (IOException  e) {
+				printError(e);
+			}
 		}
 	}
 	
-	@OnAction(value="action:/saveFile",async=true)
-	private void saveFile() throws IOException, LocalizationException {
-		if (tabber.getTabCount() == 0) {
-			newFile();
-		}		
-
-		final CreoleEditorTab	currentTab = tabs.get(tabber.getSelectedIndex());
-		
-		if (currentTab.manipulator.saveFile(state)) {
-			state.message(Severity.info, localizer.getValue(MESSAGE_FILE_SAVED), currentTab.manipulator.getCurrentPathOfTheFile());
+	@OnAction("action:/openFile")
+	private void openFile() {
+		if (saveAndNeedContinue()) {
+			try(final FileSystemInterface	total = FileSystemFactory.createFileSystem(URI.create(FileSystemInterface.FILESYSTEM_URI_SCHEME+":file://./"))){
+				
+				for (String item : JFileSelectionDialog.select(this, localizer, total, JFileSelectionDialog.OPTIONS_FOR_OPEN | JFileSelectionDialog.OPTIONS_ALLOW_MKDIR | JFileSelectionDialog.OPTIONS_CAN_SELECT_DIR)) {
+					setFileSystem(FileSystemFactory.createFileSystem(URI.create(FileSystemInterface.FILESYSTEM_URI_SCHEME+":"+item)));
+					break;
+				}
+			} catch (LocalizationException | IOException e) {
+				printError(e);
+			}
 		}
 	}
 
-	@OnAction(value="action:/saveFileAs",async=true)
-	private void saveFileAs() throws IOException, LocalizationException {
-		if (tabber.getTabCount() == 0) {
-			newFile();
-		}		
+	@OnAction("action:/saveFile")
+	private void saveFile() {
+		try{if (stc.treeWasModified()) {
+				stc.save(fsi);
+			}
+			if (ceav.creoleContentWasChanged()) {
+				ceav.saveCreoleContent();
+			}
+		} catch (ContentException e) {
+			printError(e);
+		}
+	}
 
-		final CreoleEditorTab	currentTab = tabs.get(tabber.getSelectedIndex());
-		
-		if (currentTab.manipulator.saveFileAs(state)) {
-			state.message(Severity.info, localizer.getValue(MESSAGE_FILE_SAVED), currentTab.manipulator.getCurrentPathOfTheFile());
-			tabber.setTitleAt(tabber.getSelectedIndex(), currentTab.manipulator.getCurrentNameOfTheFile());
-			tabber.setToolTipTextAt(tabber.getSelectedIndex(), currentTab.manipulator.getCurrentPathOfTheFile());
-			refillLru();
+	@OnAction("action:/saveFileAs")
+	private void saveFileAs() {
+		saveFile();
+		try(final FileSystemInterface	total = FileSystemFactory.createFileSystem(URI.create(FileSystemInterface.FILESYSTEM_URI_SCHEME+":file://./"))){
+			
+			for (String item : JFileSelectionDialog.select(this, localizer, total, JFileSelectionDialog.OPTIONS_FOR_SAVE | JFileSelectionDialog.OPTIONS_ALLOW_MKDIR | JFileSelectionDialog.OPTIONS_CAN_SELECT_DIR)) {
+				final FileSystemInterface	stored = FileSystemFactory.createFileSystem(URI.create(FileSystemInterface.FILESYSTEM_URI_SCHEME+":"+item));
+					
+				fsi.copy(stored);
+				fsi.close();
+				fsi = stored;
+				break;
+			}
+		} catch (LocalizationException | IOException e) {
+			printError(e);
 		}
 	}
 	
 	@OnAction("action:/exit")
-	private void exitApplication () {
-		try{for (CreoleEditorTab currentTab : tabs) {
-				currentTab.manipulator.close();
-			}
-		} catch (IOException e) {
-			state.message(Severity.error,e,e.getLocalizedMessage());
-		} finally {
+	private void exitApplication() {
+		if (saveAndNeedContinue()) {
 			setVisible(false);
 			dispose();
 			latch.countDown();
 		}
 	}
+
+	@OnAction("action:/pack")
+	private void packProject() {
+		if (saveAndNeedContinue()) {
+			try(final FileSystemInterface	total = FileSystemFactory.createFileSystem(URI.create(FileSystemInterface.FILESYSTEM_URI_SCHEME+":file://./"))){
+				
+				for (String item : JFileSelectionDialog.select(this, localizer, total, JFileSelectionDialog.OPTIONS_FOR_SAVE | JFileSelectionDialog.OPTIONS_ALLOW_MKDIR | JFileSelectionDialog.OPTIONS_CAN_SELECT_FILE | JFileSelectionDialog.OPTIONS_CONFIRM_REPLACEMENT, FilterCallback.of(APPLICATION_HELP_PROJECTS, "*.hlp"))) {
+					try(final FileSystemInterface	store = total.clone().open(item).create();
+						final OutputStream			os = store.write()) {
+						
+						packProject(fsi, os);
+					}
+					state.message(Severity.info, "Project was packed to ["+item+"] successfully");
+					break;
+				}
+			} catch (LocalizationException | IOException e) {
+				printError(e);
+			}
+		}
+	}	
 	
-	@OnAction("builtin.languages:en")
-	private void selectEnglish() throws LocalizationException, NullPointerException {
-		localizer.setCurrentLocale(Locale.forLanguageTag("en"));
+	@OnAction("action:/builtin.languages")
+	private void selectLang(final Map<String,String[]> map) throws LocalizationException, NullPointerException {
+		localizer.getParent().setCurrentLocale(Locale.forLanguageTag(map.get("lang")[0]));
 	}
-	
-	@OnAction("builtin.languages:ru")
-	private void selectRussian() throws LocalizationException, NullPointerException {
-		localizer.setCurrentLocale(Locale.forLanguageTag("ru"));
+
+	@OnAction("action:/helpAbout")
+	private void about() throws LocalizationException, URISyntaxException {
+		SwingUtils.showAboutScreen(this, localizer, APPLICATION_HELP_TITLE, APPLICATION_HELP_CONTENT, this.getClass().getResource("favicon.png").toURI(), new Dimension(300,300));
 	}
-	
+
+	private void setFileSystem(final FileSystemInterface fsi) {
+		this.fsi = fsi;
+		
+		try(final FileSystemInterface	temp = fsi.clone().open("/"+StaticTreeContent.CONTENT_FILE)){
+		
+			if (!temp.exists()) {
+				try(final InputStream			is = this.getClass().getResourceAsStream(StaticTreeContent.CONTENT_FILE);
+					final OutputStream			os = temp.create().write()) {
+					
+					Utils.copyStream(is, os);
+				}
+			}
+			stc.setFileSystem(fsi);
+		} catch (IOException | ContentException e) {
+			printError(e);
+		}
+	}
+
+	private boolean saveAndNeedContinue() {
+		if ((stc.treeWasModified() || ceav.creoleContentWasChanged())) {
+			try{switch (new JLocalizedOptionPane(localizer).confirm(this, APPLICATION_SAVE_CONTENT, APPLICATION_SAVE_TITLE, JOptionPane.QUESTION_MESSAGE, JOptionPane.YES_NO_CANCEL_OPTION)) {
+					case JOptionPane.YES_OPTION 	:
+						saveFile();
+					case JOptionPane.NO_OPTION 		:
+						return true;
+					case JOptionPane.CANCEL_OPTION	:
+						return false;
+				}
+			} catch (LocalizationException e) {
+				printError(e);
+			}
+		}
+		return true;						
+	}
+
+	private void packProject(final FileSystemInterface fsi, final OutputStream os) throws IOException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private UIItemState.AvailableAndVisible getAccessAndVisibility(final ContentNodeMetadata meta) {
+		if (URI.create("app:action:/saveFile").equals(meta.getApplicationPath())) {
+			return stc.treeWasModified() || ceav.creoleContentWasChanged() ? UIItemState.AvailableAndVisible.AVAILABLE : UIItemState.AvailableAndVisible.NOTAVAILABLE;
+		}
+		else {
+			return UIItemState.AvailableAndVisible.DEFAULT;
+		}
+	}
+
 	private void fillLocalizedStrings() throws LocalizationException {
 		setTitle(localizer.getValue(APPLICATION_TITLE));
-		if (menu instanceof LocaleChangeListener) {
-			((LocaleChangeListener)menu).localeChanged(localizer.currentLocale().getLocale(),localizer.currentLocale().getLocale());
-		}
-		for (CreoleEditorTab currentTab : tabs) {
-			((LocaleChangeListener)currentTab).localeChanged(localizer.currentLocale().getLocale(),localizer.currentLocale().getLocale());
-		}
+	}
+
+	private void printError(final Exception e) {
+		state.message(Severity.error, e.getLocalizedMessage(), e);
 	}
 	
-	@OnAction("action:/startBrowser")
-	private void startBrowser () {
-		if (Desktop.isDesktopSupported()) {
-			try{Desktop.getDesktop().browse(URI.create("http://localhost:"+localHelpPort+"/static/index.html"));
-			} catch (IOException exc) {
-				exc.printStackTrace();
-			}
+	private static int getFreePort() throws IOException {
+		try (ServerSocket 	socket = new ServerSocket(0)) {
+			return socket.getLocalPort();
 		}
 	}
 
-	private void refillLru() {
-		final ContentNodeMetadata	node = app.byUIPath(URI.create("ui:/model/navigation.top.mainmenu/navigation.node.menu.file/navigation.node.menu.file.lru"));
-		final JMenu					lru = (JMenu)SwingUtils.findComponentByName(this.menu,node.getName());
-
-		lru.removeAll();
-		for (CreoleEditorTab currentTab : tabs) {
-			for (String item : currentTab.manipulator.getLastUsed()) {
-				final JMenuItem			menu = new JMenuItem(item);
-				final String			fileItem = item;
-				
-				menu.addActionListener((e)->{
-					try{openFile(fileItem);
-					} catch (LocalizationException | IOException exc) {
-						state.message(Severity.error,exc,exc.getLocalizedMessage());
-					}
-				});
-				lru.add(menu);
-			}
-		}
-	}
-
-	private void changeTab(final int step) {
-		tabber.setSelectedIndex((tabber.getSelectedIndex() + step) % tabber.getTabCount());
-	}
 	
-	public static void main(String[] args) {
+	
+	public static void main(String[] args) throws NullPointerException, IllegalArgumentException {
 		try{final ArgParser						parser = new ApplicationArgParser().parse(args);
+		
 			final int							helpPort = !parser.isTyped(ARG_HELP_PORT) ? getFreePort() : parser.getValue(ARG_HELP_PORT, int.class);
+			
 			final SubstitutableProperties		props = new SubstitutableProperties(Utils.mkProps(
 													 NanoServiceFactory.NANOSERVICE_PORT, ""+helpPort
-													,NanoServiceFactory.NANOSERVICE_ROOT, "fsys:xmlReadOnly:root://chav1961.purelibnavigator.admin.Application/chav1961/purelibnavigator/admin/helptree.xml"
+													,NanoServiceFactory.NANOSERVICE_ROOT, "fsys:xmlReadOnly:root://"+Application.class.getCanonicalName()+"/chav1961/purelibnavigator/admin/helptree.xml"
 													,NanoServiceFactory.NANOSERVICE_CREOLE_PROLOGUE_URI, Application.class.getResource("prolog.cre").toString() 
 													,NanoServiceFactory.NANOSERVICE_CREOLE_EPILOGUE_URI, Application.class.getResource("epilog.cre").toString() 
 												));
 		
-			try(final LoggerFacade				logger = new SystemErrLoggerFacade();
-				final InputStream				is = Application.class.getResourceAsStream("application.xml");
-				final Localizer					localizer = new PureLibLocalizer();
-				final NanoServiceFactory		service = new NanoServiceFactory(logger,props)) {
+			try(final InputStream				is = Application.class.getResourceAsStream("application.xml");
+				final Localizer					localizer = new PureLibLocalizer(); ){
+//				final NanoServiceFactory		service = new NanoServiceFactory(logger,props)) {
 				final ContentMetadataInterface	xda = ContentModelFactory.forXmlDescription(is);
 				final CountDownLatch			latch = new CountDownLatch(1);
 				
-				new Application(xda,localizer,helpPort,latch).setVisible(true);
-				service.start();
-				latch.await();
-				service.stop();
+				try(final Application		newApp = new Application(xda,localizer,helpPort,latch)) {
+//					service.start();
+					newApp.setVisible(true);
+					latch.await();
+//					service.stop();
+				}
 			} catch (IOException | EnvironmentException | InterruptedException  e) {
 				e.printStackTrace();
 				System.exit(129);
 			}
-		} catch (ConsoleCommandException | CommandLineParametersException e) {
+		} catch (CommandLineParametersException e) {
 			e.printStackTrace();
 			System.exit(128);
 		} catch (IOException | ContentException e) {
@@ -301,15 +412,10 @@ public class Application extends JFrame implements LocaleChangeListener {
 		System.exit(0);
 	}
 
-	private static int getFreePort() throws IOException {
-		try (ServerSocket 	socket = new ServerSocket(0)) {
-			return socket.getLocalPort();
-		}
-	}
-	
 	static class ApplicationArgParser extends ArgParser {
 		public ApplicationArgParser() {
 			super(new IntegerArg(ARG_HELP_PORT,false,"help system port",0));
 		}
 	}
+
 }
