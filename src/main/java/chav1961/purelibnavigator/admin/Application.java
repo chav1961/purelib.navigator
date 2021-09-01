@@ -4,6 +4,8 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Image;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -47,6 +49,7 @@ import chav1961.purelib.model.interfaces.ContentMetadataInterface;
 import chav1961.purelib.model.interfaces.ContentMetadataInterface.ContentNodeMetadata;
 import chav1961.purelib.nanoservice.NanoServiceFactory;
 import chav1961.purelib.ui.interfaces.UIItemState;
+import chav1961.purelib.ui.swing.AutoBuiltForm;
 import chav1961.purelib.ui.swing.SwingUtils;
 import chav1961.purelib.ui.swing.interfaces.OnAction;
 import chav1961.purelib.ui.swing.useful.JFileSelectionDialog;
@@ -58,31 +61,34 @@ import chav1961.purelibnavigator.interfaces.ContentNodeGroup;
 import chav1961.purelibnavigator.interfaces.ContentNodeType;
 
 public class Application extends JFrame implements LocaleChangeListener, AutoCloseable {
-	private static final long 				serialVersionUID = -3061028320843379171L;
+	private static final long 					serialVersionUID = -3061028320843379171L;
 
-	public static final String				ARG_HELP_PORT = "helpport";
+	public static final String					ARG_HELP_PORT = "helpport";
+	public static final String					APP_SETTINGS_FILE = "./.admin.properties";
 
-	public static final String				APPLICATION_TITLE = "Application.title";
-	public static final String				MESSAGE_FILE_LOADED = "Application.message.fileLoaded";
-	public static final String				MESSAGE_FILE_SAVED = "Application.message.fileSaved";
+	private static final String					APPLICATION_TITLE = "Application.title";
+	private static final String					MESSAGE_FILE_LOADED = "Application.message.fileLoaded";
+	private static final String					MESSAGE_FILE_SAVED = "Application.message.fileSaved";
 	
-	public static final String				APPLICATION_HELP_TITLE = "Application.help.title";
-	public static final String				APPLICATION_HELP_CONTENT = "Application.help.content";
+	private static final String					APPLICATION_HELP_TITLE = "Application.help.title";
+	private static final String					APPLICATION_HELP_CONTENT = "Application.help.content";
 
-	public static final String				APPLICATION_SAVE_TITLE = "Application.save.title";
-	public static final String				APPLICATION_SAVE_CONTENT = "Application.save.content";
-	public static final String				APPLICATION_HELP_PROJECTS = "Application.help.projects";
+	private static final String					APPLICATION_SAVE_TITLE = "Application.save.title";
+	private static final String					APPLICATION_SAVE_CONTENT = "Application.save.content";
+	private static final String					APPLICATION_HELP_PROJECTS = "Application.help.projects";
 	
 	
-	private final ContentMetadataInterface	mdi;
-	private final Localizer					localizer;
-	private final int 						localHelpPort;
-	private final CountDownLatch			latch;
-	private final JMenuBar					menu;
-	private final StaticTreeContent			stc;
-	private final ContentEditorAndViewer	ceav;
-	private final JStateString				state;
-	private final Set<File>					temporaries = new HashSet<>();
+	private final ContentMetadataInterface		mdi;
+	private final Localizer						localizer;
+	private final int 							localHelpPort;
+	private final CountDownLatch				latch;
+	private final JMenuBar						menu;
+	private final StaticTreeContent				stc;
+	private final ContentEditorAndViewer		ceav;
+	private final JStateString					state;
+	private final Set<File>						temporaries = new HashSet<>();
+	private final AppSettings					as;
+	private final AutoBuiltForm<AppSettings>	form;
 	
 	private FileSystemInterface				fsi;
 	private String							creoleContent = null;
@@ -110,6 +116,18 @@ public class Application extends JFrame implements LocaleChangeListener, AutoClo
 			
 			SwingUtils.assignActionListeners(menu,this);
 			
+			this.as = new AppSettings(state);
+			this.form = new AutoBuiltForm<AppSettings>(ContentModelFactory.forAnnotatedClass(AppSettings.class), localizer, PureLibSettings.INTERNAL_LOADER, as, as);
+			this.form.setPreferredSize(new Dimension(300,110));
+			
+			final File	f = new File(APP_SETTINGS_FILE);
+			
+			if (f.exists() && f.isFile()) {
+				try(final InputStream	is = new FileInputStream(f)) {
+					this.as.load(is);
+				}
+			}
+			
 			final JSplitPane	splitter = new JSplitPane();
 			final JPanel		rightPanel = new JPanel(new BorderLayout());
 			
@@ -123,9 +141,9 @@ public class Application extends JFrame implements LocaleChangeListener, AutoClo
 											
 											ContentNodeType	type;
 											
-											if (node != null && (type = ContentNodeType.valueOf(node.getChild(StaticTreeContent.F_TYPE).getStringValue())).getGroup() == ContentNodeGroup.LEAF) {
+											if (node != null && (type = ContentNodeType.valueOf(node.getChild(AdminUtils.F_TYPE).getStringValue())).getGroup() == ContentNodeGroup.LEAF) {
 												
-												try(final FileSystemInterface	content = fsi.clone().open("/"+node.getChild(StaticTreeContent.F_ID).getStringValue()+type.getFileNameSuffix())) {
+												try(final FileSystemInterface	content = fsi.clone().open("/"+node.getChild(AdminUtils.F_ID).getStringValue()+type.getFileNameSuffix())) {
 													if (content.exists() && content.isFile()) {
 														switch (type) {
 															case CREOLE	:
@@ -288,7 +306,7 @@ public class Application extends JFrame implements LocaleChangeListener, AutoClo
 					try(final FileSystemInterface	store = total.clone().open(item).create();
 						final OutputStream			os = store.write()) {
 						
-						packProject(fsi, os);
+						AdminUtils.packProject(fsi, os, as);
 					}
 					state.message(Severity.info, "Project was packed to ["+item+"] successfully");
 					break;
@@ -304,6 +322,25 @@ public class Application extends JFrame implements LocaleChangeListener, AutoClo
 		localizer.getParent().setCurrentLocale(Locale.forLanguageTag(map.get("lang")[0]));
 	}
 
+	@OnAction("action:/settings")
+	private void appSettings() {
+		try{if (AutoBuiltForm.ask(this, localizer, form)) {
+				final File	f = new File(APP_SETTINGS_FILE);
+				
+				if (f.exists() && f.isDirectory()) {
+					throw new IOException("Config name ["+f.getAbsolutePath()+"] can't be created - directory  with thes name already exists");
+				}
+				else {
+					try(final OutputStream	os = new FileOutputStream(f)) {
+						this.as.save(os);
+					}
+				}
+			}
+		} catch (LocalizationException | IOException  e) {
+			printError(e);
+		}		
+	}	
+	
 	@OnAction("action:/helpAbout")
 	private void about() throws LocalizationException, URISyntaxException {
 		SwingUtils.showAboutScreen(this, localizer, APPLICATION_HELP_TITLE, APPLICATION_HELP_CONTENT, this.getClass().getResource("favicon.png").toURI(), new Dimension(300,300));
@@ -312,10 +349,10 @@ public class Application extends JFrame implements LocaleChangeListener, AutoClo
 	private void setFileSystem(final FileSystemInterface fsi) {
 		this.fsi = fsi;
 		
-		try(final FileSystemInterface	temp = fsi.clone().open("/"+StaticTreeContent.CONTENT_FILE)){
+		try(final FileSystemInterface	temp = fsi.clone().open("/"+AdminUtils.CONTENT_FILE)){
 		
 			if (!temp.exists()) {
-				try(final InputStream			is = this.getClass().getResourceAsStream(StaticTreeContent.CONTENT_FILE);
+				try(final InputStream			is = this.getClass().getResourceAsStream(AdminUtils.CONTENT_FILE);
 					final OutputStream			os = temp.create().write()) {
 					
 					Utils.copyStream(is, os);
@@ -342,11 +379,6 @@ public class Application extends JFrame implements LocaleChangeListener, AutoClo
 			}
 		}
 		return true;						
-	}
-
-	private void packProject(final FileSystemInterface fsi, final OutputStream os) throws IOException {
-		// TODO Auto-generated method stub
-		
 	}
 
 	private UIItemState.AvailableAndVisible getAccessAndVisibility(final ContentNodeMetadata meta) {

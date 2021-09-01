@@ -31,6 +31,8 @@
 		<key name="menu.tools.pack.tt">Pack project to zip file</key>
 		<key name="menu.tools.languages">Language</key>
 		<key name="menu.tools.languages.tt">Select language for user interface</key>
+		<key name="menu.tools.settings">Settings</key>
+		<key name="menu.tools.settings.tt">Application settings</key>
 		<key name="menu.help">Help</key>
 		<key name="menu.help.tt">Help for applications</key>
 		<key name="menu.help.startBrowser">Start browser</key>
@@ -88,6 +90,13 @@
 		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.unknown">Unknown</key>
 		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.unknown.tt">Type of the node is unknown</key>
 
+<!-- PackingType enumeration -->
+		<key name="chav1961.purelibnavigator.interfaces.packingtype.war">WAR</key>
+		<key name="chav1961.purelibnavigator.interfaces.packingtype.war.tt">Static WAR content for Web servers</key>
+		<key name="chav1961.purelibnavigator.interfaces.packingtype.standalone">STANDALONE</key>
+		<key name="chav1961.purelibnavigator.interfaces.packingtype.standalone.tt">Self-executable jar</key>
+
+
 <!-- Node settings content -->
 		<key name="chav1961.purelibnavigator.admin.nodesettings">Node properties</key>
 		<key name="chav1961.purelibnavigator.admin.nodesettings.tt">Show properties of the given node</key>
@@ -98,6 +107,15 @@
 		<key name="chav1961.purelibnavigator.admin.nodesettings.caption">Caption</key>
 		<key name="chav1961.purelibnavigator.admin.nodesettings.caption.tt">Node caption</key>
 		
+<!-- Application settings content -->
+		<key name="chav1961.purelibnavigator.admin.appsettings">Application settings</key>
+		<key name="chav1961.purelibnavigator.admin.appsettings.tt">Application settings</key>
+		<key name="chav1961.purelibnavigator.admin.appsettings.type">Packing type</key>
+		<key name="chav1961.purelibnavigator.admin.appsettings.type.tt">Packing type for archive exported</key>
+		<key name="chav1961.purelibnavigator.admin.appsettings.includejavadoc">Include JavaDoc</key>
+		<key name="chav1961.purelibnavigator.admin.appsettings.includejavadoc.tt">Include Java documentation into archive exported</key>
+		<key name="chav1961.purelibnavigator.admin.appsettings.javadoclocation">JavaDoc location</key>
+		<key name="chav1961.purelibnavigator.admin.appsettings.javadoclocation.tt">Location of the JavaDoc directory</key>
 
 <!-- Application messages localization -->
 		<key name="Application.message.fileLoaded">File %1$s was loaded successfully</key> 
@@ -137,6 +155,8 @@
 		<key name="menu.tools.pack.tt">Упаковать проект в zip-архиф</key>
 		<key name="menu.tools.languages">Язык</key>
 		<key name="menu.tools.languages.tt">Выбрать язык взаимодействия с программой</key>
+		<key name="menu.tools.settings">Настройки</key>
+		<key name="menu.tools.settings.tt">Настройки приложения</key>
 		<key name="menu.help">Помощь</key>
 		<key name="menu.help.tt">Помощь по программе</key>
 		<key name="menu.help.startBrowser">Запустить браузер</key>
@@ -185,7 +205,7 @@
 		<key name="menu.admin.tree.duplicateLeaf.tt">Сделать полную копию содержимого элемента</key>
 
 
-<!-- НУмерация ContentNodeType -->
+<!-- Нумерация ContentNodeType -->
 		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.creole">Creole</key>
 		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.creole.tt">Это файл Creole</key>
 		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.image">Изображение</key>
@@ -195,6 +215,11 @@
 		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.unknown">Неизвестно</key>
 		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.unknown.tt">Тип узла неизвестен</key>
 
+<!-- Нумерация PackingType -->
+		<key name="chav1961.purelibnavigator.interfaces.packingtype.war">WAR</key>
+		<key name="chav1961.purelibnavigator.interfaces.packingtype.war.tt">Статический WAR контент для Web сервера</key>
+		<key name="chav1961.purelibnavigator.interfaces.packingtype.standalone">STANDALONE</key>
+		<key name="chav1961.purelibnavigator.interfaces.packingtype.standalone.tt">Самовыполняющийся jar</key>
 
 <!-- Кадр свойств узла -->
 		<key name="chav1961.purelibnavigator.admin.nodesettings">Свойства узла</key>
@@ -206,6 +231,15 @@
 		<key name="chav1961.purelibnavigator.admin.nodesettings.caption">Заголовок</key>
 		<key name="chav1961.purelibnavigator.admin.nodesettings.caption.tt">Заголовок узла дерева</key>
 
+<!-- Кадр свойств приложения -->
+		<key name="chav1961.purelibnavigator.admin.appsettings">Настройки приложения</key>
+		<key name="chav1961.purelibnavigator.admin.appsettings.tt">Настройки приложения</key>
+		<key name="chav1961.purelibnavigator.admin.appsettings.type">Тип упаковки</key>
+		<key name="chav1961.purelibnavigator.admin.appsettings.type.tt">Тип упаковки готового архива</key>
+		<key name="chav1961.purelibnavigator.admin.appsettings.includejavadoc">Включать JavaDoc</key>
+		<key name="chav1961.purelibnavigator.admin.appsettings.includejavadoc.tt">Включат ь документацию Java в экспортируемый архив</key>
+		<key name="chav1961.purelibnavigator.admin.appsettings.javadoclocation">Расположение JavaDoc</key>
+		<key name="chav1961.purelibnavigator.admin.appsettings.javadoclocation.tt">Расположение директории JavaDoc</key>
 
 <!-- Локализация сообщений приложения -->
 		<key name="Application.message.fileLoaded">Файл %1$s успешно загружен</key> 

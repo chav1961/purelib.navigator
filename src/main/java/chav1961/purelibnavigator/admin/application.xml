@@ -16,7 +16,9 @@
 		</app:submenu>
 		<app:submenu name="menu.tools" caption="menu.tools" tooltip="menu.tools.tt">
 			<app:item name="menu.tools.pack" caption="menu.tools.pack" tooltip="menu.tools.pack.tt" action="pack"/>
+			<app:separator/>
 			<app:builtinSubmenu name="builtin.languages" caption="menu.tools.languages" tooltip="menu.tools.languages.tt"/>
+			<app:item name="menu.tools.settings" caption="menu.tools.settings" tooltip="menu.tools.settings.tt" action="settings"/>
 		</app:submenu>
 		<app:submenu name="menu.help" caption="menu.help" tooltip="menu.help.tt">
 			<app:item name="menu.help.startBrowser" caption="menu.help.startBrowser" tooltip="menu.help.startBrowser.tt" action="startBrowser"/>
