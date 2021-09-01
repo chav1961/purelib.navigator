@@ -128,27 +128,31 @@ public class AdminUtils {
 		final StringBuilder	sb = new StringBuilder();
 		
 		buildProlog(sb);
+		sb.append("<nav><ul>");
 		buildNavigation(node, sb);
+		sb.append("</ul></nav>");
 		buildEpilog(sb);
 		
 		return new ByteArrayInputStream(sb.toString().getBytes(PureLibSettings.DEFAULT_CONTENT_ENCODING));
 	}
 
 	private static void buildProlog(final StringBuilder sb) throws IOException, URISyntaxException   {
-		sb.append(URIUtils.loadCharsFromURI(AdminUtils.class.getResource("prolog.html").toURI())).append("<ul>");
+		sb.append(URIUtils.loadCharsFromURI(AdminUtils.class.getResource("prolog.html").toURI()));
 	}
 
 	private static void buildNavigation(final JsonNode node, final StringBuilder sb) {
 		// TODO Auto-generated method stub  http://htmlbook.ru/samlayout/verstka-na-html5/shapka-stranitsy
 		switch (node.getType()) {
 			case JsonObject :
-				sb.append("<li>").append(node.getChild(F_CAPTION).getStringValue());
+				sb.append("<li><a href=\"#\">").append(node.getChild(F_CAPTION).getStringValue());
 				if (ContentNodeType.valueOf(node.getChild(F_TYPE).getStringValue()).getGroup() == ContentNodeGroup.SUBTREE) {
-					sb.append("<br><ul>");
+					sb.append("</a><br><ul>");
 					buildNavigation(node.getChild(F_CONTENT), sb);
 					sb.append("</ul>");
 				}
-				sb.append("</li>");
+				else {
+					sb.append("</a></li>");
+				}
 				break;
 			case JsonArray 	:
 				for (JsonNode item : node.children()) {
@@ -156,13 +160,13 @@ public class AdminUtils {
 				}
 				break;
 			default :
-				sb.append("<li>").append(node.getStringValue()).append("</li>");
+				sb.append("<li><a href=\"#\">").append(node.getStringValue()).append("</a></li>");
 				break;
 		}
 	}
 
 	private static void buildEpilog(final StringBuilder sb) throws IOException, URISyntaxException {
-		sb.append("</ul>").append(URIUtils.loadCharsFromURI(AdminUtils.class.getResource("epilog.html").toURI()));
+		sb.append(URIUtils.loadCharsFromURI(AdminUtils.class.getResource("epilog.html").toURI()));
 	}
 	
 	private static void dumpJavaDoc(final File node, final String parentPath, final JarOutputStream jos) throws IOException {

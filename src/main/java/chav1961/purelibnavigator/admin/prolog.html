@@ -2,45 +2,64 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<title>Пример страницы</title>
+<title>Pure Library Help system</title>
 <style>
- header {
-  display: block;
-  background: #00B0D8;
- }
-  aside {
-    background: #f0f0f0; /* Цвет фона */
-    padding: 10px; /* Поля */
-    width: 200px; /* Ширина сайдбара */
-    float: right; /* Обтекание слева */
-   }
-   article {
-    margin-right: 240px; /* Отступ справа */
-    display: block; /* Блочный элемент */
-   }
+	header {
+		display: block;
+		background: #00B0D8;
+	}
+	header > h3 {
+		text-align: center;
+	}
+	aside {
+    	background: #f0f0f0;
+    	padding: 10px;
+    	width: 200px;
+    	float: right;
+	}
+	nav {
+    	background: #f0f0f0;
+    	padding: 10px;
+    	width: 400px;
+    	vertical-align:top;
+    	float: left;
+	}
+	article {
+		margin-left: 10px;
+		margin-right: 10px;
+		text-align: center;
+		display: block;
+	}
+	footer{
+		display: block;
+		background: #00B0D8;
+	}
+	body > table > tbody > tr> td {
+    	vertical-align: top;
+    	border: none;
+	}
 </style>
 </head>
 <body>
-<header>
- <h3>assa</h3>
- </header>
- <article>article 1</article>
-  <hgroup>
-    <h1>ASSA</h1>
-    <h2>DWASSA</h2>
-  </hgroup>
- <aside>
-   <p>Экономьте электричество</p>
-   <p>Хороший язык</p>
-   <p>Чья палка больше</p>
-  </aside>
-  <nav><a href="1.html">Чебурашка</a> | <a href="2.html">Гена</a> | <a href="3.html">Шапокляк</a> | <a href="4.html">Лариска</a></nav>
-
-  <section>
-   <h2>Съёмки фильма Полипропилен</h2>
-   <p>История о том, как снимали фильм, где герои отдыхали на пляже, 
-   потом пришёл антагонист, избил протагонистов, сбросил их в бассейн, 
-   и что из этого получилось.</p>
-  </section>
-  
-  
+	<header>
+		<h3>Pure Library Help system</h3>
+		<article>
+		<p>Справочная система по библиотеке Pure Library и проектам на ее основе.<br>
+		<p>Версия 0.0.5, дата сборки xx-xx-xxxx</p>
+		</article>
+	</header>
+	<table>
+	<tbody>
+	<tr><td>
+<!-- 	<aside>
+		<p>Экономьте электричество</p>
+		<p>Хороший язык</p>
+		<p>Чья палка больше</p>
+	</aside>
+	<section>
+		<h2>Съёмки фильма Полипропилен</h2>
+		<p>История о том, как снимали фильм, где герои отдыхали на пляже, 
+		потом пришёл антагонист, избил протагонистов, сбросил их в бассейн, 
+		и что из этого получилось.</p>
+	</section>
+ -->

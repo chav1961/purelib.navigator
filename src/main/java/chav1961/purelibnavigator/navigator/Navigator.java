@@ -10,6 +10,8 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.URI;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.concurrent.CountDownLatch;
 
 import javax.imageio.ImageIO;
@@ -17,13 +19,15 @@ import javax.swing.JOptionPane;
 
 import com.sun.net.httpserver.HttpServer;
 
+import chav1961.purelib.basic.PureLibSettings;
+
 public class Navigator {
-	public static final String	HELP_CAPTION = "Help caption";
-	public static final String	HELP_SERVER_STARTED = "Help server started";
-	public static final String	HELP_ABOUT = "About\n12345";
+	public static final String	HELP_CAPTION = "Pure Library Help system";
+	public static final String	HELP_SERVER_STARTED = "Pure Library Help server started";
+	public static final String	HELP_ABOUT = "Pure Library Help system\nVersion="+PureLibSettings.CURRENT_VERSION+"\nBuild date: "+new SimpleDateFormat("dd-MM-yyyy").format(new Date(System.currentTimeMillis()));
 	public static final String	HELP_DESKTOP_NOT_SUPPORTED = "Java doesn't support desktop functionality on your computer";
 	public static final String	HELP_ERROR_STARTING_BROWSER = "I/O error starting browser: ";
-	public static final String	HELP_TOOLTIP = "Double click - start browser\nRight mouse button - context menu";
+	public static final String	HELP_TOOLTIP = "Pure Library Help system:\n - double click: start browser\n - right mouse button: context menu";
 	
 	public static void main(final String[] args) {
 		if (!SystemTray.isSupported()) {
