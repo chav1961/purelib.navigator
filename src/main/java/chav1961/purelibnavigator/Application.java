@@ -19,12 +19,7 @@ public class Application {
 				case admin		:
 					chav1961.purelibnavigator.admin.Application.main(Arrays.copyOfRange(args,1,args.length));
 					break;
-				case javadoc	:
-					chav1961.purelibnavigator.javadoc.Application.main(Arrays.copyOfRange(args,1,args.length));
-					break;
 				case navigator	:
-					chav1961.purelibnavigator.navigator.Application.main(Arrays.copyOfRange(args,1,args.length));
-					break;
 				default:
 					System.err.println("Command line argument(s) error: unsupported mode ["+parsed.getValue("mode",ApplicationMode.class)+"]");
 					System.exit(128);

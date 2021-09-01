@@ -90,13 +90,6 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 	private static final long 				serialVersionUID = 1L;
 	private static final long				TT_DELAY = 500;
 	
-	static final String						F_ID = "id";
-	static final String						F_TYPE = "type";
-	static final String						F_NAME = "name";
-	static final String						F_CAPTION = "caption";
-	static final String						F_CONTENT = "content";
-
-	static final String						CONTENT_FILE = "content.json";
 	static final String						TEMP_FILE_PREFIX = "tmp";
 	
 	private static final String				AC_CUT;
@@ -123,11 +116,11 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 	}
 	
 	private static enum FormEditState {
-		ORDINAL(Utils.mkMap(F_TYPE, UIItemState.AvailableAndVisible.DEFAULT, F_NAME, UIItemState.AvailableAndVisible.DEFAULT, F_CAPTION, UIItemState.AvailableAndVisible.DEFAULT)),
-		NEW_SUBTREE(Utils.mkMap(F_TYPE, UIItemState.AvailableAndVisible.AVAILABLE, F_NAME, UIItemState.AvailableAndVisible.AVAILABLE, F_CAPTION, UIItemState.AvailableAndVisible.AVAILABLE)),
-		NEW_LEAF(Utils.mkMap(F_TYPE, UIItemState.AvailableAndVisible.NOTAVAILABLE, F_NAME, UIItemState.AvailableAndVisible.AVAILABLE, F_CAPTION, UIItemState.AvailableAndVisible.AVAILABLE)),
-		DUPLICATE_LEAF(Utils.mkMap(F_TYPE, UIItemState.AvailableAndVisible.NOTAVAILABLE, F_NAME, UIItemState.AvailableAndVisible.AVAILABLE, F_CAPTION, UIItemState.AvailableAndVisible.AVAILABLE)),
-		EDIT_LEAF(Utils.mkMap(F_TYPE, UIItemState.AvailableAndVisible.NOTAVAILABLE, F_NAME, UIItemState.AvailableAndVisible.AVAILABLE, F_CAPTION, UIItemState.AvailableAndVisible.AVAILABLE));
+		ORDINAL(Utils.mkMap(AdminUtils.F_TYPE, UIItemState.AvailableAndVisible.DEFAULT, AdminUtils.F_NAME, UIItemState.AvailableAndVisible.DEFAULT, AdminUtils.F_CAPTION, UIItemState.AvailableAndVisible.DEFAULT)),
+		NEW_SUBTREE(Utils.mkMap(AdminUtils.F_TYPE, UIItemState.AvailableAndVisible.AVAILABLE, AdminUtils.F_NAME, UIItemState.AvailableAndVisible.AVAILABLE, AdminUtils.F_CAPTION, UIItemState.AvailableAndVisible.AVAILABLE)),
+		NEW_LEAF(Utils.mkMap(AdminUtils.F_TYPE, UIItemState.AvailableAndVisible.NOTAVAILABLE, AdminUtils.F_NAME, UIItemState.AvailableAndVisible.AVAILABLE, AdminUtils.F_CAPTION, UIItemState.AvailableAndVisible.AVAILABLE)),
+		DUPLICATE_LEAF(Utils.mkMap(AdminUtils.F_TYPE, UIItemState.AvailableAndVisible.NOTAVAILABLE, AdminUtils.F_NAME, UIItemState.AvailableAndVisible.AVAILABLE, AdminUtils.F_CAPTION, UIItemState.AvailableAndVisible.AVAILABLE)),
+		EDIT_LEAF(Utils.mkMap(AdminUtils.F_TYPE, UIItemState.AvailableAndVisible.NOTAVAILABLE, AdminUtils.F_NAME, UIItemState.AvailableAndVisible.AVAILABLE, AdminUtils.F_CAPTION, UIItemState.AvailableAndVisible.AVAILABLE));
 		
 		private final Map<String,UIItemState.AvailableAndVisible> props;
 		
@@ -404,7 +397,7 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 					if (sel == null) {
 						fsmMenu.processTerminal(SelectionTerminal.UNSELECT, null);
 					}
-					else if (ContentNodeType.valueOf(sel.node.getChild(F_TYPE).getStringValue()) == ContentNodeType.SUBTREE) {
+					else if (ContentNodeType.valueOf(sel.node.getChild(AdminUtils.F_TYPE).getStringValue()) == ContentNodeType.SUBTREE) {
 						fsmMenu.processTerminal(SelectionTerminal.SELECT_SUBTREE, null);
 					}
 					else {
@@ -419,7 +412,7 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 			this.form = new AutoBuiltForm<NodeSettings>(ContentModelFactory.forAnnotatedClass(NodeSettings.class), localizer, PureLibSettings.INTERNAL_LOADER, ns, ns, (meta)->getAccessAndVisibility(meta));
 			this.form.setPreferredSize(new Dimension(300,120));
 			
-			((DefaultTreeModel)getModel()).setRoot(new MyTreeNode(new JsonNode(JsonNodeType.JsonObject, new JsonNode("undefined").setName(F_NAME), new JsonNode("SUBTREE").setName(F_TYPE))));
+			((DefaultTreeModel)getModel()).setRoot(new MyTreeNode(new JsonNode(JsonNodeType.JsonObject, new JsonNode("undefined").setName(AdminUtils.F_NAME), new JsonNode("SUBTREE").setName(AdminUtils.F_TYPE))));
 			setRootVisible(true);
 			getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
 			setCellRenderer(new DefaultTreeCellRenderer() {
@@ -429,7 +422,7 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 				public Component getTreeCellRendererComponent(JTree tree, Object value, boolean sel, boolean expanded, boolean leaf, int row, boolean hasFocus) {
 					final JLabel	label = (JLabel) super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
 
-					label.setText(((MyTreeNode)value).getUserObject().getChild(F_NAME).getStringValue());
+					label.setText(((MyTreeNode)value).getUserObject().getChild(AdminUtils.F_NAME).getStringValue());
 					return label;
 				}
 			});
@@ -449,8 +442,8 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 	public String getToolTipText(final MouseEvent event) {
 		final ItemAndNode	sel = getSelection(event.getPoint());
 		
-		if (sel != null && sel.node.hasName(F_CAPTION)) {
-			return sel.node.getChild(F_CAPTION).getStringValue();
+		if (sel != null && sel.node.hasName(AdminUtils.F_CAPTION)) {
+			return sel.node.getChild(AdminUtils.F_CAPTION).getStringValue();
 		}
 		else {
 			return super.getToolTipText(event);
@@ -462,23 +455,27 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 			throw new NullPointerException("File system can't be null"); 
 		}
 		else {
-			this.fsi = fsi;
-			try(final FileSystemInterface		content = fsi.clone().open("/"+CONTENT_FILE)) {
-				
-				if (content.exists() && content.isFile()) {
-					try(final Reader			rdr = content.charRead(PureLibSettings.DEFAULT_CONTENT_ENCODING);
-						final JsonStaxParser	parser = new JsonStaxParser(rdr)) {
-						
-						parser.next();
-						((DefaultTreeModel)getModel()).setRoot(buildContentTree(JsonUtils.loadJsonTree(parser), new ArrayList<>(), new StringBuilder()));
-					}
-				}
-				else {
-					throw new ContentException("File system ["+fsi.getAbsoluteURI()+"] doesn't contain mandatory file ["+CONTENT_FILE+"] at the root"); 
-				}
+			try{this.fsi = fsi;
+				((DefaultTreeModel)getModel()).setRoot(buildContentTree(AdminUtils.loadContentDescriptor(fsi), new ArrayList<>(), new StringBuilder()));
 			} catch (IOException e) {
 				throw new ContentException("I/O error reading content descriptor: "+e.getLocalizedMessage(),e); 
 			}
+//			try(final FileSystemInterface		content = fsi.clone().open("/"+CONTENT_FILE)) {
+//				
+//				if (content.exists() && content.isFile()) {
+//					try(final Reader			rdr = content.charRead(PureLibSettings.DEFAULT_CONTENT_ENCODING);
+//						final JsonStaxParser	parser = new JsonStaxParser(rdr)) {
+//						
+//						parser.next();
+//						((DefaultTreeModel)getModel()).setRoot(buildContentTree(JsonUtils.loadJsonTree(parser), new ArrayList<>(), new StringBuilder()));
+//					}
+//				}
+//				else {
+//					throw new ContentException("File system ["+fsi.getAbsoluteURI()+"] doesn't contain mandatory file ["+CONTENT_FILE+"] at the root"); 
+//				}
+//			} catch (IOException e) {
+//				throw new ContentException("I/O error reading content descriptor: "+e.getLocalizedMessage(),e); 
+//			}
 		}
 	}
 	
@@ -487,7 +484,7 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 			throw new NullPointerException("File system can't be null"); 
 		}
 		else {
-			try(final FileSystemInterface	content = fsi.clone().open("/"+CONTENT_FILE+".new").create()) {
+			try(final FileSystemInterface	content = fsi.clone().open("/"+AdminUtils.CONTENT_FILE+".new").create()) {
 				
 				try(final Writer			wr = content.charWrite(PureLibSettings.DEFAULT_CONTENT_ENCODING);
 					final JsonStaxPrinter	printer = new JsonStaxPrinter(wr)) {
@@ -495,7 +492,10 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 					JsonUtils.unloadJsonTree(((MyTreeNode)((DefaultTreeModel)getModel()).getRoot()).getUserObject(), printer);
 					printer.flush();
 				}
-				content.push("/"+CONTENT_FILE+".old").delete().pop().push("/"+CONTENT_FILE).rename(CONTENT_FILE+".old").pop().push("/"+CONTENT_FILE+".new").rename(CONTENT_FILE).pop();
+				if (content.push("/"+AdminUtils.CONTENT_FILE+".old").exists()) {
+					content.delete();
+				}
+				content.pop().push("/"+AdminUtils.CONTENT_FILE).rename(AdminUtils.CONTENT_FILE+".old").pop().push("/"+AdminUtils.CONTENT_FILE+".new").rename(AdminUtils.CONTENT_FILE).pop();
 			} catch (IOException e) {
 				throw new ContentException("I/O error reading content descriptor: "+e.getLocalizedMessage(),e); 
 			}
@@ -517,10 +517,10 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 	protected void insertChild(final MyTreeNode parentItem, final JsonNode parentNode, final JsonNode newNode) {
 		final MyTreeNode	newItem = new MyTreeNode(newNode);
 		
-		if (!parentNode.hasName(F_CONTENT)) {
-			parentNode.addChild(new JsonNode(JsonNodeType.JsonArray).setName(F_CONTENT));
+		if (!parentNode.hasName(AdminUtils.F_CONTENT)) {
+			parentNode.addChild(new JsonNode(JsonNodeType.JsonArray).setName(AdminUtils.F_CONTENT));
 		}
-		parentNode.getChild(F_CONTENT).addChild(newNode);
+		parentNode.getChild(AdminUtils.F_CONTENT).addChild(newNode);
 		parentItem.add(newItem);
 		((DefaultTreeModel)getModel()).nodeStructureChanged(parentItem);
 		treeWasModified = true;
@@ -530,8 +530,8 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 		final MyTreeNode	parentItem = (MyTreeNode)item.getParent();
 		final JsonNode		parentNode = (JsonNode)parentItem.getUserObject(); 
 		
-		if (parentNode.hasName(F_CONTENT)) {
-			final JsonNode	arr = parentNode.getChild(F_CONTENT);
+		if (parentNode.hasName(AdminUtils.F_CONTENT)) {
+			final JsonNode	arr = parentNode.getChild(AdminUtils.F_CONTENT);
 			
 			for (int index = 0; index < arr.childrenCount(); index++) {
 				if (node.equals(arr.getChild(index))) {
@@ -609,9 +609,9 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 		if (sel != null) {
 			final int	suffix = uniqueNameSuffix++;
 			
-			ns.type = ContentNodeType.valueOf(sel.node.getChild(F_TYPE).getStringValue());
-			ns.name = sel.node.getChild(F_NAME).getStringValue();
-			ns.caption = sel.node.getChild(F_CAPTION).getStringValue()+suffix;
+			ns.type = ContentNodeType.valueOf(sel.node.getChild(AdminUtils.F_TYPE).getStringValue());
+			ns.name = sel.node.getChild(AdminUtils.F_NAME).getStringValue();
+			ns.caption = sel.node.getChild(AdminUtils.F_CAPTION).getStringValue()+suffix;
 			
 			try{fsmProp.processTerminal(FormEditTerminal.INSERT_SIBLING, null);
 			
@@ -620,10 +620,10 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 					
 					ns.id = UUID.randomUUID().toString();
 					insertSibling(sel.item, sel.node, new JsonNode(JsonNodeType.JsonObject 
-							, new JsonNode(ns.id).setName(F_ID)
-							, new JsonNode(ns.type.name()).setName(F_TYPE)
-							, new JsonNode(ns.name).setName(F_NAME)
-							, new JsonNode(ns.caption).setName(F_CAPTION)
+							, new JsonNode(ns.id).setName(AdminUtils.F_ID)
+							, new JsonNode(ns.type.name()).setName(AdminUtils.F_TYPE)
+							, new JsonNode(ns.name).setName(AdminUtils.F_NAME)
+							, new JsonNode(ns.caption).setName(AdminUtils.F_CAPTION)
 					));
 				}
 				else {
@@ -653,10 +653,10 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 					
 					ns.id = UUID.randomUUID().toString();
 					insertChild(sel.item, sel.node, new JsonNode(JsonNodeType.JsonObject 
-							, new JsonNode(ns.id).setName(F_ID)
-							, new JsonNode(ns.type.name()).setName(F_TYPE)
-							, new JsonNode(ns.name).setName(F_NAME)
-							, new JsonNode(ns.caption).setName(F_CAPTION)
+							, new JsonNode(ns.id).setName(AdminUtils.F_ID)
+							, new JsonNode(ns.type.name()).setName(AdminUtils.F_TYPE)
+							, new JsonNode(ns.name).setName(AdminUtils.F_NAME)
+							, new JsonNode(ns.caption).setName(AdminUtils.F_CAPTION)
 					));
 				}
 				else {
@@ -672,7 +672,7 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 	private void nodeRemoveSubtree() {
 		try{final ItemAndNode	sel = getSelection();
 			
-			if (sel != null && new JLocalizedOptionPane(localizer).confirm(this, new LocalizedFormatter(REMOVE_SUBTREE_MESSAGE, sel.node.getChild(F_NAME).getStringValue()), REMOVE_SUBTREE_TITLE, JOptionPane.QUESTION_MESSAGE, JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+			if (sel != null && new JLocalizedOptionPane(localizer).confirm(this, new LocalizedFormatter(REMOVE_SUBTREE_MESSAGE, sel.node.getChild(AdminUtils.F_NAME).getStringValue()), REMOVE_SUBTREE_TITLE, JOptionPane.QUESTION_MESSAGE, JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
 				removeItem(sel.item, sel.node);
 			}
 		} catch (LocalizationException exc) {
@@ -711,9 +711,9 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 		if (sel != null) {
 			final int	suffix = uniqueNameSuffix++;
 			
-			try{ns.type = ContentNodeType.valueOf(sel.node.getChild(F_TYPE).getStringValue());
-				ns.name = sel.node.getChild(F_NAME).getStringValue();
-				ns.caption = sel.node.getChild(F_CAPTION).getStringValue()+suffix;
+			try{ns.type = ContentNodeType.valueOf(sel.node.getChild(AdminUtils.F_TYPE).getStringValue());
+				ns.name = sel.node.getChild(AdminUtils.F_NAME).getStringValue();
+				ns.caption = sel.node.getChild(AdminUtils.F_CAPTION).getStringValue()+suffix;
 				
 				fsmProp.processTerminal(FormEditTerminal.DUPLICATE_LEAF, null);
 
@@ -722,10 +722,10 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 					
 					ns.id = UUID.randomUUID().toString();					
 					final JsonNode	newNode = new JsonNode(JsonNodeType.JsonObject 
-														, new JsonNode(UUID.randomUUID().toString()).setName(F_ID)
-														, new JsonNode(ns.type.name()).setName(F_TYPE)
-														, new JsonNode(ns.name).setName(F_NAME)
-														, new JsonNode(ns.caption).setName(F_CAPTION)
+														, new JsonNode(UUID.randomUUID().toString()).setName(AdminUtils.F_ID)
+														, new JsonNode(ns.type.name()).setName(AdminUtils.F_TYPE)
+														, new JsonNode(ns.name).setName(AdminUtils.F_NAME)
+														, new JsonNode(ns.caption).setName(AdminUtils.F_CAPTION)
 														);
 					insertChild(sel.item.getParent(),sel.item.getParent().getUserObject(),newNode);
 				}
@@ -742,7 +742,7 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 	private void leafRemove() {
 		try{final ItemAndNode	sel = getSelection();
 			
-			if (sel != null && new JLocalizedOptionPane(localizer).confirm(this, new LocalizedFormatter(REMOVE_LEAF_MESSAGE, sel.node.getChild(F_NAME).getStringValue()), REMOVE_LEAF_TITLE, JOptionPane.QUESTION_MESSAGE, JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+			if (sel != null && new JLocalizedOptionPane(localizer).confirm(this, new LocalizedFormatter(REMOVE_LEAF_MESSAGE, sel.node.getChild(AdminUtils.F_NAME).getStringValue()), REMOVE_LEAF_TITLE, JOptionPane.QUESTION_MESSAGE, JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
 				removeItem(sel.item, sel.node);
 			}
 		} catch (LocalizationException exc) {
@@ -771,9 +771,9 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 			if (AutoBuiltForm.ask((JFrame)null, localizer, form)) {
 				fsmProp.processTerminal(FormEditTerminal.COMPLETE, null);
 				
-				node.getChild(F_TYPE).setValue(ns.type.toString());
-				node.getChild(F_NAME).setValue(ns.name);
-				node.getChild(F_CAPTION).setValue(ns.caption);
+				node.getChild(AdminUtils.F_TYPE).setValue(ns.type.toString());
+				node.getChild(AdminUtils.F_NAME).setValue(ns.name);
+				node.getChild(AdminUtils.F_CAPTION).setValue(ns.caption);
 				((DefaultTreeModel)getModel()).nodeChanged(item);
 				treeWasModified = true;
 			}
@@ -802,10 +802,10 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 					ns.id = UUID.randomUUID().toString();
 					
 					final JsonNode	newNode = new JsonNode(JsonNodeType.JsonObject 
-											, new JsonNode(ns.id).setName(F_ID)
-											, new JsonNode(ns.type.name()).setName(F_TYPE)
-											, new JsonNode(ns.name).setName(F_NAME)
-											, new JsonNode(ns.caption).setName(F_CAPTION)
+											, new JsonNode(ns.id).setName(AdminUtils.F_ID)
+											, new JsonNode(ns.type.name()).setName(AdminUtils.F_TYPE)
+											, new JsonNode(ns.name).setName(AdminUtils.F_NAME)
+											, new JsonNode(ns.caption).setName(AdminUtils.F_CAPTION)
 									);
 					insertChild(sel.item, sel.node, newNode);
 					
@@ -869,8 +869,6 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 	}
 
 	private UIItemState.AvailableAndVisible getAccessAndVisibility(final ContentNodeMetadata meta) {
-//		System.err.println("Name: "+meta.getApplicationPath()+", "+meta.getName());
-		
 		final Map<String,UIItemState.AvailableAndVisible>	aav = fsmProp.getCurrentState().getProps();
 		
 		if (aav.containsKey(meta.getName())) {
@@ -891,12 +889,12 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 	static DefaultMutableTreeNode buildContentTree(final JsonNode node, final List<JsonNode> path, final StringBuilder sb) throws ContentException {
 		path.add(node);
 		if (node.getType() == JsonNodeType.JsonObject) {
-			if (JsonUtils.checkJsonMandatories(node, sb, F_ID, F_TYPE, F_NAME, F_CAPTION)) {
-				if (JsonUtils.checkJsonFieldTypes(node, sb, F_ID+"/"+JsonUtils.JSON_TYPE_STR, F_TYPE+"/"+JsonUtils.JSON_TYPE_STR, F_NAME+"/"+JsonUtils.JSON_TYPE_STR, F_CAPTION+"/"+JsonUtils.JSON_TYPE_STR, F_CONTENT+"/"+JsonUtils.JSON_TYPE_ARR)) {
+			if (JsonUtils.checkJsonMandatories(node, sb, AdminUtils.F_ID, AdminUtils.F_TYPE, AdminUtils.F_NAME, AdminUtils.F_CAPTION)) {
+				if (JsonUtils.checkJsonFieldTypes(node, sb, AdminUtils.F_ID+"/"+JsonUtils.JSON_TYPE_STR, AdminUtils.F_TYPE+"/"+JsonUtils.JSON_TYPE_STR, AdminUtils.F_NAME+"/"+JsonUtils.JSON_TYPE_STR, AdminUtils.F_CAPTION+"/"+JsonUtils.JSON_TYPE_STR, AdminUtils.F_CONTENT+"/"+JsonUtils.JSON_TYPE_ARR)) {
 					final MyTreeNode	treeItem = new MyTreeNode(node);
 
-					if (node.hasName(F_CONTENT)) {
-						for (JsonNode item : node.getChild(F_CONTENT).children()) {
+					if (node.hasName(AdminUtils.F_CONTENT)) {
+						for (JsonNode item : node.getChild(AdminUtils.F_CONTENT).children()) {
 							treeItem.add(buildContentTree(item, path, sb));
 						}
 					}
@@ -917,10 +915,10 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 	}
 
 	private static void fillSettings(final NodeSettings settings, final JsonNode node) {
-		settings.type = ContentNodeType.valueOf(node.getChild(F_TYPE).getStringValue());
-		settings.id = node.getChild(F_ID).getStringValue();
-		settings.name = node.getChild(F_NAME).getStringValue();
-		settings.caption = node.getChild(F_CAPTION).getStringValue();
+		settings.type = ContentNodeType.valueOf(node.getChild(AdminUtils.F_TYPE).getStringValue());
+		settings.id = node.getChild(AdminUtils.F_ID).getStringValue();
+		settings.name = node.getChild(AdminUtils.F_NAME).getStringValue();
+		settings.caption = node.getChild(AdminUtils.F_CAPTION).getStringValue();
 	}
 
 	private class StaticContentTransferHandler extends TransferHandler {
@@ -1034,7 +1032,7 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 	    		final TreePath	path = ((JTree)c).getPathForLocation(point.x, point.y);
 	    		
 	    		if (path != null) {
-	    			return ((JsonNode)((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject()).hasName(F_CONTENT);
+	    			return ((JsonNode)((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject()).hasName(AdminUtils.F_CONTENT);
 	    		}
 	    		else {
 	    			return false;
@@ -1109,7 +1107,7 @@ public class StaticTreeContent extends JTree implements LocaleChangeListener {
 		
 		@Override
 		public boolean isLeaf() {
-			return ContentNodeType.valueOf(getUserObject().getChild(F_TYPE).getStringValue()) != ContentNodeType.SUBTREE;
+			return ContentNodeType.valueOf(getUserObject().getChild(AdminUtils.F_TYPE).getStringValue()) != ContentNodeType.SUBTREE;
 		}
 		
 		@Override
