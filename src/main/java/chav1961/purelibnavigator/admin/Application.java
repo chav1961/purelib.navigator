@@ -245,10 +245,12 @@ public class Application extends JFrame implements LocaleChangeListener, AutoClo
 	@OnAction("action:/openFile")
 	private void openFile() {
 		if (saveAndNeedContinue()) {
-			try(final FileSystemInterface	total = FileSystemFactory.createFileSystem(URI.create(FileSystemInterface.FILESYSTEM_URI_SCHEME+":file://./"))){
+			try(final FileSystemInterface	total = FileSystemFactory.createFileSystem(URI.create(FileSystemInterface.FILESYSTEM_URI_SCHEME+":file:/"))){
 				
 				for (String item : JFileSelectionDialog.select(this, localizer, total, JFileSelectionDialog.OPTIONS_FOR_OPEN | JFileSelectionDialog.OPTIONS_ALLOW_MKDIR | JFileSelectionDialog.OPTIONS_CAN_SELECT_DIR)) {
-					setFileSystem(FileSystemFactory.createFileSystem(URI.create(FileSystemInterface.FILESYSTEM_URI_SCHEME+":"+item)));
+					final URI	loadedURI = URI.create(FileSystemInterface.FILESYSTEM_URI_SCHEME+":"+total.getAbsoluteURI().toString()+"/"+item);
+					
+					setFileSystem(FileSystemFactory.createFileSystem(loadedURI));
 					break;
 				}
 			} catch (LocalizationException | IOException e) {
@@ -273,10 +275,11 @@ public class Application extends JFrame implements LocaleChangeListener, AutoClo
 	@OnAction("action:/saveFileAs")
 	private void saveFileAs() {
 		saveFile();
-		try(final FileSystemInterface	total = FileSystemFactory.createFileSystem(URI.create(FileSystemInterface.FILESYSTEM_URI_SCHEME+":file://./"))){
+		try(final FileSystemInterface	total = FileSystemFactory.createFileSystem(URI.create(FileSystemInterface.FILESYSTEM_URI_SCHEME+":file:/"))){
 			
 			for (String item : JFileSelectionDialog.select(this, localizer, total, JFileSelectionDialog.OPTIONS_FOR_SAVE | JFileSelectionDialog.OPTIONS_ALLOW_MKDIR | JFileSelectionDialog.OPTIONS_CAN_SELECT_DIR)) {
-				final FileSystemInterface	stored = FileSystemFactory.createFileSystem(URI.create(FileSystemInterface.FILESYSTEM_URI_SCHEME+":"+item));
+				final URI					storedURI = URI.create(FileSystemInterface.FILESYSTEM_URI_SCHEME+":"+total.getAbsoluteURI().toString()+"/"+item);
+				final FileSystemInterface	stored = FileSystemFactory.createFileSystem(storedURI);
 					
 				fsi.copy(stored);
 				fsi.close();
