@@ -3,25 +3,25 @@
 	<app:i18n location="i18n:xml:root://chav1961.purelibnavigator.admin.Application/chav1961/purelib/admin/i18n/i18n.xml"/>
 	<app:menu id="mainmenu">
 		<app:submenu name="menu.file" caption="menu.file" tooltip="menu.file.tt">
-			<app:item name="menu.file.new" caption="menu.file.new" tooltip="menu.file.new.tt" action="newFile"/>
-			<app:item name="menu.file.open" caption="menu.file.open" tooltip="menu.file.open.tt" action="openFile"/>
+			<app:item name="menu.file.new" caption="menu.file.new" tooltip="menu.file.new.tt" icon="root://chav1961.purelibnavigator.admin.Application/images/new.png" action="newFile"/>
+			<app:item name="menu.file.open" caption="menu.file.open" tooltip="menu.file.open.tt" icon="root://chav1961.purelibnavigator.admin.Application/images/open.png" action="openFile"/>
 			<app:separator/>
-			<app:item name="menu.file.save" caption="menu.file.save" tooltip="menu.file.save.tt" action="saveFile"/>
+			<app:item name="menu.file.save" caption="menu.file.save" tooltip="menu.file.save.tt" icon="root://chav1961.purelibnavigator.admin.Application/images/save.png" action="saveFile"/>
 			<app:item name="menu.file.saveas" caption="menu.file.saveAs" tooltip="menu.file.saveAs.tt" action="saveFileAs"/>
 			<app:separator/>
 			<app:builtinSubmenu name="builtin.lru" caption="menu.file.lru" tooltip="menu.file.lru.tt"/>	
-			<app:item name="menu.file.exit" caption="menu.file.exit" tooltip="menu.file.exit.tt" action="exit"/>
+			<app:item name="menu.file.exit" caption="menu.file.exit" tooltip="menu.file.exit.tt" icon="root://chav1961.purelibnavigator.admin.Application/images/exit.png" action="exit"/>
 		</app:submenu>
 		<app:submenu name="menu.tools" caption="menu.tools" tooltip="menu.tools.tt">
-			<app:item name="menu.tools.pack" caption="menu.tools.pack" tooltip="menu.tools.pack.tt" action="pack"/>
+			<app:item name="menu.tools.pack" caption="menu.tools.pack" tooltip="menu.tools.pack.tt" icon="root://chav1961.purelibnavigator.admin.Application/images/pack.png" action="pack"/>
 			<app:separator/>
 			<app:builtinSubmenu name="builtin.languages" caption="menu.tools.languages" tooltip="menu.tools.languages.tt"/>
-			<app:item name="menu.tools.settings" caption="menu.tools.settings" tooltip="menu.tools.settings.tt" action="settings"/>
+			<app:item name="menu.tools.settings" caption="menu.tools.settings" tooltip="menu.tools.settings.tt" icon="root://chav1961.purelibnavigator.admin.Application/images/settings.png" action="settings"/>
 		</app:submenu>
 		<app:submenu name="menu.help" caption="menu.help" tooltip="menu.help.tt">
-			<app:item name="menu.help.startBrowser" caption="menu.help.startBrowser" tooltip="menu.help.startBrowser.tt" action="startBrowser"/>
+			<app:item name="menu.help.startBrowser" caption="menu.help.startBrowser" tooltip="menu.help.startBrowser.tt" icon="root://chav1961.purelibnavigator.admin.Application/images/browser.png" action="startBrowser"/>
 			<app:separator/>
-			<app:item name="menu.help.about" caption="menu.help.about" tooltip="menu.help.about.tt" action="helpAbout"/>
+			<app:item name="menu.help.about" caption="menu.help.about" tooltip="menu.help.about.tt" icon="root://chav1961.purelibnavigator.admin.Application/images/about.png" action="helpAbout"/>
 		</app:submenu>
 	</app:menu>
 	<app:keyset id="mainmenu.keyset">
@@ -31,24 +31,24 @@
 		<app:key code="Q" ctrl="true" action="exit"/>
 	</app:keyset>
 	<app:menu id="creoleEditorToolbar">
-		<app:item name="creoleeditor.toolbar.clear" caption="creoleeditor.toolbar.clear" tooltip="creoleeditor.toolbar.clear.tt" icon="root://chav1961.purelibnavigator.admin.NewApplication/images/favicon.png" action="creoleClear"/>
-		<app:item name="creoleeditor.toolbar.save" caption="creoleeditor.toolbar.save" tooltip="creoleeditor.toolbar.save.tt" icon="root://chav1961.purelibnavigator.admin.NewApplication/images/favicon.png" action="creoleSave"/>
+		<app:item name="creoleeditor.toolbar.clear" caption="creoleeditor.toolbar.clear" tooltip="creoleeditor.toolbar.clear.tt" icon="root://chav1961.purelibnavigator.admin.Application/images/clear.png" action="creoleClear"/>
+		<app:item name="creoleeditor.toolbar.save" caption="creoleeditor.toolbar.save" tooltip="creoleeditor.toolbar.save.tt" icon="root://chav1961.purelibnavigator.admin.Application/images/save.png" action="creoleSave"/>
 	</app:menu>
 	<app:menu id="imageViewToolbar">
-		<app:item name="imageview.toolbar.fill" caption="imageview.toolbar.fill" tooltip="imageview.toolbar.fill.tt" icon="root://chav1961.purelibnavigator.admin.NewApplication/images/favicon.png" action="imageFill"/>
-		<app:item name="imageview.toolbar.original" caption="imageview.toolbar.original" tooltip="imageview.toolbar.original.tt" icon="root://chav1961.purelibnavigator.admin.NewApplication/images/favicon.png" action="imageOriginal"/>
+		<app:item name="imageview.toolbar.fill" caption="imageview.toolbar.fill" tooltip="imageview.toolbar.fill.tt" icon="root://chav1961.purelibnavigator.admin.Application/images/expand.png" action="imageFill"/>
+		<app:item name="imageview.toolbar.original" caption="imageview.toolbar.original" tooltip="imageview.toolbar.original.tt" icon="root://chav1961.purelibnavigator.admin.Application/images/original.png" action="imageOriginal"/>
 	</app:menu>
 	<app:menu id="rightNodeMenu">
-		<app:item name="menu.admin.tree.cut" caption="menu.admin.tree.cut" tooltip="menu.admin.tree.cut.tt" action="nodeCut"/>
-		<app:item name="menu.admin.tree.copy" caption="menu.admin.tree.copy" tooltip="menu.admin.tree.copy.tt" action="nodeCopy"/>
-		<app:item name="menu.admin.tree.paste" caption="menu.admin.tree.paste" tooltip="menu.admin.tree.paste.tt" action="nodePaste"/>
+		<app:item name="menu.admin.tree.cut" caption="menu.admin.tree.cut" tooltip="menu.admin.tree.cut.tt" icon="root://chav1961.purelibnavigator.admin.Application/images/cut.png" action="nodeCut"/>
+		<app:item name="menu.admin.tree.copy" caption="menu.admin.tree.copy" tooltip="menu.admin.tree.copy.tt"  icon="root://chav1961.purelibnavigator.admin.Application/images/copy.png" action="nodeCopy"/>
+		<app:item name="menu.admin.tree.paste" caption="menu.admin.tree.paste" tooltip="menu.admin.tree.paste.tt" icon="root://chav1961.purelibnavigator.admin.Application/images/paste.png" action="nodePaste"/>
 		<app:item name="menu.admin.tree.pasteFile" caption="menu.admin.tree.pasteFile" tooltip="menu.admin.tree.pasteFile.tt" action="nodePasteFile"/>
 		<app:separator/>
 		<app:item name="menu.admin.tree.insert.sibling" caption="menu.admin.tree.insert.sibling" tooltip="menu.admin.tree.insert.sibling.tt" action="nodeInsertSibling"/>
 		<app:item name="menu.admin.tree.insert.child" caption="menu.admin.tree.insert.child" tooltip="menu.admin.tree.insert.child.tt" action="nodeInsertChild"/>
-		<app:item name="menu.admin.tree.removeSubtree" caption="menu.admin.tree.removeSubtree" tooltip="menu.admin.tree.removeSubtree.tt" action="nodeRemoveSubtree"/>
+		<app:item name="menu.admin.tree.removeSubtree" caption="menu.admin.tree.removeSubtree" tooltip="menu.admin.tree.removeSubtree.tt" icon="root://chav1961.purelibnavigator.admin.Application/images/delete.png" action="nodeRemoveSubtree"/>
 		<app:separator/>
-		<app:item name="menu.admin.tree.properties" caption="menu.admin.tree.properties" tooltip="menu.admin.tree.properties.tt" action="nodeProperties"/>
+		<app:item name="menu.admin.tree.properties" caption="menu.admin.tree.properties" tooltip="menu.admin.tree.properties.tt" icon="root://chav1961.purelibnavigator.admin.Application/images/properties.png" action="nodeProperties"/>
 	</app:menu>
 	<app:keyset id="rightNodeMenu.keyset">
 		<app:key code="X" ctrl="true" action="nodeCut"/>
@@ -58,14 +58,14 @@
 		<app:key code="DELETE" action="nodeRemoveSubtree"/>
 	</app:keyset>
 	<app:menu id="rightLeafMenu">
-		<app:item name="menu.admin.tree.cut" caption="menu.admin.tree.cut" tooltip="menu.admin.tree.cut.tt" action="leafCut"/>
-		<app:item name="menu.admin.tree.copy" caption="menu.admin.tree.copy" tooltip="menu.admin.tree.copy.tt" action="leafCopy"/>
-		<app:item name="menu.admin.tree.paste" caption="menu.admin.tree.paste" tooltip="menu.admin.tree.paste.tt" action="leafPaste"/>
+		<app:item name="menu.admin.tree.cut" caption="menu.admin.tree.cut" tooltip="menu.admin.tree.cut.tt" icon="root://chav1961.purelibnavigator.admin.Application/images/cut.png" action="leafCut"/>
+		<app:item name="menu.admin.tree.copy" caption="menu.admin.tree.copy" tooltip="menu.admin.tree.copy.tt" icon="root://chav1961.purelibnavigator.admin.Application/images/copy.png" action="leafCopy"/>
+		<app:item name="menu.admin.tree.paste" caption="menu.admin.tree.paste" tooltip="menu.admin.tree.paste.tt" icon="root://chav1961.purelibnavigator.admin.Application/images/paste.png" action="leafPaste"/>
 		<app:separator/>
 		<app:item name="menu.admin.tree.duplicateLeaf" caption="menu.admin.tree.duplicateLeaf" tooltip="menu.admin.tree.duplicateLeaf.tt" action="leafDuplicate"/>
-		<app:item name="menu.admin.tree.removeSubtree" caption="menu.admin.tree.removeSubtree" tooltip="menu.admin.tree.removeSubtree.tt" action="leafRemove"/>
+		<app:item name="menu.admin.tree.removeSubtree" caption="menu.admin.tree.removeSubtree" tooltip="menu.admin.tree.removeSubtree.tt" icon="root://chav1961.purelibnavigator.admin.Application/images/delete.png" action="leafRemove"/>
 		<app:separator/>
-		<app:item name="menu.admin.tree.properties" caption="menu.admin.tree.properties" tooltip="menu.admin.tree.properties.tt" action="leafProperties"/>
+		<app:item name="menu.admin.tree.properties" caption="menu.admin.tree.properties" tooltip="menu.admin.tree.properties.tt" icon="root://chav1961.purelibnavigator.admin.Application/images/properties.png" action="leafProperties"/>
 	</app:menu>
 	<app:keyset id="rightLeafMenu.keyset">
 		<app:key code="X" ctrl="true" action="leafCut"/>
@@ -75,6 +75,6 @@
 		<app:key code="DELETE" action="leafRemove"/>
 	</app:keyset>
 	<app:menu id="rightEmptyMenu">
-		<app:item name="creoleeditor.toolbar.clear2" caption="creoleeditor.toolbar.clear" tooltip="creoleeditor.toolbar.clear.tt" icon="root://chav1961.purelibnavigator.admin.NewApplication/images/favicon.png" action="clear"/>
+		<app:item name="creoleeditor.toolbar.clear2" caption="creoleeditor.toolbar.clear" tooltip="creoleeditor.toolbar.clear.tt" icon="root://chav1961.purelibnavigator.admin.Application/images/favicon.png" action="clear"/>
 	</app:menu>
 </app:root>

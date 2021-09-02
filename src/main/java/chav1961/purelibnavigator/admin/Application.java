@@ -102,8 +102,8 @@ public class Application extends JFrame implements LocaleChangeListener, AutoClo
 	private static final String					APPLICATION_TAB_RES_TITLE = "Application.tab.resource.title";
 	private static final String					APPLICATION_TAB_RES_TT = "Application.tab.resource.title.tt";
 	
-	private static final Icon					NAVIGATION_ICON = new ImageIcon(Application.class.getResource("favicon.png"));
-	private static final Icon					RESOURCE_ICON = new ImageIcon(Application.class.getResource("favicon.png"));
+	private static final Icon					NAVIGATION_ICON = new ImageIcon(Application.class.getResource("navigator.png"));
+	private static final Icon					RESOURCE_ICON = new ImageIcon(Application.class.getResource("helplist.png"));
 	
 	private final ContentMetadataInterface		mdi;
 	private final Localizer						localizer;
@@ -181,7 +181,7 @@ public class Application extends JFrame implements LocaleChangeListener, AutoClo
 					for (String item : lru) {
 						sb.append('\t').append(item.trim());
 					}
-					if (!sb.isEmpty()) {
+					if (sb.length() > 0) {
 						as.lruList = sb.substring(1);
 						saveSettings(as);
 					}
