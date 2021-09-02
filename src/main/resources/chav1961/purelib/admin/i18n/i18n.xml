@@ -2,13 +2,16 @@
 <localization xmlns="http://www.i18n.purelib.chav1961.ru/">
 	<lang name="en">
 <!-- Application localization -->
-		<key name="Application.title">(c) 2021, Pure lib navigator, static content editor</key>  
+		<key name="Application.title">(c) 2021, Pure lib navigator, static content editor %1$s</key>  
 		<key name="Application.help.title">About</key>
 		<key name="Application.help.content">About content</key>
 		<key name="Application.save.title">Save changes</key>
 		<key name="Application.save.content">There are unsaved changes in your content. Save it?</key>
 		<key name="Application.help.projects">Help projects</key>
-		
+		<key name="Application.tab.navigation.title">Navigator</key>
+		<key name="Application.tab.navigation.title.tt">Tab contains navigation tree of the help system (Alt+1)</key>
+		<key name="Application.tab.resource.title">Resources</key>
+		<key name="Application.tab.resource.title.tt">Tab contains resource tree of the help system (Alt+2)</key>
 
 <!-- Application menu localization -->
 		<key name="menu.file">File</key>
@@ -85,8 +88,12 @@
 		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.creole.tt">This node is Creole file</key>
 		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.image">Image</key>
 		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.image.tt">This node is image file</key>
+		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.resource">Resource</key>
+		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.resource.tt">This node is any resource file</key>
 		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.subtree">Subtree</key>
 		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.subtree.tt">This node is subtree</key>
+		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.subtreewithcreole">Subtree with content</key>
+		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.subtreewithcreole.tt">This node is subtree with content associated</key>
 		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.unknown">Unknown</key>
 		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.unknown.tt">Type of the node is unknown</key>
 
@@ -102,8 +109,6 @@
 		<key name="chav1961.purelibnavigator.admin.nodesettings.tt">Show properties of the given node</key>
 		<key name="chav1961.purelibnavigator.admin.nodesettings.type">Type</key>
 		<key name="chav1961.purelibnavigator.admin.nodesettings.type.tt">Node type</key>
-		<key name="chav1961.purelibnavigator.admin.nodesettings.name">Name</key>
-		<key name="chav1961.purelibnavigator.admin.nodesettings.name.tt">Node name</key>
 		<key name="chav1961.purelibnavigator.admin.nodesettings.caption">Caption</key>
 		<key name="chav1961.purelibnavigator.admin.nodesettings.caption.tt">Node caption</key>
 		
@@ -127,12 +132,16 @@
 	<lang name="ru">
 	
 <!-- Application localization -->
-		<key name="Application.title">(c) 2021, Pure lib navigator, редактор статического контента</key>  
+		<key name="Application.title">(c) 2021, Pure lib navigator, редактор статического контента %1$s</key>  
 		<key name="Application.help.title">О программе</key>
 		<key name="Application.help.content">О программе</key>
 		<key name="Application.save.title">Сохранить изменения</key>
 		<key name="Application.save.content">В программе есть несохраненные изменения. Сохранить их?</key>
 		<key name="Application.help.projects">Проекты справки</key>
+		<key name="Application.tab.navigation.title">Навигатор</key>
+		<key name="Application.tab.navigation.title.tt">Дерево навигации справочной системы (Alt+1)</key>
+		<key name="Application.tab.resource.title">Ресурсы</key>
+		<key name="Application.tab.resource.title.tt">Ресурсы справочной системы (Alt+2)</key>
 
 <!-- Application menu localization -->
 		<key name="menu.file">Файл</key>
@@ -210,10 +219,15 @@
 		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.creole.tt">Это файл Creole</key>
 		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.image">Изображение</key>
 		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.image.tt">Это изображение</key>
+		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.resource">Ресурсы</key>
+		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.resource.tt">Это файл какого-либо ресурса</key>
 		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.subtree">Поддерево</key>
 		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.subtree.tt">Это поддерево</key>
+		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.subtreewithcreole">Subtree with content</key>
+		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.subtreewithcreole.tt">This node is subtree with content associated</key>
 		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.unknown">Неизвестно</key>
 		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.unknown.tt">Тип узла неизвестен</key>
+
 
 <!-- Нумерация PackingType -->
 		<key name="chav1961.purelibnavigator.interfaces.packingtype.war">WAR</key>
@@ -226,8 +240,6 @@
 		<key name="chav1961.purelibnavigator.admin.nodesettings.tt">Показывает свойства выбранного узла дерева</key>
 		<key name="chav1961.purelibnavigator.admin.nodesettings.type">Тип</key>
 		<key name="chav1961.purelibnavigator.admin.nodesettings.type.tt">Тип узла дерева</key>
-		<key name="chav1961.purelibnavigator.admin.nodesettings.name">Имя</key>
-		<key name="chav1961.purelibnavigator.admin.nodesettings.name.tt">Наименование узла дерева</key>
 		<key name="chav1961.purelibnavigator.admin.nodesettings.caption">Заголовок</key>
 		<key name="chav1961.purelibnavigator.admin.nodesettings.caption.tt">Заголовок узла дерева</key>
 

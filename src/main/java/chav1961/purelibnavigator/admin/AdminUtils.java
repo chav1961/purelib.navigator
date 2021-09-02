@@ -26,6 +26,7 @@ import chav1961.purelib.json.JsonNode;
 import chav1961.purelib.json.JsonUtils;
 import chav1961.purelib.json.interfaces.JsonNodeType;
 import chav1961.purelib.streams.JsonStaxParser;
+import chav1961.purelibnavigator.admin.entities.AppSettings;
 import chav1961.purelibnavigator.interfaces.ContentNodeGroup;
 import chav1961.purelibnavigator.interfaces.ContentNodeType;
 import chav1961.purelibnavigator.navigator.Navigator;
@@ -34,14 +35,25 @@ import chav1961.purelibnavigator.navigator.NavigatorHandler;
 public class AdminUtils {
 	public static final String			CONTENT_FILE = "content.json";
 
+	public static final String			F_NAVIGATION = "navigation";
+	public static final String			F_RESOURCES = "resources";
 	public static final String			F_ID = "id";
 	public static final String			F_TYPE = "type";
-	public static final String			F_NAME = "name";
 	public static final String			F_CAPTION = "caption";
 	public static final String			F_CONTENT = "content";
-
 	
 	private static final InputStream	NULL_CONTENT = new InputStream() {@Override public int read() throws IOException {return -1;}}; 
+	
+	
+	// JSON  format:
+	// {
+	//	"navigation":{
+	//		{"id":<resource id>,"type":"<type>","caption":"<caption>","content":[<repeats tree node>]}
+	//	}, 
+	// 	"resources":[
+	//		{"type": "<type>", "content":[<resource id>, ...]}, ...
+	//	]
+	// }
 	
 	public static JsonNode loadContentDescriptor(final FileSystemInterface fsi) throws IOException, ContentException, NullPointerException {
 		if (fsi == null) {

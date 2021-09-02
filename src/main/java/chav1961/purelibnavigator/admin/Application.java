@@ -3,6 +3,8 @@ package chav1961.purelibnavigator.admin;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Image;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -15,19 +17,28 @@ import java.io.Writer;
 import java.net.ServerSocket;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 
 import javax.imageio.ImageIO;
+import javax.swing.Icon;
+import javax.swing.ImageIcon;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
+import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
+import javax.swing.KeyStroke;
+import javax.swing.tree.DefaultTreeModel;
 
 import chav1961.purelib.basic.ArgParser;
 import chav1961.purelib.basic.PureLibSettings;
@@ -44,21 +55,30 @@ import chav1961.purelib.i18n.LocalizerFactory;
 import chav1961.purelib.i18n.PureLibLocalizer;
 import chav1961.purelib.i18n.interfaces.Localizer;
 import chav1961.purelib.i18n.interfaces.Localizer.LocaleChangeListener;
+import chav1961.purelib.json.JsonNode;
+import chav1961.purelib.json.JsonUtils;
+import chav1961.purelib.model.Constants;
 import chav1961.purelib.model.ContentModelFactory;
 import chav1961.purelib.model.interfaces.ContentMetadataInterface;
 import chav1961.purelib.model.interfaces.ContentMetadataInterface.ContentNodeMetadata;
 import chav1961.purelib.nanoservice.NanoServiceFactory;
+import chav1961.purelib.streams.JsonStaxPrinter;
 import chav1961.purelib.ui.interfaces.UIItemState;
 import chav1961.purelib.ui.swing.AutoBuiltForm;
 import chav1961.purelib.ui.swing.SwingUtils;
 import chav1961.purelib.ui.swing.interfaces.OnAction;
 import chav1961.purelib.ui.swing.useful.JFileSelectionDialog;
 import chav1961.purelib.ui.swing.useful.JFileSelectionDialog.FilterCallback;
+import chav1961.purelib.ui.swing.useful.interfaces.LRUPersistence;
 import chav1961.purelib.ui.swing.useful.JLocalizedOptionPane;
 import chav1961.purelib.ui.swing.useful.JStateString;
+import chav1961.purelib.ui.swing.useful.LRUManager;
 import chav1961.purelibnavigator.admin.ContentEditorAndViewer.ContentType;
+import chav1961.purelibnavigator.admin.entities.AppSettings;
+import chav1961.purelibnavigator.admin.entities.TreeContentNode;
 import chav1961.purelibnavigator.interfaces.ContentNodeGroup;
 import chav1961.purelibnavigator.interfaces.ContentNodeType;
+import chav1961.purelibnavigator.interfaces.ResourceType;
 
 public class Application extends JFrame implements LocaleChangeListener, AutoCloseable {
 	private static final long 					serialVersionUID = -3061028320843379171L;
@@ -76,22 +96,34 @@ public class Application extends JFrame implements LocaleChangeListener, AutoClo
 	private static final String					APPLICATION_SAVE_TITLE = "Application.save.title";
 	private static final String					APPLICATION_SAVE_CONTENT = "Application.save.content";
 	private static final String					APPLICATION_HELP_PROJECTS = "Application.help.projects";
+
+	private static final String					APPLICATION_TAB_NAV_TITLE = "Application.tab.navigation.title";
+	private static final String					APPLICATION_TAB_NAV_TT = "Application.tab.navigation.title.tt";
+	private static final String					APPLICATION_TAB_RES_TITLE = "Application.tab.resource.title";
+	private static final String					APPLICATION_TAB_RES_TT = "Application.tab.resource.title.tt";
 	
+	private static final Icon					NAVIGATION_ICON = new ImageIcon(Application.class.getResource("favicon.png"));
+	private static final Icon					RESOURCE_ICON = new ImageIcon(Application.class.getResource("favicon.png"));
 	
 	private final ContentMetadataInterface		mdi;
 	private final Localizer						localizer;
 	private final int 							localHelpPort;
 	private final CountDownLatch				latch;
 	private final JMenuBar						menu;
-	private final StaticTreeContent				stc;
+	private final NavigatorTreeContent			ntc;
+	private final ResourceTreeContent			rtc;
 	private final ContentEditorAndViewer		ceav;
 	private final JStateString					state;
+	private final JTabbedPane					tabs = new JTabbedPane();
 	private final Set<File>						temporaries = new HashSet<>();
 	private final AppSettings					as;
+	private final LRUManager					mgr;
 	private final AutoBuiltForm<AppSettings>	form;
 	
-	private FileSystemInterface				fsi;
-	private String							creoleContent = null;
+	private FileSystemInterface					fsi;
+	private JsonNode							rootNode;
+	private String								creoleContent = null;
+	private String								lastLoaded = "";
 	
 	public Application(final ContentMetadataInterface mdi, final Localizer parent, final int localHelpPort, final CountDownLatch latch) throws EnvironmentException, NullPointerException, IllegalArgumentException, IOException, ContentException {
 		if (mdi == null) {
@@ -127,66 +159,53 @@ public class Application extends JFrame implements LocaleChangeListener, AutoClo
 					this.as.load(is);
 				}
 			}
+			this.mgr = new LRUManager(new LRUPersistence() {
+				@Override
+				public void loadLRU(final List<String> lru) throws IOException {
+					lru.clear();
+					
+					for (String item : as.lruList.split("\t")) {
+						final String	trimmed = item.trim();
+						
+						if (!trimmed.isEmpty()) {
+							lru.add(item);
+						}
+					}
+					SwingUtils.fillLruSubmenu((JMenu)SwingUtils.findComponentByName(menu, Constants.MODEL_BUILTIN_LRU), lru);
+				}
+				
+				@Override
+				public void saveLRU(final List<String> lru) throws IOException {
+					final StringBuilder	sb = new StringBuilder();
+					
+					for (String item : lru) {
+						sb.append('\t').append(item.trim());
+					}
+					if (!sb.isEmpty()) {
+						as.lruList = sb.substring(1);
+						saveSettings(as);
+					}
+				}
+			});
+			this.mgr.addLRUManagerListener((m,t,i)->SwingUtils.fillLruSubmenu((JMenu)SwingUtils.findComponentByName(menu, Constants.MODEL_BUILTIN_LRU), m));
 			
 			final JSplitPane	splitter = new JSplitPane();
 			final JPanel		rightPanel = new JPanel(new BorderLayout());
 			
 			this.fsi = null;
 			this.ceav = new ContentEditorAndViewer(localizer, state, mdi, (t)->saveCreoleContent(t));
-			this.stc = new StaticTreeContent(mdi, localizer, state
-										,(item,node)->{
-											if (creoleContent != null && ceav.creoleContentWasChanged()) {
-												ceav.saveCreoleContent();
-											}
-											
-											ContentNodeType	type;
-											
-											if (node != null && (type = ContentNodeType.valueOf(node.getChild(AdminUtils.F_TYPE).getStringValue())).getGroup() == ContentNodeGroup.LEAF) {
-												
-												try(final FileSystemInterface	content = fsi.clone().open("/"+node.getChild(AdminUtils.F_ID).getStringValue()+type.getFileNameSuffix())) {
-													if (content.exists() && content.isFile()) {
-														switch (type) {
-															case CREOLE	:
-																creoleContent = content.getPath();
-																
-																try(final Reader		rdr = content.charRead(PureLibSettings.DEFAULT_CONTENT_ENCODING)) {
-																	
-																	ceav.getCreoleEditor().setText(Utils.fromResource(rdr));
-																	ceav.setContentType(ContentType.CREOLE);
-																}
-																break;
-															case IMAGE	:
-																try(final InputStream	is = content.read()) {
-																	final Image			image = ImageIO.read(is);
-																	
-																	ceav.getImageContainer().setBackground(image);
-																	creoleContent = null; 
-																	ceav.setContentType(ContentType.IMAGE);
-																}
-																break;
-															default:
-																creoleContent = null; 
-																ceav.setContentType(ContentType.COMMON);
-																break;
-														}
-													}
-													else {
-														creoleContent = null; 
-														ceav.setContentType(ContentType.COMMON);
-													}
-												} catch (IOException exc) {
-													state.message(Severity.error, exc.getLocalizedMessage(), exc);
-												}
-											}
-											else {
-												ceav.setContentType(ContentType.COMMON);
-											}
-										});
+			this.ntc = new NavigatorTreeContent(mdi, localizer, state, (item,node)->refreshRightPanel(node));
+			this.rtc = new ResourceTreeContent(mdi, localizer, state, (item,node)->refreshRightPanel(node));
 			
-			rightPanel.add(ceav, BorderLayout.CENTER);
-			splitter.setLeftComponent(new JScrollPane(stc));
+			tabs.addTab("", NAVIGATION_ICON, new JScrollPane(ntc));
+			SwingUtils.assignActionKey((JComponent)getContentPane(), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, KeyStroke.getKeyStroke(KeyEvent.VK_1, InputEvent.ALT_DOWN_MASK), (e)->tabs.setSelectedIndex(0), "tab1");
+			tabs.addTab("", RESOURCE_ICON, new JScrollPane(rtc));
+			SwingUtils.assignActionKey((JComponent)getContentPane(), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, KeyStroke.getKeyStroke(KeyEvent.VK_2, InputEvent.ALT_DOWN_MASK), (e)->tabs.setSelectedIndex(1), "tab2");
+			
+			rightPanel.add(new JScrollPane(ceav), BorderLayout.CENTER);
+			splitter.setLeftComponent(tabs);
 			splitter.setRightComponent(rightPanel);
-			splitter.setDividerLocation(200);
+			splitter.setDividerLocation(250);
 			
 			getContentPane().add(menu,BorderLayout.NORTH);
 			getContentPane().add(splitter,BorderLayout.CENTER);
@@ -207,6 +226,7 @@ public class Application extends JFrame implements LocaleChangeListener, AutoClo
 		for (File item : temporaries) {
 			Utils.deleteDir(item);
 		}
+		mgr.close();
 		latch.countDown();
 	}
 	
@@ -214,7 +234,7 @@ public class Application extends JFrame implements LocaleChangeListener, AutoClo
 	public void localeChanged(final Locale oldLocale, final Locale newLocale) throws LocalizationException {
 		fillLocalizedStrings();
 		SwingUtils.refreshLocale(menu, oldLocale, newLocale);
-		SwingUtils.refreshLocale(stc, oldLocale, newLocale);
+		SwingUtils.refreshLocale(ntc, oldLocale, newLocale);
 		SwingUtils.refreshLocale(ceav, oldLocale, newLocale);
 		SwingUtils.refreshLocale(state, oldLocale, newLocale);
 	}
@@ -249,8 +269,10 @@ public class Application extends JFrame implements LocaleChangeListener, AutoClo
 				
 				for (String item : JFileSelectionDialog.select(this, localizer, total, JFileSelectionDialog.OPTIONS_FOR_OPEN | JFileSelectionDialog.OPTIONS_ALLOW_MKDIR | JFileSelectionDialog.OPTIONS_CAN_SELECT_DIR)) {
 					final URI	loadedURI = URI.create(FileSystemInterface.FILESYSTEM_URI_SCHEME+":"+total.getAbsoluteURI().toString()+"/"+item);
-					
+
 					setFileSystem(FileSystemFactory.createFileSystem(loadedURI));
+					mgr.addItem(lastLoaded = loadedURI.toString());
+					fillTitle();
 					break;
 				}
 			} catch (LocalizationException | IOException e) {
@@ -259,14 +281,57 @@ public class Application extends JFrame implements LocaleChangeListener, AutoClo
 		}
 	}
 
+	@OnAction("action:builtin:/builtin.lru")
+	private void openLRU(final Map<String,String[]> file) {
+		if (saveAndNeedContinue()) {
+			final String	name = file.get("name")[0];
+			final URI		lruUri = URI.create(name);
+				
+			try(final FileSystemInterface	lru = FileSystemFactory.createFileSystem(lruUri)) {
+				if (lru.exists()) {
+					setFileSystem(lru);
+					lastLoaded = name;
+					fillTitle();
+				}
+				else {
+					mgr.removeItem(lruUri.toString());
+					throw new IOException("File ["+lruUri+"] not found and will be removed from RU list");
+				}
+			} catch (IOException | LocalizationException e) {
+				printError(e);
+			}
+		}
+	}	
+	
 	@OnAction("action:/saveFile")
 	private void saveFile() {
-		try{if (stc.treeWasModified()) {
-				stc.save(fsi);
+		try{if (fsi == null) {
+				throw new NullPointerException("File system can't be null"); 
 			}
-			if (ceav.creoleContentWasChanged()) {
-				ceav.saveCreoleContent();
-			}
+			else {
+				if (ceav.creoleContentWasChanged()) {
+					ceav.saveCreoleContent();
+				}
+
+				if (ntc.treeWasModified()) {
+					try(final FileSystemInterface	content = fsi.clone().open("/"+AdminUtils.CONTENT_FILE+".new").create()) {
+						
+						try(final Writer			wr = content.charWrite(PureLibSettings.DEFAULT_CONTENT_ENCODING);
+							final JsonStaxPrinter	printer = new JsonStaxPrinter(wr)) {
+							
+							JsonUtils.unloadJsonTree(rootNode, printer);
+							printer.flush();
+						}
+						if (content.push("/"+AdminUtils.CONTENT_FILE+".old").exists()) {
+							content.delete();
+						}
+						content.pop().push("/"+AdminUtils.CONTENT_FILE).rename(AdminUtils.CONTENT_FILE+".old").pop().push("/"+AdminUtils.CONTENT_FILE+".new").rename(AdminUtils.CONTENT_FILE).pop();
+					} catch (IOException e) {
+						throw new ContentException("I/O error reading content descriptor: "+e.getLocalizedMessage(),e); 
+					}
+					ntc.setTreeWasModified(false);
+				}
+			}		
 		} catch (ContentException e) {
 			printError(e);
 		}
@@ -277,13 +342,14 @@ public class Application extends JFrame implements LocaleChangeListener, AutoClo
 		saveFile();
 		try(final FileSystemInterface	total = FileSystemFactory.createFileSystem(URI.create(FileSystemInterface.FILESYSTEM_URI_SCHEME+":file:/"))){
 			
-			for (String item : JFileSelectionDialog.select(this, localizer, total, JFileSelectionDialog.OPTIONS_FOR_SAVE | JFileSelectionDialog.OPTIONS_ALLOW_MKDIR | JFileSelectionDialog.OPTIONS_CAN_SELECT_DIR)) {
+			for (String item : JFileSelectionDialog.select(this, localizer, total, JFileSelectionDialog.OPTIONS_FOR_SAVE | JFileSelectionDialog.OPTIONS_ALLOW_MKDIR | JFileSelectionDialog.OPTIONS_CAN_SELECT_DIR | JFileSelectionDialog.OPTIONS_FILE_MUST_EXISTS)) {
 				final URI					storedURI = URI.create(FileSystemInterface.FILESYSTEM_URI_SCHEME+":"+total.getAbsoluteURI().toString()+"/"+item);
 				final FileSystemInterface	stored = FileSystemFactory.createFileSystem(storedURI);
 					
-				fsi.copy(stored);
-				fsi.close();
+				fsi.copy(stored).close();
 				fsi = stored;
+				mgr.addItem(lastLoaded = storedURI.toString());
+				fillTitle();
 				break;
 			}
 		} catch (LocalizationException | IOException e) {
@@ -293,6 +359,7 @@ public class Application extends JFrame implements LocaleChangeListener, AutoClo
 	
 	@OnAction("action:/exit")
 	private void exitApplication() {
+		saveSettings(as);
 		if (saveAndNeedContinue()) {
 			setVisible(false);
 			dispose();
@@ -320,7 +387,7 @@ public class Application extends JFrame implements LocaleChangeListener, AutoClo
 		}
 	}	
 	
-	@OnAction("action:/builtin.languages")
+	@OnAction("action:builtin:/builtin.languages")
 	private void selectLang(final Map<String,String[]> map) throws LocalizationException, NullPointerException {
 		localizer.getParent().setCurrentLocale(Locale.forLanguageTag(map.get("lang")[0]));
 	}
@@ -328,18 +395,9 @@ public class Application extends JFrame implements LocaleChangeListener, AutoClo
 	@OnAction("action:/settings")
 	private void appSettings() {
 		try{if (AutoBuiltForm.ask(this, localizer, form)) {
-				final File	f = new File(APP_SETTINGS_FILE);
-				
-				if (f.exists() && f.isDirectory()) {
-					throw new IOException("Config name ["+f.getAbsolutePath()+"] can't be created - directory  with thes name already exists");
-				}
-				else {
-					try(final OutputStream	os = new FileOutputStream(f)) {
-						this.as.save(os);
-					}
-				}
+				saveSettings(as);
 			}
-		} catch (LocalizationException | IOException  e) {
+		} catch (LocalizationException e) {
 			printError(e);
 		}		
 	}	
@@ -361,14 +419,16 @@ public class Application extends JFrame implements LocaleChangeListener, AutoClo
 					Utils.copyStream(is, os);
 				}
 			}
-			stc.setFileSystem(fsi);
+			this.rootNode = AdminUtils.loadContentDescriptor(fsi);
+			ntc.setFileSystem(fsi, rootNode.getChild(AdminUtils.F_NAVIGATION));
+			rtc.setFileSystem(fsi, rootNode.getChild(AdminUtils.F_RESOURCES));
 		} catch (IOException | ContentException e) {
 			printError(e);
 		}
 	}
 
 	private boolean saveAndNeedContinue() {
-		if ((stc.treeWasModified() || ceav.creoleContentWasChanged())) {
+		if ((ntc.treeWasModified() || ceav.creoleContentWasChanged())) {
 			try{switch (new JLocalizedOptionPane(localizer).confirm(this, APPLICATION_SAVE_CONTENT, APPLICATION_SAVE_TITLE, JOptionPane.QUESTION_MESSAGE, JOptionPane.YES_NO_CANCEL_OPTION)) {
 					case JOptionPane.YES_OPTION 	:
 						saveFile();
@@ -385,18 +445,76 @@ public class Application extends JFrame implements LocaleChangeListener, AutoClo
 	}
 
 	private UIItemState.AvailableAndVisible getAccessAndVisibility(final ContentNodeMetadata meta) {
-		if (URI.create("app:action:/saveFile").equals(meta.getApplicationPath())) {
-			return stc.treeWasModified() || ceav.creoleContentWasChanged() ? UIItemState.AvailableAndVisible.AVAILABLE : UIItemState.AvailableAndVisible.NOTAVAILABLE;
+		if (URI.create(ContentMetadataInterface.APPLICATION_SCHEME+":action:/saveFile").equals(meta.getApplicationPath())) {
+			return ntc.treeWasModified() || ceav.creoleContentWasChanged() ? UIItemState.AvailableAndVisible.AVAILABLE : UIItemState.AvailableAndVisible.NOTAVAILABLE;
 		}
 		else {
 			return UIItemState.AvailableAndVisible.DEFAULT;
 		}
 	}
 
+	private void refreshRightPanel(final JsonNode node) {
+		if (creoleContent != null && ceav.creoleContentWasChanged()) {
+			ceav.saveCreoleContent();
+		}
+		
+		ContentNodeType	type;
+		
+		if (node != null && (type = ContentNodeType.valueOf(node.getChild(AdminUtils.F_TYPE).getStringValue())).getResourceType() != ResourceType.NONE) {
+			
+			try(final FileSystemInterface	content = fsi.clone().open("/"+node.getChild(AdminUtils.F_ID).getStringValue()+type.getResourceType().getResourceSuffix())) {
+				if (content.exists() && content.isFile()) {
+					switch (type.getResourceType()) {
+						case CREOLE	:
+							creoleContent = content.getPath();
+							
+							try(final Reader		rdr = content.charRead(PureLibSettings.DEFAULT_CONTENT_ENCODING)) {
+								
+								ceav.getCreoleEditor().setText(Utils.fromResource(rdr));
+								ceav.setContentType(ContentType.CREOLE);
+							}
+							break;
+						case IMAGE	:
+							try(final InputStream	is = content.read()) {
+								final Image			image = ImageIO.read(is);
+								
+								ceav.getImageContainer().setBackground(image);
+								creoleContent = null; 
+								ceav.setContentType(ContentType.IMAGE);
+							}
+							break;
+						default:
+							creoleContent = null; 
+							ceav.setContentType(ContentType.COMMON);
+							break;
+					}
+				}
+				else {
+					creoleContent = null; 
+					ceav.setContentType(ContentType.COMMON);
+				}
+			} catch (IOException exc) {
+				state.message(Severity.error, exc.getLocalizedMessage(), exc);
+			}
+		}
+		else {
+			ceav.setContentType(ContentType.COMMON);
+		}
+	}
+	
 	private void fillLocalizedStrings() throws LocalizationException {
-		setTitle(localizer.getValue(APPLICATION_TITLE));
+		fillTitle();
+		tabs.setTitleAt(0, localizer.getValue(APPLICATION_TAB_NAV_TITLE));
+		tabs.setToolTipTextAt(0, localizer.getValue(APPLICATION_TAB_NAV_TT));
+		tabs.setTitleAt(1, localizer.getValue(APPLICATION_TAB_RES_TITLE));
+		tabs.setToolTipTextAt(1, localizer.getValue(APPLICATION_TAB_RES_TT));
 	}
 
+	private void fillTitle() throws LocalizationException {
+		setTitle(String.format(localizer.getValue(APPLICATION_TITLE),lastLoaded.isEmpty() ? "" : "["+lastLoaded+"]"));
+	}
+	
+	
 	private void printError(final Exception e) {
 		state.message(Severity.error, e.getLocalizedMessage(), e);
 	}
@@ -407,7 +525,21 @@ public class Application extends JFrame implements LocaleChangeListener, AutoClo
 		}
 	}
 
-	
+	private void saveSettings(final AppSettings settings) {
+		try{final File	f = new File(APP_SETTINGS_FILE);
+		
+			if (f.exists() && f.isDirectory()) {
+				throw new IOException("Config name ["+f.getAbsolutePath()+"] can't be created - directory  with thes name already exists");
+			}
+			else {
+				try(final OutputStream	os = new FileOutputStream(f)) {
+					this.as.save(os);
+				}
+			}
+		} catch (IOException  e) {
+			printError(e);
+		}		
+	}
 	
 	public static void main(String[] args) throws NullPointerException, IllegalArgumentException {
 		try{final ArgParser						parser = new ApplicationArgParser().parse(args);

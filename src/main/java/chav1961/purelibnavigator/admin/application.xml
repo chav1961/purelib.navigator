@@ -9,9 +9,7 @@
 			<app:item name="menu.file.save" caption="menu.file.save" tooltip="menu.file.save.tt" action="saveFile"/>
 			<app:item name="menu.file.saveas" caption="menu.file.saveAs" tooltip="menu.file.saveAs.tt" action="saveFileAs"/>
 			<app:separator/>
-			<app:submenu name="menu.file.lru" caption="menu.file.lru" tooltip="menu.file.lru.tt">	
-				<app:separator/>
-			</app:submenu>
+			<app:builtinSubmenu name="builtin.lru" caption="menu.file.lru" tooltip="menu.file.lru.tt"/>	
 			<app:item name="menu.file.exit" caption="menu.file.exit" tooltip="menu.file.exit.tt" action="exit"/>
 		</app:submenu>
 		<app:submenu name="menu.tools" caption="menu.tools" tooltip="menu.tools.tt">

@@ -1,4 +1,4 @@
-package chav1961.purelibnavigator.admin;
+package chav1961.purelibnavigator.admin.entities;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,9 +18,10 @@ import chav1961.purelib.ui.interfaces.Format;
 import chav1961.purelib.ui.interfaces.RefreshMode;
 import chav1961.purelibnavigator.interfaces.PackingType;
 
-@LocaleResourceLocation("i18n:xml:root://chav1961.purelibnavigator.admin.AppSettings/chav1961/purelib/admin/i18n/i18n.xml")
+@LocaleResourceLocation("i18n:xml:root://chav1961.purelibnavigator.admin.entities.AppSettings/chav1961/purelib/admin/i18n/i18n.xml")
 @LocaleResource(value="chav1961.purelibnavigator.admin.appsettings",tooltip="chav1961.purelibnavigator.admin.appsettings.tt",help="help.aboutApplication")
 public class AppSettings implements FormManager<Object,AppSettings>, ModuleAccessor {
+	private static final String		LRU_LIST = "lruList";
 	private static final String		PACKING_TYPE_PROP = "packingType";
 	private static final String		INCLUDE_JAVADOC_PROP = "includeJavaDoc";
 	private static final String		JAVADOC_LOCATION_PROP = "javaDocLocation";
@@ -36,6 +37,9 @@ public class AppSettings implements FormManager<Object,AppSettings>, ModuleAcces
 	@LocaleResource(value="chav1961.purelibnavigator.admin.appsettings.javadoclocation",tooltip="chav1961.purelibnavigator.admin.appsettings.javadoclocation.tt")
 	@Format("30ms")
 	public File			javaDocLocation = new File("./");
+	
+	public String		lruList = "";
+	
 	
 	private final LoggerFacade 	logger;
 
@@ -76,6 +80,7 @@ public class AppSettings implements FormManager<Object,AppSettings>, ModuleAcces
 			type = props.getProperty(PACKING_TYPE_PROP, PackingType.class, PackingType.WAR.name());
 			includeJavaDoc = props.getProperty(INCLUDE_JAVADOC_PROP, boolean.class, "false");
 			javaDocLocation = props.getProperty(JAVADOC_LOCATION_PROP, File.class, "./");
+			lruList = props.getProperty(LRU_LIST, String.class, "");
 		}
 	}
 	
@@ -89,6 +94,7 @@ public class AppSettings implements FormManager<Object,AppSettings>, ModuleAcces
 			props.setProperty(PACKING_TYPE_PROP, type.name());
 			props.setProperty(INCLUDE_JAVADOC_PROP, String.valueOf(includeJavaDoc));
 			props.setProperty(JAVADOC_LOCATION_PROP, javaDocLocation.getAbsolutePath());
+			props.setProperty(LRU_LIST, lruList);
 			props.store(os, null);
 		}
 	}

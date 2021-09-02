@@ -1,1 +1,8 @@
-{"id":"1","type":"SUBTREE","name":"undefined","caption":"undefined","content":[]}
+{"navigation"  : 
+	{"id":"1", "type":"SUBTREE", "caption":"Новый проект", "content":[]},
+ "resources" : 
+ 	[{"type":"CREOLE", "content":[]},
+ 	 {"type":"IMAGE", "content":[]},
+ 	 {"type":"RESOURCE", "content":[]}
+ 	]
+ }
