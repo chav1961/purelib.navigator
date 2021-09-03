@@ -29,6 +29,7 @@ import chav1961.purelib.i18n.interfaces.Localizer;
 import chav1961.purelib.json.JsonNode;
 import chav1961.purelib.model.interfaces.ContentMetadataInterface;
 import chav1961.purelib.model.interfaces.ContentMetadataInterface.ContentNodeMetadata;
+import chav1961.purelib.streams.char2char.CreoleWriter.CreoleLexema;
 import chav1961.purelib.ui.interfaces.ActionFormManager;
 import chav1961.purelib.ui.interfaces.RefreshMode;
 import chav1961.purelib.ui.swing.SwingUtils;
@@ -161,7 +162,7 @@ class ContentEditorAndViewer extends JPanel {
 						AdminUtils.buildSiblingLinksMenu(insertLinks, parent, (t)->true);
 						SwingUtils.assignActionListeners(insertLinks, (ev)->{
 							try {
-								editor.getDocument().insertString(editor.getCaretPosition(), ev.getActionCommand(), null);
+								editor.getDocument().insertString(editor.getCaretPosition(), ev.getActionCommand(), editor.getCharacterStyles(CreoleLexema.LinkRef));
 							} catch (BadLocationException e1) {
 								// TODO Auto-generated catch block
 								e1.printStackTrace();

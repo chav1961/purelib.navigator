@@ -383,7 +383,7 @@ class NavigatorTreeContent extends JTree implements LocaleChangeListener {
 						else {
 							callback.select(null, null);
 						}
-//						tt.cancel();
+//							tt.cancel();
 					}
 				};
 				PureLibSettings.COMMON_MAINTENANCE_TIMER.schedule(tt, TT_DELAY);
