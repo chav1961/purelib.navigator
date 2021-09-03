@@ -5,28 +5,39 @@ import java.awt.CardLayout;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.geom.AffineTransform;
 import java.io.IOException;
 import java.net.URI;
 
 import javax.swing.JLabel;
+import javax.swing.JMenu;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JToolBar;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.text.BadLocationException;
 
+import chav1961.purelib.basic.exceptions.FlowException;
+import chav1961.purelib.basic.exceptions.LocalizationException;
 import chav1961.purelib.basic.interfaces.LoggerFacade;
 import chav1961.purelib.basic.interfaces.LoggerFacade.Severity;
 import chav1961.purelib.i18n.interfaces.Localizer;
+import chav1961.purelib.json.JsonNode;
 import chav1961.purelib.model.interfaces.ContentMetadataInterface;
+import chav1961.purelib.model.interfaces.ContentMetadataInterface.ContentNodeMetadata;
+import chav1961.purelib.ui.interfaces.ActionFormManager;
+import chav1961.purelib.ui.interfaces.RefreshMode;
 import chav1961.purelib.ui.swing.SwingUtils;
 import chav1961.purelib.ui.swing.interfaces.OnAction;
 import chav1961.purelib.ui.swing.useful.JBackgroundComponent;
 import chav1961.purelib.ui.swing.useful.JBackgroundComponent.FillMode;
 import chav1961.purelib.ui.swing.useful.JCreoleEditor;
 
-public class ContentEditorAndViewer extends JPanel {
+class ContentEditorAndViewer extends JPanel {
 	private static final long serialVersionUID = 1L;
 
 	public static enum ContentType {
@@ -62,6 +73,7 @@ public class ContentEditorAndViewer extends JPanel {
 	private final JLabel					common = new JLabel("<not selected>", JLabel.CENTER);
 	
 	private ContentType						contentType = ContentType.CREOLE;
+	private JsonNode						navigator = null, parent =  null, current = null;
 	private boolean							editorContentChanged = false;
 	
 	public ContentEditorAndViewer(final Localizer localizer, final LoggerFacade logger, final ContentMetadataInterface mdi, final CreoleContentSaveCallback callback) throws NullPointerException {
@@ -111,10 +123,58 @@ public class ContentEditorAndViewer extends JPanel {
 			setContenTypeInternal(ContentType.COMMON);
 			
 			editor.getDocument().addDocumentListener(new DocumentListener() {
-				@Override public void removeUpdate(DocumentEvent e) {editorContentChanged = true;}
-				@Override public void insertUpdate(DocumentEvent e) {editorContentChanged = true;}
-				@Override public void changedUpdate(DocumentEvent e) {editorContentChanged = true;}
+				@Override public void removeUpdate(DocumentEvent e) {setContentChanged(true);}
+				@Override public void insertUpdate(DocumentEvent e) {setContentChanged(true);}
+				@Override public void changedUpdate(DocumentEvent e) {setContentChanged(true);}
 			});
+			editor.addMouseListener(new MouseListener() {
+				@Override public void mouseReleased(MouseEvent e) {}
+				@Override public void mousePressed(MouseEvent e) {}
+				@Override public void mouseExited(MouseEvent e) {}
+				@Override public void mouseEntered(MouseEvent e) {}
+				
+				@Override
+				public void mouseClicked(final MouseEvent e) {
+					if (e.getButton() == MouseEvent.BUTTON3) {
+						final JPopupMenu	popup = new JPopupMenu();
+						final JMenu			copyLinks = new JMenu("Copy links");
+						final JMenu			insertLinks = new JMenu("Insert links");
+						final JMenu			insertTotal = new JMenu("Whole navigator tree");
+						
+						if (!AdminUtils.buildInternalLinksMenu(copyLinks, editor.getText()))  {
+							copyLinks.setEnabled(false);
+						}
+						else {
+							SwingUtils.assignActionListeners(copyLinks, (ev)->{
+								System.err.println("Name="+ev.getActionCommand());
+							});
+						}
+						popup.add(copyLinks);
+
+						if (AdminUtils.buildTreeLinksMenu(insertTotal, navigator, (t)->true)) {
+							insertLinks.add(insertTotal);
+							insertLinks.addSeparator();
+						}
+						if (AdminUtils.buildInternalLinksMenu(insertLinks, editor.getText())) {
+							insertLinks.addSeparator();
+						}
+						AdminUtils.buildSiblingLinksMenu(insertLinks, parent, (t)->true);
+						SwingUtils.assignActionListeners(insertLinks, (ev)->{
+							try {
+								editor.getDocument().insertString(editor.getCaretPosition(), ev.getActionCommand(), null);
+							} catch (BadLocationException e1) {
+								// TODO Auto-generated catch block
+								e1.printStackTrace();
+							}
+							System.err.println("Link="+ev.getActionCommand());
+						});
+						popup.add(insertLinks);
+						
+						popup.show(editor, e.getX(), e.getY());
+					}
+				}
+			});
+			setContentChanged(false);
 		}
 	}
 	
@@ -122,12 +182,25 @@ public class ContentEditorAndViewer extends JPanel {
 		return contentType;
 	}
 	
-	public void setContentType(final ContentType contentType) {
+	public void setContentType(final ContentType contentType, final JsonNode navigator, final JsonNode parent, final JsonNode current) {
 		if (contentType == null) {
 			throw new NullPointerException("Content type can't be null"); 
 		}
+		else if (navigator == null) {
+			throw new NullPointerException("Navigator node can't be null"); 
+		}
+		else if (parent == null) {
+			throw new NullPointerException("Parent node can't be null"); 
+		}
+		else if (current == null) {
+			throw new NullPointerException("Current node can't be null"); 
+		}
 		else {
 			setContenTypeInternal(contentType);
+			this.navigator = navigator; 
+			this.parent = parent; 
+			this.current = current; 
+			setContentChanged(false);
 		}
 	}
 
@@ -156,11 +229,21 @@ public class ContentEditorAndViewer extends JPanel {
 	@OnAction("action:/creoleSave")
 	void saveCreoleContent() {
 		try{callback.save(editor.getText());
-			editorContentChanged = false;
+			setContentChanged(false);
 		} catch (IOException e) {
 			logger.message(Severity.error, e.getLocalizedMessage(), e);
 		}
 	}
+	
+	private void setContentChanged(final boolean newState) {
+		if (editorContentChanged != newState) {
+			final ContentNodeMetadata	meta = mdi.byApplicationPath(URI.create(ContentMetadataInterface.APPLICATION_SCHEME+":action:/creoleSave"))[0];
+			
+			SwingUtils.findComponentByName(creoleToolBar, meta.getName()).setEnabled(newState);
+			editorContentChanged = newState;
+		}
+	}
+	
 	
 	@OnAction("action:/imageFill")
 	private void fillImage() {

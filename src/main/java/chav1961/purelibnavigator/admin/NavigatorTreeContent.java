@@ -24,7 +24,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.Reader;
 import java.io.StringReader;
 import java.io.Writer;
 import java.net.URI;
@@ -48,7 +47,6 @@ import javax.swing.JTree;
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
 import javax.swing.TransferHandler;
-import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
@@ -73,7 +71,6 @@ import chav1961.purelib.json.interfaces.JsonNodeType;
 import chav1961.purelib.model.ContentModelFactory;
 import chav1961.purelib.model.interfaces.ContentMetadataInterface;
 import chav1961.purelib.model.interfaces.ContentMetadataInterface.ContentNodeMetadata;
-import chav1961.purelib.streams.JsonStaxParser;
 import chav1961.purelib.streams.JsonStaxPrinter;
 import chav1961.purelib.ui.interfaces.UIItemState;
 import chav1961.purelib.ui.swing.AutoBuiltForm;
@@ -87,9 +84,9 @@ import chav1961.purelibnavigator.admin.entities.NodeSettings;
 import chav1961.purelibnavigator.admin.entities.TreeContentNode;
 import chav1961.purelibnavigator.interfaces.ContentNodeGroup;
 import chav1961.purelibnavigator.interfaces.ContentNodeType;
-import chav1961.purelibnavigator.interfaces.TreeSelectionCallback;
+import chav1961.purelibnavigator.interfaces.TreeManipulationCallback;
 
-public class NavigatorTreeContent extends JTree implements LocaleChangeListener {
+class NavigatorTreeContent extends JTree implements LocaleChangeListener {
 	private static final long 				serialVersionUID = 1L;
 	private static final long				TT_DELAY = 500;
 	
@@ -182,7 +179,7 @@ public class NavigatorTreeContent extends JTree implements LocaleChangeListener 
 	private final ContentMetadataInterface	mdi;
 	private final Localizer					localizer;
 	private final LoggerFacade				logger;
-	private final TreeSelectionCallback		callback;
+	private final TreeManipulationCallback	callback;
 	private final TransferHandler			th = new StaticContentTransferHandler(); 
 	private final JPopupMenu				nodeMenu; 
 	private final JPopupMenu				leafMenu; 
@@ -203,7 +200,7 @@ public class NavigatorTreeContent extends JTree implements LocaleChangeListener 
 		AC_PASTE = TransferHandler.getPasteAction().getValue(Action.NAME).toString();
 	}
 	
-	public NavigatorTreeContent(final ContentMetadataInterface mdi, final Localizer localizer, final LoggerFacade logger, final TreeSelectionCallback callback) throws ContentException, LocalizationException {
+	public NavigatorTreeContent(final ContentMetadataInterface mdi, final Localizer localizer, final LoggerFacade logger, final TreeManipulationCallback callback) throws ContentException, LocalizationException {
 		if (mdi == null) {
 			throw new NullPointerException("Metadata interface can't be null"); 
 		}
@@ -381,10 +378,10 @@ public class NavigatorTreeContent extends JTree implements LocaleChangeListener 
 						final ItemAndNode	sel = getSelection();
 						
 						if (sel != null) {
-							callback.process(sel.item, sel.node);
+							callback.select(sel.item, sel.node);
 						}
 						else {
-							callback.process(null, null);
+							callback.select(null, null);
 						}
 //						tt.cancel();
 					}
@@ -396,7 +393,7 @@ public class NavigatorTreeContent extends JTree implements LocaleChangeListener 
 					if (sel == null) {
 						fsmMenu.processTerminal(SelectionTerminal.UNSELECT, null);
 					}
-					else if (ContentNodeType.valueOf(sel.node.getChild(AdminUtils.F_TYPE).getStringValue()) == ContentNodeType.SUBTREE) {
+					else if (ContentNodeType.valueOf(sel.node.getChild(AdminUtils.F_TYPE).getStringValue()).getGroup() == ContentNodeGroup.SUBTREE) {
 						fsmMenu.processTerminal(SelectionTerminal.SELECT_SUBTREE, null);
 					}
 					else {
@@ -517,6 +514,7 @@ public class NavigatorTreeContent extends JTree implements LocaleChangeListener 
 			parentItem.add(newItem);
 				
 			((DefaultTreeModel)getModel()).nodeStructureChanged(parentItem);
+			callback.insert(parentItem, parentNode, newItem, newNode);
 			setTreeWasModified(true);
 		} catch (IOException e) {
 			printError(e);
@@ -525,7 +523,7 @@ public class NavigatorTreeContent extends JTree implements LocaleChangeListener 
 
 	protected void removeItem(final TreeContentNode item, final JsonNode node) {
 		final TreeContentNode	parentItem = (TreeContentNode)item.getParent();
-		final JsonNode		parentNode = (JsonNode)parentItem.getUserObject(); 
+		final JsonNode			parentNode = (JsonNode)parentItem.getUserObject(); 
 		
 		if (parentNode.hasName(AdminUtils.F_CONTENT)) {
 			final JsonNode	arr = parentNode.getChild(AdminUtils.F_CONTENT);
@@ -537,12 +535,13 @@ public class NavigatorTreeContent extends JTree implements LocaleChangeListener 
 				}
 			}
 			for (int index = 0; index < parentItem.getChildCount(); index++) {
-				if (node.equals(((DefaultMutableTreeNode)parentItem.getChildAt(index)).getUserObject())) {
+				if (node.equals(((TreeContentNode)parentItem.getChildAt(index)).getUserObject())) {
 					parentItem.remove(index);
 					break;
 				}
 			}			
 			((DefaultTreeModel)getModel()).nodeStructureChanged(parentItem);
+			callback.delete(parentItem, parentNode, item, node);
 			setTreeWasModified(true);
 		}
 	}
@@ -755,7 +754,7 @@ public class NavigatorTreeContent extends JTree implements LocaleChangeListener 
 		JOptionPane.showMessageDialog(this, "drag: "+fromNode+" to "+toNode+" with move="+move);
 	}
 
-	private void showSettings(final DefaultMutableTreeNode item, final JsonNode node) {
+	private void showSettings(final TreeContentNode item, final JsonNode node) {
 		try{fillSettings(ns, node);
 			fsmProp.processTerminal(FormEditTerminal.SHOW_PROPERTIES, null);
 			
@@ -765,6 +764,7 @@ public class NavigatorTreeContent extends JTree implements LocaleChangeListener 
 				node.getChild(AdminUtils.F_TYPE).setValue(ns.type.toString());
 				node.getChild(AdminUtils.F_CAPTION).setValue(ns.caption);
 				((DefaultTreeModel)getModel()).nodeChanged(item);
+				callback.change(item, node);
 				treeWasModified = true;
 			}
 			else {
@@ -775,7 +775,7 @@ public class NavigatorTreeContent extends JTree implements LocaleChangeListener 
 		}
 	}
 
-	private void insertFile(final File item, final DefaultMutableTreeNode toItem, final JsonNode toNode) {
+	private void insertFile(final File item, final TreeContentNode toItem, final JsonNode toNode) {
 		final ItemAndNode	sel = getSelection();
 		
 		if (sel != null && (ContentNodeType.byFileNameSuffix(item.getName()).getGroup() == ContentNodeGroup.LEAF)) {
@@ -789,6 +789,13 @@ public class NavigatorTreeContent extends JTree implements LocaleChangeListener 
 				if (AutoBuiltForm.ask((JFrame)null, localizer, form)) {
 					fsmProp.processTerminal(FormEditTerminal.COMPLETE, null);
 					ns.id = UUID.randomUUID().toString();
+
+					try(final FileSystemInterface	temp = fsi.clone().open("/"+ns.id+ns.type.getResourceType().getResourceSuffix()).create();
+							final InputStream			is = new FileInputStream(item);
+							final OutputStream			os = temp.write()) {
+						
+							Utils.copyStream(is, os);
+						}
 					
 					final JsonNode	newNode = new JsonNode(JsonNodeType.JsonObject 
 											, new JsonNode(ns.id).setName(AdminUtils.F_ID)
@@ -796,13 +803,6 @@ public class NavigatorTreeContent extends JTree implements LocaleChangeListener 
 											, new JsonNode(ns.caption).setName(AdminUtils.F_CAPTION)
 									);
 					insertChild(sel.item, sel.node, newNode);
-					
-					try(final FileSystemInterface	temp = fsi.clone().open("/"+ns.id+ns.type.getResourceType().getResourceSuffix()).create();
-						final InputStream			is = new FileInputStream(item);
-						final OutputStream			os = temp.write()) {
-					
-						Utils.copyStream(is, os);
-					}
 				}
 				else {
 					fsmProp.processTerminal(FormEditTerminal.CANCEL, null);
@@ -874,7 +874,7 @@ public class NavigatorTreeContent extends JTree implements LocaleChangeListener 
 		}
 	}
 	
-	static DefaultMutableTreeNode buildContentTree(final JsonNode node, final List<JsonNode> path, final StringBuilder sb) throws ContentException {
+	static TreeContentNode buildContentTree(final JsonNode node, final List<JsonNode> path, final StringBuilder sb) throws ContentException {
 		path.add(node);
 		if (node.getType() == JsonNodeType.JsonObject) {
 			if (JsonUtils.checkJsonMandatories(node, sb, AdminUtils.F_ID, AdminUtils.F_TYPE, AdminUtils.F_CAPTION)) {
@@ -925,7 +925,7 @@ public class NavigatorTreeContent extends JTree implements LocaleChangeListener 
 			final TreePath	path = ((JTree)c).getSelectionPath();
 			
 			if (path != null) {
-			    return new MyTransferable(((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject());
+			    return new MyTransferable(((TreeContentNode)path.getLastPathComponent()).getUserObject());
 			}
 			else {
 				return null;
@@ -1019,7 +1019,7 @@ public class NavigatorTreeContent extends JTree implements LocaleChangeListener 
 	    		final TreePath	path = ((JTree)c).getPathForLocation(point.x, point.y);
 	    		
 	    		if (path != null) {
-	    			return ((JsonNode)((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject()).hasName(AdminUtils.F_CONTENT);
+	    			return ((JsonNode)((TreeContentNode)path.getLastPathComponent()).getUserObject()).hasName(AdminUtils.F_CONTENT);
 	    		}
 	    		else {
 	    			return false;
@@ -1064,20 +1064,4 @@ public class NavigatorTreeContent extends JTree implements LocaleChangeListener 
 			}
 		}
 	}
-	
-	private static class ItemAndNode {
-		private final TreeContentNode	item;
-		private final JsonNode		node;
-		
-		public ItemAndNode(TreeContentNode item, JsonNode node) {
-			this.item = item;
-			this.node = node;
-		}
-
-		@Override
-		public String toString() {
-			return "ItemAndNode [item=" + item + ", node=" + node + "]";
-		}
-	}
-
 }

@@ -17,7 +17,6 @@ import java.io.Writer;
 import java.net.ServerSocket;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -38,7 +37,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.KeyStroke;
-import javax.swing.tree.DefaultTreeModel;
 
 import chav1961.purelib.basic.ArgParser;
 import chav1961.purelib.basic.PureLibSettings;
@@ -49,6 +47,8 @@ import chav1961.purelib.basic.exceptions.ContentException;
 import chav1961.purelib.basic.exceptions.EnvironmentException;
 import chav1961.purelib.basic.exceptions.LocalizationException;
 import chav1961.purelib.basic.interfaces.LoggerFacade.Severity;
+import chav1961.purelib.enumerations.ContinueMode;
+import chav1961.purelib.enumerations.NodeEnterMode;
 import chav1961.purelib.fsys.FileSystemFactory;
 import chav1961.purelib.fsys.interfaces.FileSystemInterface;
 import chav1961.purelib.i18n.LocalizerFactory;
@@ -57,6 +57,7 @@ import chav1961.purelib.i18n.interfaces.Localizer;
 import chav1961.purelib.i18n.interfaces.Localizer.LocaleChangeListener;
 import chav1961.purelib.json.JsonNode;
 import chav1961.purelib.json.JsonUtils;
+import chav1961.purelib.json.interfaces.JsonNodeType;
 import chav1961.purelib.model.Constants;
 import chav1961.purelib.model.ContentModelFactory;
 import chav1961.purelib.model.interfaces.ContentMetadataInterface;
@@ -69,16 +70,16 @@ import chav1961.purelib.ui.swing.SwingUtils;
 import chav1961.purelib.ui.swing.interfaces.OnAction;
 import chav1961.purelib.ui.swing.useful.JFileSelectionDialog;
 import chav1961.purelib.ui.swing.useful.JFileSelectionDialog.FilterCallback;
-import chav1961.purelib.ui.swing.useful.interfaces.LRUPersistence;
 import chav1961.purelib.ui.swing.useful.JLocalizedOptionPane;
 import chav1961.purelib.ui.swing.useful.JStateString;
 import chav1961.purelib.ui.swing.useful.LRUManager;
+import chav1961.purelib.ui.swing.useful.interfaces.LRUPersistence;
 import chav1961.purelibnavigator.admin.ContentEditorAndViewer.ContentType;
 import chav1961.purelibnavigator.admin.entities.AppSettings;
 import chav1961.purelibnavigator.admin.entities.TreeContentNode;
-import chav1961.purelibnavigator.interfaces.ContentNodeGroup;
 import chav1961.purelibnavigator.interfaces.ContentNodeType;
 import chav1961.purelibnavigator.interfaces.ResourceType;
+import chav1961.purelibnavigator.interfaces.TreeManipulationCallback;
 
 public class Application extends JFrame implements LocaleChangeListener, AutoCloseable {
 	private static final long 					serialVersionUID = -3061028320843379171L;
@@ -194,8 +195,31 @@ public class Application extends JFrame implements LocaleChangeListener, AutoClo
 			
 			this.fsi = null;
 			this.ceav = new ContentEditorAndViewer(localizer, state, mdi, (t)->saveCreoleContent(t));
-			this.ntc = new NavigatorTreeContent(mdi, localizer, state, (item,node)->refreshRightPanel(node));
-			this.rtc = new ResourceTreeContent(mdi, localizer, state, (item,node)->refreshRightPanel(node));
+			this.ntc = new NavigatorTreeContent(mdi, localizer, state, 
+						new TreeManipulationCallback() {
+							@Override
+							public void insert(final TreeContentNode parentItem, final JsonNode parentNode, final TreeContentNode item, final JsonNode node) {
+								rtc.addResource(node);
+							}
+							
+							@Override
+							public void delete(final TreeContentNode parentItem, final JsonNode parentNode, final TreeContentNode item, final JsonNode node) {
+								rtc.removeResource(node);
+							}
+							
+							@Override
+							public void select(final TreeContentNode item, final JsonNode node) {
+								final String		id = node.getChild(AdminUtils.F_ID).getStringValue();
+								final ResourceType	type = ContentNodeType.valueOf(node.getChild(AdminUtils.F_TYPE).getStringValue()).getResourceType();
+								
+								refreshRightPanel(type, id);
+							}
+						});
+			this.rtc = new ResourceTreeContent(mdi, localizer, state, (item,node)->{
+							final String	value = node.getStringValue();
+							
+							refreshRightPanel(ContentNodeType.byFileNameSuffix(value).getResourceType(), value.substring(0,value.lastIndexOf('.')));
+						});
 			
 			tabs.addTab("", NAVIGATION_ICON, new JScrollPane(ntc));
 			SwingUtils.assignActionKey((JComponent)getContentPane(), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT, KeyStroke.getKeyStroke(KeyEvent.VK_1, InputEvent.ALT_DOWN_MASK), (e)->tabs.setSelectedIndex(0), "tab1");
@@ -453,25 +477,22 @@ public class Application extends JFrame implements LocaleChangeListener, AutoClo
 		}
 	}
 
-	private void refreshRightPanel(final JsonNode node) {
+	private void refreshRightPanel(final ResourceType type, final String id) {
 		if (creoleContent != null && ceav.creoleContentWasChanged()) {
 			ceav.saveCreoleContent();
 		}
 		
-		ContentNodeType	type;
-		
-		if (node != null && (type = ContentNodeType.valueOf(node.getChild(AdminUtils.F_TYPE).getStringValue())).getResourceType() != ResourceType.NONE) {
-			
-			try(final FileSystemInterface	content = fsi.clone().open("/"+node.getChild(AdminUtils.F_ID).getStringValue()+type.getResourceType().getResourceSuffix())) {
+		if (type != ResourceType.NONE) {
+			try(final FileSystemInterface	content = fsi.clone().open("/"+id+type.getResourceSuffix())) {
 				if (content.exists() && content.isFile()) {
-					switch (type.getResourceType()) {
+					switch (type) {
 						case CREOLE	:
 							creoleContent = content.getPath();
 							
 							try(final Reader		rdr = content.charRead(PureLibSettings.DEFAULT_CONTENT_ENCODING)) {
 								
 								ceav.getCreoleEditor().setText(Utils.fromResource(rdr));
-								ceav.setContentType(ContentType.CREOLE);
+								ceav.setContentType(ContentType.CREOLE, rootNode.getChild(AdminUtils.F_NAVIGATION), seekParentForId(rootNode, id), seekById(rootNode, id));
 							}
 							break;
 						case IMAGE	:
@@ -480,25 +501,25 @@ public class Application extends JFrame implements LocaleChangeListener, AutoClo
 								
 								ceav.getImageContainer().setBackground(image);
 								creoleContent = null; 
-								ceav.setContentType(ContentType.IMAGE);
+								ceav.setContentType(ContentType.IMAGE, rootNode.getChild(AdminUtils.F_NAVIGATION), seekParentForId(rootNode, id), seekById(rootNode, id));
 							}
 							break;
 						default:
 							creoleContent = null; 
-							ceav.setContentType(ContentType.COMMON);
+							ceav.setContentType(ContentType.COMMON, rootNode.getChild(AdminUtils.F_NAVIGATION), seekParentForId(rootNode, id), seekById(rootNode, id));
 							break;
 					}
 				}
 				else {
 					creoleContent = null; 
-					ceav.setContentType(ContentType.COMMON);
+					ceav.setContentType(ContentType.COMMON, rootNode.getChild(AdminUtils.F_NAVIGATION), seekParentForId(rootNode, id), seekById(rootNode, id));
 				}
 			} catch (IOException exc) {
 				state.message(Severity.error, exc.getLocalizedMessage(), exc);
 			}
 		}
 		else {
-			ceav.setContentType(ContentType.COMMON);
+			ceav.setContentType(ContentType.COMMON, rootNode.getChild(AdminUtils.F_NAVIGATION), seekParentForId(rootNode, id), seekById(rootNode, id));
 		}
 	}
 	
@@ -539,6 +560,44 @@ public class Application extends JFrame implements LocaleChangeListener, AutoClo
 		} catch (IOException  e) {
 			printError(e);
 		}		
+	}
+	
+	private static JsonNode seekById(final JsonNode root, final String id) {
+		final JsonNode[]	result = {null};
+		
+		try{JsonUtils.walkDownJson(root, (mode, node, path)->{
+				if (mode == NodeEnterMode.ENTER) {
+					if (node.getType() == JsonNodeType.JsonObject && node.hasName(AdminUtils.F_ID) && id.equals( node.getChild(AdminUtils.F_ID).getStringValue())) {
+						result[0] = node;
+						return ContinueMode.STOP;
+					}
+				}
+				return ContinueMode.CONTINUE;
+			});
+		} catch (ContentException e) {
+		}
+		return result[0];
+	}
+
+	private static JsonNode seekParentForId(final JsonNode root, final String id) {
+		final JsonNode[]	result = {null};
+		
+		try{JsonUtils.walkDownJson(root, (mode, node, path)->{
+				if (mode == NodeEnterMode.ENTER) {
+					if (node.getType() == JsonNodeType.JsonObject && node.hasName(AdminUtils.F_CONTENT)) {
+						for (JsonNode item :  node.getChild(AdminUtils.F_CONTENT).children()) {
+							if (item.hasName(AdminUtils.F_ID) && id.equals(item.getChild(AdminUtils.F_ID).getStringValue())) {
+								result[0] = node;
+								return ContinueMode.STOP;
+							}
+						}
+					}
+				}
+				return ContinueMode.CONTINUE;
+			});
+		} catch (ContentException e) {
+		}
+		return result[0];
 	}
 	
 	public static void main(String[] args) throws NullPointerException, IllegalArgumentException {

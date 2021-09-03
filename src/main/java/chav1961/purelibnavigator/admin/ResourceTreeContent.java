@@ -1,18 +1,21 @@
 package chav1961.purelibnavigator.admin;
 
+
 import java.awt.Component;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.TimerTask;
 
 import javax.swing.JLabel;
 import javax.swing.JTree;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 
+import chav1961.purelib.basic.PureLibSettings;
 import chav1961.purelib.basic.exceptions.ContentException;
 import chav1961.purelib.basic.exceptions.LocalizationException;
 import chav1961.purelib.basic.interfaces.LoggerFacade;
@@ -28,18 +31,21 @@ import chav1961.purelib.model.interfaces.ContentMetadataInterface;
 import chav1961.purelibnavigator.admin.entities.TreeContentNode;
 import chav1961.purelibnavigator.interfaces.ContentNodeGroup;
 import chav1961.purelibnavigator.interfaces.ContentNodeType;
-import chav1961.purelibnavigator.interfaces.TreeSelectionCallback;
+import chav1961.purelibnavigator.interfaces.ResourceType;
+import chav1961.purelibnavigator.interfaces.TreeManipulationCallback;
 
-public class ResourceTreeContent extends JTree implements LocaleChangeListener {
+class ResourceTreeContent extends JTree implements LocaleChangeListener {
 	private static final long serialVersionUID = 1L;
+	private static final long				TT_DELAY = 500;
 
 	private final ContentMetadataInterface	mdi;
 	private final Localizer					localizer;
 	private final LoggerFacade				logger;
-	private final TreeSelectionCallback		callback;
+	private final TreeManipulationCallback	callback;
+	private volatile TimerTask				tt = null;
 	private FileSystemInterface				fsi =  null;
 	
-	public ResourceTreeContent(final ContentMetadataInterface mdi, final Localizer localizer, final LoggerFacade logger, final TreeSelectionCallback callback) throws ContentException, LocalizationException {
+	public ResourceTreeContent(final ContentMetadataInterface mdi, final Localizer localizer, final LoggerFacade logger, final TreeManipulationCallback callback) throws ContentException, LocalizationException {
 		if (mdi == null) {
 			throw new NullPointerException("Metadata interface can't be null"); 
 		}
@@ -91,6 +97,27 @@ public class ResourceTreeContent extends JTree implements LocaleChangeListener {
 					return label;
 				}
 			});
+			getSelectionModel().addTreeSelectionListener((e)->{
+				if (tt != null) {
+					tt.cancel();
+					tt = null;
+				}
+				tt = new TimerTask() {
+					@Override
+					public void run() {
+						final ItemAndNode	sel = getSelection();
+						
+						if (sel != null) {
+							callback.select(sel.item, sel.node);
+						}
+						else {
+							callback.select(null, null);
+						}
+					}
+				};
+				PureLibSettings.COMMON_MAINTENANCE_TIMER.schedule(tt, TT_DELAY);
+			});
+			
 		}
 	}	
 	
@@ -105,6 +132,104 @@ public class ResourceTreeContent extends JTree implements LocaleChangeListener {
 		else {
 			this.fsi = fsi;
 			((DefaultTreeModel)getModel()).setRoot(buildContentTree(resources));
+		}
+	}
+	
+	public void addResource(final JsonNode resource) {
+		if (resource == null) {
+			throw new NullPointerException("Resource to add can't be null"); 
+		}
+		else {
+			final ResourceType	type = ContentNodeType.valueOf(resource.getChild(AdminUtils.F_TYPE).getStringValue()).getResourceType();
+			
+			switch (type) {
+				case CREOLE : case IMAGE : case RESOURCE :
+					final ItemAndNode	ian = seekNode((TreeContentNode)((DefaultTreeModel)getModel()).getRoot(),type); 
+					
+					insertChild(ian, resource, type);
+					((DefaultTreeModel)getModel()).nodeStructureChanged(ian.item);
+					break;
+				case NONE	:
+					break;
+				default :
+					throw new UnsupportedOperationException("Resource type ["+type+"] is not supported yet");
+			}
+		}
+	}
+	
+	public void removeResource(final JsonNode resource) {
+		if (resource == null) {
+			throw new NullPointerException("Resource to remove can't be null"); 
+		}
+		else {
+			final ResourceType	type = ContentNodeType.valueOf(resource.getChild(AdminUtils.F_TYPE).getStringValue()).getResourceType();
+			
+			switch (type) {
+				case CREOLE : case IMAGE : case RESOURCE :
+					final ItemAndNode	ian = seekNode((TreeContentNode)((DefaultTreeModel)getModel()).getRoot(),type);
+					
+					removeChild(ian, resource);
+					((DefaultTreeModel)getModel()).nodeStructureChanged(ian.item);
+					break;
+				case NONE	:
+					break;
+				default :
+					throw new UnsupportedOperationException("Resource type ["+type+"] is not supported yet");
+			}
+		}
+	}
+	
+	private ItemAndNode seekNode(final TreeContentNode root, final ResourceType type) {
+		final JsonNode	rootNode = root.getUserObject(); 
+		
+		if (rootNode.getType() == JsonNodeType.JsonArray) {
+			for (int index = 0; index < root.getChildCount(); index++) {
+				final TreeContentNode	childItem = (TreeContentNode)root.getChildAt(index);
+				final JsonNode			childNode = childItem.getUserObject();
+				
+				if (childNode.hasName(AdminUtils.F_TYPE) && ContentNodeType.valueOf(childNode.getChild(AdminUtils.F_TYPE).getStringValue()).getResourceType() == type) {
+					return new ItemAndNode(childItem, childNode);
+				}
+			}
+			throw new IllegalArgumentException("Unsupported resource type ["+type+"]");
+		}
+		else {
+			throw new IllegalArgumentException("Resource tree structure corrupted");
+		}
+	}
+
+	private void insertChild(final ItemAndNode parent, final JsonNode child, final ResourceType type) {
+		final JsonNode			childNode = new JsonNode(child.getChild(AdminUtils.F_ID).getStringValue()+type.getResourceSuffix());
+		final TreeContentNode	childItem = new TreeContentNode(childNode);
+		
+		parent.node.getChild(AdminUtils.F_CONTENT).addChild(childNode);
+		parent.item.add(childItem);
+	}
+
+	private void removeChild(final ItemAndNode parent, final JsonNode child) {
+		for (int index = 0; index < parent.item.getChildCount(); index++) {
+			final TreeContentNode	childItem = (TreeContentNode)parent.item.getChildAt(index);
+			final JsonNode			childNode = childItem.getUserObject();
+			
+			if (childNode.getStringValue().startsWith(child.getChild(AdminUtils.F_ID).getStringValue())) {
+				parent.node.removeChild(index);
+				parent.item.remove(index);
+				break;
+			}
+		}
+	}
+
+	private ItemAndNode getSelection() {
+		final TreePath	path = getSelectionModel().getSelectionPath();
+		
+		if (path != null) {
+			final TreeContentNode	item = (TreeContentNode)path.getLastPathComponent();
+			final JsonNode		node = item.getUserObject();
+			
+			return new ItemAndNode(item, node);
+		}
+		else {
+			return null;
 		}
 	}
 	

@@ -10,17 +10,22 @@ import java.io.OutputStream;
 import java.io.Reader;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.function.Predicate;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 import java.util.zip.ZipOutputStream;
 
+import javax.swing.JMenu;
+import javax.swing.JMenuItem;
 import javax.swing.tree.DefaultTreeModel;
 
+import chav1961.purelib.basic.LineByLineProcessor;
 import chav1961.purelib.basic.PureLibSettings;
 import chav1961.purelib.basic.URIUtils;
 import chav1961.purelib.basic.Utils;
 import chav1961.purelib.basic.exceptions.ContentException;
+import chav1961.purelib.basic.exceptions.SyntaxException;
 import chav1961.purelib.fsys.interfaces.FileSystemInterface;
 import chav1961.purelib.json.JsonNode;
 import chav1961.purelib.json.JsonUtils;
@@ -29,6 +34,7 @@ import chav1961.purelib.streams.JsonStaxParser;
 import chav1961.purelibnavigator.admin.entities.AppSettings;
 import chav1961.purelibnavigator.interfaces.ContentNodeGroup;
 import chav1961.purelibnavigator.interfaces.ContentNodeType;
+import chav1961.purelibnavigator.interfaces.ResourceType;
 import chav1961.purelibnavigator.navigator.Navigator;
 import chav1961.purelibnavigator.navigator.NavigatorHandler;
 
@@ -75,6 +81,125 @@ public class AdminUtils {
 				}
 			}
 		}
+	}
+	
+	public static boolean buildInternalLinksMenu(final JMenu container, final String creoleContent) {
+		if (container == null) {
+			throw new NullPointerException("Menu container can't be null"); 
+		}
+		else if (creoleContent == null) {
+			throw new NullPointerException("Content to parse can't be null"); 
+		}
+		else {
+			final boolean[]					result = {false};
+			
+			try(final LineByLineProcessor	lblp = new LineByLineProcessor((displacement, lineNo, data, from, length)->{
+															for(int index = 0; index < length; index++) {
+																if (data[index] == '=') {
+																	int lastIndex = length-1;
+																	
+																	while (data[index] == '=') {
+																		index++;
+																	}
+																	while ((Character.isWhitespace(data[lastIndex]) || data[lastIndex] == '=') && lastIndex > index) {
+																		lastIndex--;
+																	}
+																	
+																	if (++lastIndex > index) {
+																		final String	item = new String(data, index, lastIndex - index).trim();
+																		final JMenuItem	menuItem = new JMenuItem("#"+item);
+																		
+																		menuItem.setActionCommand("[[#"+item+"|"+item+"]]");
+																		container.add(menuItem);
+																		result[0] = true;
+																	}
+																	return;
+																}
+																else if (!Character.isWhitespace(data[index])) {
+																	return;
+																}
+															}
+														})) {
+				final char[]				charContent = creoleContent.toCharArray(); 
+				
+				lblp.write(charContent, 0, charContent.length);
+			} catch (IOException | SyntaxException e) {
+			}
+			return result[0];
+		}
+	}
+	
+	public static boolean buildSiblingLinksMenu(final JMenu container, final JsonNode parent, final Predicate<JsonNode> include) {
+		if (container == null) {
+			throw new NullPointerException("Menu container can't be null"); 
+		}
+		else if (parent == null) {
+			throw new NullPointerException("Parent node can't be null"); 
+		}
+		else if (include == null) {
+			throw new NullPointerException("Inlude callback can't be null"); 
+		}
+		else {
+			boolean	result = false;
+			
+			for (JsonNode item : parent.getChild(F_CONTENT).children()) {
+				if (include.test(item)) {
+					container.add(createMenuItemByJsonNode(item));
+					result = true;
+				}
+			}
+			return result;
+		}
+	}
+	
+	public static boolean buildTreeLinksMenu(final JMenu container, final JsonNode node, final Predicate<JsonNode> include) {
+		boolean	result = false;
+		
+		for(ResourceType item : new ResourceType[] {ResourceType.CREOLE, ResourceType.IMAGE, ResourceType.RESOURCE}) {
+			final JMenu	menuItem = new JMenu(item.name());
+			
+			if (buildTreeLinksMenu(menuItem, node, item, include)) {
+				container.add(menuItem);
+				result = true;
+			}
+		}
+		return result;
+	}
+
+	private static boolean buildTreeLinksMenu(final JMenu container, final JsonNode node, final ResourceType resourceType, final Predicate<JsonNode> include) {
+		final ContentNodeType	type = ContentNodeType.valueOf(node.getChild(F_TYPE).getStringValue());
+		boolean					result = false;
+		
+		if (type.getGroup() == ContentNodeGroup.SUBTREE) {
+			for (JsonNode item : node.getChild(F_CONTENT).children()) {
+				final JMenu		subtree = new JMenu(item.getChild(F_CAPTION).getStringValue());
+				
+				if (buildTreeLinksMenu(subtree, item, resourceType, include)) {
+					container.add(subtree);
+					result = true;
+				}
+			}
+		}
+		if (type.getResourceType() == resourceType) {
+			if (include.test(node)) {
+				if (result) {
+					container.addSeparator();
+				}
+				container.add(createMenuItemByJsonNode(node));
+				result = true;
+			}
+		}
+		return result;
+	}	
+
+	private static JMenuItem createMenuItemByJsonNode(final JsonNode node) {
+		final ContentNodeType	type = ContentNodeType.valueOf(node.getChild(F_TYPE).getStringValue());
+		final String			id = node.getChild(F_ID).getStringValue();
+		final String			caption = node.getChild(F_CAPTION).getStringValue();
+		final JMenuItem			menuItem = new JMenuItem(caption);
+		
+		menuItem.setActionCommand("[[#"+id+type.getResourceType().getResourceSuffix()+"|"+caption+"]]");
+		return menuItem;
 	}
 	
 	public static void packProject(final FileSystemInterface fsi, final OutputStream os, final AppSettings settings) throws IOException, NullPointerException {
