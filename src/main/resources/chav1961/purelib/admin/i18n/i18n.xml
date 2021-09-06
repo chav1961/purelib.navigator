@@ -103,7 +103,6 @@
 		<key name="chav1961.purelibnavigator.interfaces.packingtype.standalone">STANDALONE</key>
 		<key name="chav1961.purelibnavigator.interfaces.packingtype.standalone.tt">Self-executable jar</key>
 
-
 <!-- Node settings content -->
 		<key name="chav1961.purelibnavigator.admin.nodesettings">Node properties</key>
 		<key name="chav1961.purelibnavigator.admin.nodesettings.tt">Show properties of the given node</key>
@@ -125,6 +124,12 @@
 <!-- Application messages localization -->
 		<key name="Application.message.fileLoaded">File %1$s was loaded successfully</key> 
 		<key name="Application.message.fileSaved">File %1$s was saved successfully</key>
+
+<!-- ContentEditorAndViewer menu localization -->
+		<key name="ContentEditorAndViewer.menu.copylinks">Copy links</key>
+		<key name="ContentEditorAndViewer.menu.insertlinks">Insert links</key>
+		<key name="ContentEditorAndViewer.menu.totaltree">Total project</key>
+		<key name="ContentEditorAndViewer.label.notselected">&lt;not selected&gt;</key>
 
 <!-- Localized errors, warnings etc -->
 		<key name="warning.no_desktop_available">Sorry, no tools available to start WEB browser. Visit instead</key>
@@ -213,7 +218,6 @@
 		<key name="menu.admin.tree.duplicateLeaf">Дублировать</key>
 		<key name="menu.admin.tree.duplicateLeaf.tt">Сделать полную копию содержимого элемента</key>
 
-
 <!-- Нумерация ContentNodeType -->
 		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.creole">Creole</key>
 		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.creole.tt">Это файл Creole</key>
@@ -223,11 +227,10 @@
 		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.resource.tt">Это файл какого-либо ресурса</key>
 		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.subtree">Поддерево</key>
 		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.subtree.tt">Это поддерево</key>
-		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.subtreewithcreole">Subtree with content</key>
-		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.subtreewithcreole.tt">This node is subtree with content associated</key>
+		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.subtreewithcreole">Поддерево с Creole</key>
+		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.subtreewithcreole.tt">Это поддерево со связанным с ним описанием</key>
 		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.unknown">Неизвестно</key>
 		<key name="chav1961.purelibnavigator.interfaces.contentNodeType.unknown.tt">Тип узла неизвестен</key>
-
 
 <!-- Нумерация PackingType -->
 		<key name="chav1961.purelibnavigator.interfaces.packingtype.war">WAR</key>
@@ -256,6 +259,12 @@
 <!-- Локализация сообщений приложения -->
 		<key name="Application.message.fileLoaded">Файл %1$s успешно загружен</key> 
 		<key name="Application.message.fileSaved">Файл %1$s успешно сохранен</key>
+
+<!-- Локализация меню ContentEditorAndViewer -->
+		<key name="ContentEditorAndViewer.menu.copylinks">Копировать ссылки</key>
+		<key name="ContentEditorAndViewer.menu.insertlinks">Вставить ссылку</key>
+		<key name="ContentEditorAndViewer.menu.totaltree">Весь проект</key>
+		<key name="ContentEditorAndViewer.label.notselected">&lt;не выбрано&gt;</key>
 
 <!-- Локализованные ошибки, предупреждения и т.д. -->
 		<key name="warning.no_desktop_available">Увы, невозможно запустить ваш WEB-браузер. Воспользуйтесь вместо</key>	

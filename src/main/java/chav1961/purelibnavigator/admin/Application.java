@@ -350,6 +350,7 @@ public class Application extends JFrame implements LocaleChangeListener, AutoClo
 							content.delete();
 						}
 						content.pop().push("/"+AdminUtils.CONTENT_FILE).rename(AdminUtils.CONTENT_FILE+".old").pop().push("/"+AdminUtils.CONTENT_FILE+".new").rename(AdminUtils.CONTENT_FILE).pop();
+						state.message(Severity.info, "Project was saved successfully");
 					} catch (IOException e) {
 						throw new ContentException("I/O error reading content descriptor: "+e.getLocalizedMessage(),e); 
 					}
@@ -519,7 +520,7 @@ public class Application extends JFrame implements LocaleChangeListener, AutoClo
 			}
 		}
 		else {
-			ceav.setContentType(ContentType.COMMON, rootNode.getChild(AdminUtils.F_NAVIGATION), seekParentForId(rootNode, id), seekById(rootNode, id));
+			ceav.setContentType(ContentType.COMMON, rootNode.getChild(AdminUtils.F_NAVIGATION), rootNode.getChild(AdminUtils.F_NAVIGATION), rootNode.getChild(AdminUtils.F_NAVIGATION));
 		}
 	}
 	

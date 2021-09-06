@@ -20,6 +20,7 @@ import chav1961.purelib.basic.exceptions.ContentException;
 import chav1961.purelib.basic.exceptions.LocalizationException;
 import chav1961.purelib.basic.interfaces.LoggerFacade;
 import chav1961.purelib.cdb.CompilerUtils;
+import chav1961.purelib.concurrent.OptionalTimerTask;
 import chav1961.purelib.fsys.interfaces.FileSystemInterface;
 import chav1961.purelib.i18n.interfaces.LocaleResource;
 import chav1961.purelib.i18n.interfaces.Localizer;
@@ -42,7 +43,7 @@ class ResourceTreeContent extends JTree implements LocaleChangeListener {
 	private final Localizer					localizer;
 	private final LoggerFacade				logger;
 	private final TreeManipulationCallback	callback;
-	private volatile TimerTask				tt = null;
+	private OptionalTimerTask				tt = null;
 	private FileSystemInterface				fsi =  null;
 	
 	public ResourceTreeContent(final ContentMetadataInterface mdi, final Localizer localizer, final LoggerFacade logger, final TreeManipulationCallback callback) throws ContentException, LocalizationException {
@@ -88,7 +89,10 @@ class ResourceTreeContent extends JTree implements LocaleChangeListener {
 							}
 							break;
 						case JsonString:
+							final ContentNodeType	cnt = ContentNodeType.byFileNameSuffix(node.getStringValue());
+							
 							label.setText(node.getStringValue());
+							label.setIcon(cnt.getResourceType().getIcon());
 						case JsonReal: case JsonBoolean: case JsonInteger: case JsonNull:
 							break;
 						default :
@@ -99,12 +103,9 @@ class ResourceTreeContent extends JTree implements LocaleChangeListener {
 			});
 			getSelectionModel().addTreeSelectionListener((e)->{
 				if (tt != null) {
-					tt.cancel();
-					tt = null;
+					tt.reject();
 				}
-				tt = new TimerTask() {
-					@Override
-					public void run() {
+				tt = new OptionalTimerTask(()->{
 						final ItemAndNode	sel = getSelection();
 						
 						if (sel != null) {
@@ -114,7 +115,7 @@ class ResourceTreeContent extends JTree implements LocaleChangeListener {
 							callback.select(null, null);
 						}
 					}
-				};
+				);
 				PureLibSettings.COMMON_MAINTENANCE_TIMER.schedule(tt, TT_DELAY);
 			});
 			

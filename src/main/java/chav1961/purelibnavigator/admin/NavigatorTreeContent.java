@@ -32,7 +32,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.TimerTask;
 import java.util.UUID;
 
 import javax.imageio.ImageIO;
@@ -61,6 +60,7 @@ import chav1961.purelib.basic.exceptions.FlowException;
 import chav1961.purelib.basic.exceptions.LocalizationException;
 import chav1961.purelib.basic.interfaces.LoggerFacade;
 import chav1961.purelib.basic.interfaces.LoggerFacade.Severity;
+import chav1961.purelib.concurrent.OptionalTimerTask;
 import chav1961.purelib.fsys.FileSystemFactory;
 import chav1961.purelib.fsys.interfaces.FileSystemInterface;
 import chav1961.purelib.i18n.interfaces.Localizer;
@@ -189,7 +189,7 @@ class NavigatorTreeContent extends JTree implements LocaleChangeListener {
 	
 	private FileSystemInterface				fsi;
 	private int								uniqueNameSuffix = 1;
-	private volatile TimerTask				tt = null;
+	private OptionalTimerTask				tt = null;
 	private JComponent 						focusOwner = null;
 	private boolean							treeWasModified = false;
 	
@@ -369,12 +369,9 @@ class NavigatorTreeContent extends JTree implements LocaleChangeListener {
 			});
 			getSelectionModel().addTreeSelectionListener((e)->{
 				if (tt != null) {
-					tt.cancel();
-					tt = null;
+					tt.reject();
 				}
-				tt = new TimerTask() {
-					@Override
-					public void run() {
+				tt = new OptionalTimerTask(()->{
 						final ItemAndNode	sel = getSelection();
 						
 						if (sel != null) {
@@ -383,9 +380,8 @@ class NavigatorTreeContent extends JTree implements LocaleChangeListener {
 						else {
 							callback.select(null, null);
 						}
-//							tt.cancel();
 					}
-				};
+				);
 				PureLibSettings.COMMON_MAINTENANCE_TIMER.schedule(tt, TT_DELAY);
 				
 				try{final ItemAndNode	sel = getSelection();

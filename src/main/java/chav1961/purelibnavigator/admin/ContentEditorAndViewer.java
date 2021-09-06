@@ -2,15 +2,15 @@ package chav1961.purelibnavigator.admin;
 
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
-import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
+import java.awt.Toolkit;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.awt.geom.AffineTransform;
 import java.io.IOException;
 import java.net.URI;
+import java.util.Locale;
 
+import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JPanel;
@@ -21,25 +21,27 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.BadLocationException;
 
-import chav1961.purelib.basic.exceptions.FlowException;
 import chav1961.purelib.basic.exceptions.LocalizationException;
 import chav1961.purelib.basic.interfaces.LoggerFacade;
 import chav1961.purelib.basic.interfaces.LoggerFacade.Severity;
 import chav1961.purelib.i18n.interfaces.Localizer;
+import chav1961.purelib.i18n.interfaces.Localizer.LocaleChangeListener;
 import chav1961.purelib.json.JsonNode;
 import chav1961.purelib.model.interfaces.ContentMetadataInterface;
 import chav1961.purelib.model.interfaces.ContentMetadataInterface.ContentNodeMetadata;
 import chav1961.purelib.streams.char2char.CreoleWriter.CreoleLexema;
-import chav1961.purelib.ui.interfaces.ActionFormManager;
-import chav1961.purelib.ui.interfaces.RefreshMode;
 import chav1961.purelib.ui.swing.SwingUtils;
 import chav1961.purelib.ui.swing.interfaces.OnAction;
 import chav1961.purelib.ui.swing.useful.JBackgroundComponent;
 import chav1961.purelib.ui.swing.useful.JBackgroundComponent.FillMode;
 import chav1961.purelib.ui.swing.useful.JCreoleEditor;
 
-class ContentEditorAndViewer extends JPanel {
-	private static final long serialVersionUID = 1L;
+class ContentEditorAndViewer extends JPanel implements LocaleChangeListener {
+	private static final long 		serialVersionUID = 1L;
+	private static final String		MENU_COPY_LINKS = "ContentEditorAndViewer.menu.copylinks";
+	private static final String		MENU_INSERT_LINKS = "ContentEditorAndViewer.menu.insertlinks";
+	private static final String		MENU_TOTAL_TREE = "ContentEditorAndViewer.menu.totaltree";
+	private static final String		LABEL_NOT_SELECTED = "ContentEditorAndViewer.label.notselected";
 
 	public static enum ContentType {
 		CREOLE("creole"),
@@ -71,13 +73,13 @@ class ContentEditorAndViewer extends JPanel {
 	private final JCreoleEditor				editor = new JCreoleEditor();
 	private final JToolBar					imageToolBar;
 	private final JBackgroundComponent		image;
-	private final JLabel					common = new JLabel("<not selected>", JLabel.CENTER);
+	private final JLabel					notSelectedLabel = new JLabel("", JLabel.CENTER);
 	
 	private ContentType						contentType = ContentType.CREOLE;
 	private JsonNode						navigator = null, parent =  null, current = null;
 	private boolean							editorContentChanged = false;
 	
-	public ContentEditorAndViewer(final Localizer localizer, final LoggerFacade logger, final ContentMetadataInterface mdi, final CreoleContentSaveCallback callback) throws NullPointerException {
+	public ContentEditorAndViewer(final Localizer localizer, final LoggerFacade logger, final ContentMetadataInterface mdi, final CreoleContentSaveCallback callback) throws NullPointerException, LocalizationException {
 		if (localizer == null) {
 			throw new NullPointerException("Localizer can't be null");
 		}
@@ -116,7 +118,7 @@ class ContentEditorAndViewer extends JPanel {
 			
 			final JPanel	commonPanel = new JPanel(new BorderLayout());
 
-			commonPanel.add(common, BorderLayout.CENTER);
+			commonPanel.add(notSelectedLabel, BorderLayout.CENTER);
 			
 			add(creolePanel, ContentType.CREOLE.getCardName());
 			add(imagePanel, ContentType.IMAGE.getCardName());
@@ -137,46 +139,56 @@ class ContentEditorAndViewer extends JPanel {
 				@Override
 				public void mouseClicked(final MouseEvent e) {
 					if (e.getButton() == MouseEvent.BUTTON3) {
-						final JPopupMenu	popup = new JPopupMenu();
-						final JMenu			copyLinks = new JMenu("Copy links");
-						final JMenu			insertLinks = new JMenu("Insert links");
-						final JMenu			insertTotal = new JMenu("Whole navigator tree");
-						
-						if (!AdminUtils.buildInternalLinksMenu(copyLinks, editor.getText()))  {
-							copyLinks.setEnabled(false);
-						}
-						else {
-							SwingUtils.assignActionListeners(copyLinks, (ev)->{
-								System.err.println("Name="+ev.getActionCommand());
-							});
-						}
-						popup.add(copyLinks);
-
-						if (AdminUtils.buildTreeLinksMenu(insertTotal, navigator, (t)->true)) {
-							insertLinks.add(insertTotal);
-							insertLinks.addSeparator();
-						}
-						if (AdminUtils.buildInternalLinksMenu(insertLinks, editor.getText())) {
-							insertLinks.addSeparator();
-						}
-						AdminUtils.buildSiblingLinksMenu(insertLinks, parent, (t)->true);
-						SwingUtils.assignActionListeners(insertLinks, (ev)->{
-							try {
-								editor.getDocument().insertString(editor.getCaretPosition(), ev.getActionCommand(), editor.getCharacterStyles(CreoleLexema.LinkRef));
-							} catch (BadLocationException e1) {
-								// TODO Auto-generated catch block
-								e1.printStackTrace();
+						try {
+							final JPopupMenu	popup = new JPopupMenu();
+							final JMenu			copyLinks = new JMenu(localizer.getValue(MENU_COPY_LINKS));
+							final JMenu			insertLinks = new JMenu(localizer.getValue(MENU_INSERT_LINKS));
+							final JMenu			insertTotal = new JMenu(localizer.getValue(MENU_TOTAL_TREE));
+	
+							if (!AdminUtils.buildInternalLinksMenu(copyLinks, editor.getText(), current.getChild(AdminUtils.F_ID).getStringValue()+"#"))  {
+								copyLinks.setEnabled(false);
 							}
-							System.err.println("Link="+ev.getActionCommand());
-						});
-						popup.add(insertLinks);
-						
-						popup.show(editor, e.getX(), e.getY());
+							else {
+								SwingUtils.assignActionListeners(copyLinks, (ev)->{
+									Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(ev.getActionCommand()), null);
+								});
+							}
+							copyLinks.setIcon(new ImageIcon(this.getClass().getResource("/images/locallink.png")));
+							popup.add(copyLinks);
+	
+							if (AdminUtils.buildTreeLinksMenu(insertTotal, navigator, (t)->true)) {
+								insertTotal.setIcon(new ImageIcon(this.getClass().getResource("/images/open.png")));
+								insertLinks.add(insertTotal);
+								insertLinks.addSeparator();
+							}
+							if (AdminUtils.buildInternalLinksMenu(insertLinks, editor.getText(),"#")) {
+								insertLinks.addSeparator();
+							}
+							AdminUtils.buildSiblingLinksMenu(insertLinks, parent, (t)->true);
+							SwingUtils.assignActionListeners(insertLinks, (ev)->{
+								try {
+									editor.getDocument().insertString(editor.getCaretPosition(), ev.getActionCommand(), editor.getCharacterStyles(CreoleLexema.LinkRef));
+								} catch (BadLocationException exc) {
+									exc.printStackTrace();
+								}
+							});
+							insertLinks.setIcon(new ImageIcon(this.getClass().getResource("/images/externallink.png")));
+							popup.add(insertLinks);
+							
+							popup.show(editor, e.getX(), e.getY());
+						} catch (LocalizationException exc) {
+						}
 					}
 				}
 			});
 			setContentChanged(false);
+			fillLocalizedStrings();
 		}
+	}
+
+	@Override
+	public void localeChanged(Locale oldLocale, Locale newLocale) throws LocalizationException {
+		fillLocalizedStrings();
 	}
 	
 	public ContentType getContentType() {
@@ -245,7 +257,6 @@ class ContentEditorAndViewer extends JPanel {
 		}
 	}
 	
-	
 	@OnAction("action:/imageFill")
 	private void fillImage() {
 		image.setFillMode(FillMode.FILL);
@@ -254,5 +265,9 @@ class ContentEditorAndViewer extends JPanel {
 	@OnAction("action:/imageOriginal")
 	private void originalImage() {
 		image.setFillMode(FillMode.ORIGINAL);
+	}
+
+	private void fillLocalizedStrings() throws LocalizationException {
+		notSelectedLabel.setText(localizer.getValue(LABEL_NOT_SELECTED));
 	}
 }

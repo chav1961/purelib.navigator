@@ -3,22 +3,17 @@ package chav1961.purelibnavigator.admin;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.function.Predicate;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
-import java.util.jar.Manifest;
-import java.util.zip.ZipOutputStream;
 
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
-import javax.swing.tree.DefaultTreeModel;
 
 import chav1961.purelib.basic.LineByLineProcessor;
 import chav1961.purelib.basic.PureLibSettings;
@@ -29,7 +24,6 @@ import chav1961.purelib.basic.exceptions.SyntaxException;
 import chav1961.purelib.fsys.interfaces.FileSystemInterface;
 import chav1961.purelib.json.JsonNode;
 import chav1961.purelib.json.JsonUtils;
-import chav1961.purelib.json.interfaces.JsonNodeType;
 import chav1961.purelib.streams.JsonStaxParser;
 import chav1961.purelibnavigator.admin.entities.AppSettings;
 import chav1961.purelibnavigator.interfaces.ContentNodeGroup;
@@ -83,33 +77,33 @@ public class AdminUtils {
 		}
 	}
 	
-	public static boolean buildInternalLinksMenu(final JMenu container, final String creoleContent) {
+	public static boolean buildInternalLinksMenu(final JMenu container, final String creoleContent, final String linkPrefix) {
 		if (container == null) {
 			throw new NullPointerException("Menu container can't be null"); 
 		}
 		else if (creoleContent == null) {
 			throw new NullPointerException("Content to parse can't be null"); 
 		}
-		else {
+		else if (!creoleContent.trim().isEmpty()) {
 			final boolean[]					result = {false};
 			
 			try(final LineByLineProcessor	lblp = new LineByLineProcessor((displacement, lineNo, data, from, length)->{
 															for(int index = 0; index < length; index++) {
-																if (data[index] == '=') {
+																if (data[from + index] == '=') {
 																	int lastIndex = length-1;
 																	
-																	while (data[index] == '=') {
+																	while (data[from + index] == '=') {
 																		index++;
 																	}
-																	while ((Character.isWhitespace(data[lastIndex]) || data[lastIndex] == '=') && lastIndex > index) {
+																	while ((Character.isWhitespace(data[from + lastIndex]) || data[from + lastIndex] == '=') && lastIndex > index) {
 																		lastIndex--;
 																	}
 																	
 																	if (++lastIndex > index) {
-																		final String	item = new String(data, index, lastIndex - index).trim();
+																		final String	item = new String(data, from + index, from + lastIndex - index).trim();
 																		final JMenuItem	menuItem = new JMenuItem("#"+item);
 																		
-																		menuItem.setActionCommand("[[#"+item+"|"+item+"]]");
+																		menuItem.setActionCommand("[["+linkPrefix+item+"|"+item+"]]");
 																		container.add(menuItem);
 																		result[0] = true;
 																	}
@@ -126,6 +120,9 @@ public class AdminUtils {
 			} catch (IOException | SyntaxException e) {
 			}
 			return result[0];
+		}
+		else {
+			return false;
 		}
 	}
 	
@@ -144,7 +141,7 @@ public class AdminUtils {
 			
 			for (JsonNode item : parent.getChild(F_CONTENT).children()) {
 				if (include.test(item)) {
-					container.add(createMenuItemByJsonNode(item));
+					container.add(createMenuItemByJsonNode(item,""));
 					result = true;
 				}
 			}
@@ -159,6 +156,7 @@ public class AdminUtils {
 			final JMenu	menuItem = new JMenu(item.name());
 			
 			if (buildTreeLinksMenu(menuItem, node, item, include)) {
+				menuItem.setIcon(item.getIcon());
 				container.add(menuItem);
 				result = true;
 			}
@@ -170,7 +168,7 @@ public class AdminUtils {
 		final ContentNodeType	type = ContentNodeType.valueOf(node.getChild(F_TYPE).getStringValue());
 		boolean					result = false;
 		
-		if (type.getGroup() == ContentNodeGroup.SUBTREE) {
+		if (type.getGroup() == ContentNodeGroup.SUBTREE && node.hasName(F_CONTENT)) {
 			for (JsonNode item : node.getChild(F_CONTENT).children()) {
 				final JMenu		subtree = new JMenu(item.getChild(F_CAPTION).getStringValue());
 				
@@ -185,20 +183,20 @@ public class AdminUtils {
 				if (result) {
 					container.addSeparator();
 				}
-				container.add(createMenuItemByJsonNode(node));
+				container.add(createMenuItemByJsonNode(node,""));
 				result = true;
 			}
 		}
 		return result;
 	}	
 
-	private static JMenuItem createMenuItemByJsonNode(final JsonNode node) {
+	private static JMenuItem createMenuItemByJsonNode(final JsonNode node, final String prefix) {
 		final ContentNodeType	type = ContentNodeType.valueOf(node.getChild(F_TYPE).getStringValue());
 		final String			id = node.getChild(F_ID).getStringValue();
 		final String			caption = node.getChild(F_CAPTION).getStringValue();
 		final JMenuItem			menuItem = new JMenuItem(caption);
 		
-		menuItem.setActionCommand("[[#"+id+type.getResourceType().getResourceSuffix()+"|"+caption+"]]");
+		menuItem.setActionCommand("[["+prefix+id+type.getResourceType().getResourceSuffix()+"|"+caption+"]]");
 		return menuItem;
 	}
 	
