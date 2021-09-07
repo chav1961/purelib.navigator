@@ -494,27 +494,29 @@ class NavigatorTreeContent extends JTree implements LocaleChangeListener {
 	protected void insertChild(final TreeContentNode parentItem, final JsonNode parentNode, final JsonNode newNode) {
 		final ContentNodeType	type = ContentNodeType.valueOf(newNode.getChild(AdminUtils.F_TYPE).getStringValue());
 		final TreeContentNode	newItem = new TreeContentNode(newNode);
-		
-		try(final FileSystemInterface	defaultFile = fsi.clone().open("/"+newNode.getChild(AdminUtils.F_ID).getStringValue()+type.getResourceType().getResourceSuffix())) {
-			
-			if (!defaultFile.exists()) {
-				try(final OutputStream	os = defaultFile.create().write()) {
-					Utils.copyStream(type.getResourceType().getDefaultResource(), os);
-				}
-			}
-			
-			if (!parentNode.hasName(AdminUtils.F_CONTENT)) {
-				parentNode.addChild(new JsonNode(JsonNodeType.JsonArray).setName(AdminUtils.F_CONTENT));
-			}
-			parentNode.getChild(AdminUtils.F_CONTENT).addChild(newNode);
-			parentItem.add(newItem);
+
+		if (type.getResourceType().hasResource()) {
+			try(final FileSystemInterface	defaultFile = fsi.clone().open("/"+newNode.getChild(AdminUtils.F_ID).getStringValue()+type.getResourceType().getResourceSuffix())) {
 				
-			((DefaultTreeModel)getModel()).nodeStructureChanged(parentItem);
-			callback.insert(parentItem, parentNode, newItem, newNode);
-			setTreeWasModified(true);
-		} catch (IOException e) {
-			printError(e);
+				if (!defaultFile.exists()) {
+					try(final OutputStream	os = defaultFile.create().write()) {
+						Utils.copyStream(type.getResourceType().getDefaultResource(), os);
+					}
+				}
+				
+			} catch (IOException e) {
+				printError(e);
+			}
 		}
+		if (!parentNode.hasName(AdminUtils.F_CONTENT)) {
+			parentNode.addChild(new JsonNode(JsonNodeType.JsonArray).setName(AdminUtils.F_CONTENT));
+		}
+		parentNode.getChild(AdminUtils.F_CONTENT).addChild(newNode);
+		parentItem.add(newItem);
+			
+		((DefaultTreeModel)getModel()).nodeStructureChanged(parentItem);
+		callback.insert(parentItem, parentNode, newItem, newNode);
+		setTreeWasModified(true);
 	}
 
 	protected void removeItem(final TreeContentNode item, final JsonNode node) {
@@ -632,7 +634,7 @@ class NavigatorTreeContent extends JTree implements LocaleChangeListener {
 			ns.id = UUID.randomUUID().toString();
 			ns.caption = ns.id;
 			
-			try{fsmProp.processTerminal(FormEditTerminal.INSERT_SIBLING, null);
+			try{fsmProp.processTerminal(FormEditTerminal.INSERT_CHILDREN, null);
 				if (AutoBuiltForm.ask((JFrame)null, localizer, form)) {
 					fsmProp.processTerminal(FormEditTerminal.COMPLETE, null);
 					ns.caption = ns.id+ns.type.getResourceType().getResourceSuffix();

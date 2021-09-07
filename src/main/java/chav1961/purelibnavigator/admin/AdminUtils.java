@@ -25,11 +25,13 @@ import chav1961.purelib.basic.Utils;
 import chav1961.purelib.basic.exceptions.ContentException;
 import chav1961.purelib.basic.exceptions.SyntaxException;
 import chav1961.purelib.enumerations.ContinueMode;
+import chav1961.purelib.enumerations.MarkupOutputFormat;
 import chav1961.purelib.fsys.interfaces.FileSystemInterface;
 import chav1961.purelib.json.JsonNode;
 import chav1961.purelib.json.JsonUtils;
 import chav1961.purelib.streams.JsonStaxParser;
 import chav1961.purelib.streams.char2char.CreoleWriter;
+import chav1961.purelib.streams.interfaces.PrologueEpilogueMaster;
 import chav1961.purelibnavigator.admin.entities.AppSettings;
 import chav1961.purelibnavigator.interfaces.ContentNodeGroup;
 import chav1961.purelibnavigator.interfaces.ContentNodeType;
@@ -242,13 +244,17 @@ public class AdminUtils {
 		dumpContentAsIs(jos, "META-INF/MANIFEST.MF", AdminUtils.class.getResourceAsStream("manifest.mf"));
 		dumpContentAsIs(jos, Navigator.class.getCanonicalName().replace('.', '/')+".class", Navigator.class.getResourceAsStream("Navigator.class"));
 		dumpContentAsIs(jos, Navigator.class.getPackage().getName().replace('.', '/')+"/avatar.jpg", Navigator.class.getResourceAsStream("avatar.jpg"));
+		dumpContentAsIs(jos, Navigator.class.getPackage().getName().replace('.', '/')+"/notFound.html", Navigator.class.getResourceAsStream("notFound.html"));
+		dumpContentAsIs(jos, Navigator.class.getPackage().getName().replace('.', '/')+"/illegalRequest.html", Navigator.class.getResourceAsStream("illegalRequest.html"));
 		dumpContentAsIs(jos, NavigatorHandler.class.getCanonicalName().replace('.', '/')+".class", NavigatorHandler.class.getResourceAsStream("NavigatorHandler.class"));
 		dumpContentAsIs(jos, "index.html", buildIndexHtml(root.getChild(F_NAVIGATION)));
 		try (final FileSystemInterface	item = fsi.clone()) {
 			item.list(".*\\.cre",  (f)->{
 				try(final ByteArrayOutputStream	baos = new ByteArrayOutputStream()) {
-					try(final Writer			wr = new OutputStreamWriter(baos);
-						final CreoleWriter		cwr = new CreoleWriter(wr);
+					try(final Writer			wr = new OutputStreamWriter(baos, PureLibSettings.DEFAULT_CONTENT_ENCODING);
+						final CreoleWriter		cwr = new CreoleWriter(wr, MarkupOutputFormat.XML2HTML, 
+															(wrP, instP)-> {((Writer)wrP).write(""); return false;}, 
+															(wrE, instE)-> {((Writer)wrE).write(""); return false;});
 						final Reader			rdr = f.charRead(PureLibSettings.DEFAULT_CONTENT_ENCODING)) {
 					
 						Utils.copyStream(rdr, cwr);
@@ -302,7 +308,7 @@ public class AdminUtils {
 				
 				sb.append("<li>");
 				if (type.getResourceType().hasResource()) {
-					sb.append("<a href=\"javascript:setEmbedRef('/").append(node.getChild(F_ID).getStringValue()).append(type.getResourceType().getResourceSuffix()).append("')\">");
+					sb.append("<a href=\"#\" onClick=\"setEmbedRef('/").append(node.getChild(F_ID).getStringValue()).append(type.getResourceType().getResourceSuffix()).append("')\">");
 				}
 				sb.append(node.getChild(F_CAPTION).getStringValue());
 				

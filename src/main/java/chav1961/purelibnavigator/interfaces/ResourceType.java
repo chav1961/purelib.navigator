@@ -29,7 +29,7 @@ public enum ResourceType {
 		this.hasResource = true;
 		this.resourceSuffix = resourceSuffix;
 		this.icon = new ImageIcon(this.getClass().getResource(iconResource));
-		this.defaultResource = ResourceType.class.getResource(defaultResource);
+		this.defaultResource = this.getClass().getResource(defaultResource);
 	}
 
 	public boolean hasResource() {

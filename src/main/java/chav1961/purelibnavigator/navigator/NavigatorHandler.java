@@ -28,7 +28,8 @@ public class NavigatorHandler implements HttpHandler {
     }
 
     private void sendResponse(final HttpExchange x, final int responseCode, final InputStream content) throws IOException {
-		x.sendResponseHeaders(responseCode, 0);
+		x.getResponseHeaders().add("Cache-Control", "no-cache");
+    	x.sendResponseHeaders(responseCode, 0);
 		
 		try(final OutputStream 	os = x.getResponseBody()) {
 			final byte[]		buffer = new byte[8192];
