@@ -54,6 +54,12 @@
 		<key name="imageview.toolbar.fill.tt">Fill image content to the window</key>
 		<key name="imageview.toolbar.original">original</key>
 		<key name="imageview.toolbar.original.tt">Use original image size to show image</key>
+		<key name="imageview.toolbar.copy">Copy</key>
+		<key name="imageview.toolbar.copy.tt">Copy image content to clipboard</key>
+		<key name="imageview.toolbar.paste">Paste</key>
+		<key name="imageview.toolbar.paste.tt">Replace image content from clipboard</key>
+		<key name="imageview.toolbar.save">Save</key>
+		<key name="imageview.toolbar.save.tt">Save image content</key>
 		
 <!-- Tree content window -->
 		<key name="chav1961.purelibnavigator.admin.StaticTreeContent.fileType.creole">Creole text files</key>
@@ -121,10 +127,6 @@
 		<key name="chav1961.purelibnavigator.admin.appsettings.javadoclocation">JavaDoc location</key>
 		<key name="chav1961.purelibnavigator.admin.appsettings.javadoclocation.tt">Location of the JavaDoc directory</key>
 
-<!-- Application messages localization -->
-		<key name="Application.message.fileLoaded">File %1$s was loaded successfully</key> 
-		<key name="Application.message.fileSaved">File %1$s was saved successfully</key>
-
 <!-- ContentEditorAndViewer menu localization -->
 		<key name="ContentEditorAndViewer.menu.copylinks">Copy links</key>
 		<key name="ContentEditorAndViewer.menu.insertlinks">Insert links</key>
@@ -189,6 +191,12 @@
 		<key name="imageview.toolbar.fill.tt">Заполнить изображение на все окно</key>
 		<key name="imageview.toolbar.original">Исходное</key>
 		<key name="imageview.toolbar.original.tt">Показывать исходный размер изображения</key>
+		<key name="imageview.toolbar.copy">Копировать</key>
+		<key name="imageview.toolbar.copy.tt">Скопировать изображение в буфер обмена</key>
+		<key name="imageview.toolbar.paste">Вставить</key>
+		<key name="imageview.toolbar.paste.tt">Вставить изображение из буфера обмена</key>
+		<key name="imageview.toolbar.save">Сохранить</key>
+		<key name="imageview.toolbar.save.tt">Сохранить изображение</key>
 
 <!-- Окно дерева контента -->
 		<key name="chav1961.purelibnavigator.admin.StaticTreeContent.fileType.creole">Файлы формата CREOLE</key>
@@ -255,10 +263,6 @@
 		<key name="chav1961.purelibnavigator.admin.appsettings.includejavadoc.tt">Включат ь документацию Java в экспортируемый архив</key>
 		<key name="chav1961.purelibnavigator.admin.appsettings.javadoclocation">Расположение JavaDoc</key>
 		<key name="chav1961.purelibnavigator.admin.appsettings.javadoclocation.tt">Расположение директории JavaDoc</key>
-
-<!-- Локализация сообщений приложения -->
-		<key name="Application.message.fileLoaded">Файл %1$s успешно загружен</key> 
-		<key name="Application.message.fileSaved">Файл %1$s успешно сохранен</key>
 
 <!-- Локализация меню ContentEditorAndViewer -->
 		<key name="ContentEditorAndViewer.menu.copylinks">Копировать ссылки</key>

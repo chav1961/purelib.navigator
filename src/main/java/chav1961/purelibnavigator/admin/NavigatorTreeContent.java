@@ -188,7 +188,7 @@ class NavigatorTreeContent extends JTree implements LocaleChangeListener {
 	private final AutoBuiltForm<NodeSettings>	form;
 	
 	private FileSystemInterface				fsi;
-	private int								uniqueNameSuffix = 1;
+//	private int								uniqueNameSuffix = 1;
 	private OptionalTimerTask				tt = null;
 	private JComponent 						focusOwner = null;
 	private boolean							treeWasModified = false;
@@ -402,7 +402,7 @@ class NavigatorTreeContent extends JTree implements LocaleChangeListener {
 
 			this.ns = new NodeSettings(logger);
 			this.form = new AutoBuiltForm<NodeSettings>(ContentModelFactory.forAnnotatedClass(NodeSettings.class), localizer, PureLibSettings.INTERNAL_LOADER, ns, ns, (meta)->getAccessAndVisibility(meta));
-			this.form.setPreferredSize(new Dimension(300,120));
+			this.form.setPreferredSize(new Dimension(300,100));
 			
 			((DefaultTreeModel)getModel()).setRoot(new TreeContentNode(new JsonNode(JsonNodeType.JsonObject, new JsonNode("undefined").setName(AdminUtils.F_CAPTION), new JsonNode("SUBTREE").setName(AdminUtils.F_TYPE))));
 			setRootVisible(true);
@@ -599,17 +599,15 @@ class NavigatorTreeContent extends JTree implements LocaleChangeListener {
 		final ItemAndNode	sel = getSelection();
 		
 		if (sel != null) {
-			final int	suffix = uniqueNameSuffix++;
-			
 			ns.type = ContentNodeType.valueOf(sel.node.getChild(AdminUtils.F_TYPE).getStringValue());
-			ns.caption = sel.node.getChild(AdminUtils.F_CAPTION).getStringValue()+suffix;
+			ns.id = UUID.randomUUID().toString();
+			ns.caption = ns.id+ns.type.getResourceType().getResourceSuffix();
 			
 			try{fsmProp.processTerminal(FormEditTerminal.INSERT_SIBLING, null);
 			
 				if (AutoBuiltForm.ask((JFrame)null, localizer, form)) {
 					fsmProp.processTerminal(FormEditTerminal.COMPLETE, null);
 					
-					ns.id = UUID.randomUUID().toString();
 					insertSibling(sel.item, sel.node, new JsonNode(JsonNodeType.JsonObject 
 							, new JsonNode(ns.id).setName(AdminUtils.F_ID)
 							, new JsonNode(ns.type.name()).setName(AdminUtils.F_TYPE)
@@ -630,17 +628,15 @@ class NavigatorTreeContent extends JTree implements LocaleChangeListener {
 		final ItemAndNode	sel = getSelection();
 		
 		if (sel != null) {
-			final int	suffix = uniqueNameSuffix++;
-			
 			ns.type = ContentNodeType.UNKNOWN;
-			ns.caption = "caption"+suffix;
+			ns.id = UUID.randomUUID().toString();
+			ns.caption = ns.id;
 			
 			try{fsmProp.processTerminal(FormEditTerminal.INSERT_SIBLING, null);
-				
 				if (AutoBuiltForm.ask((JFrame)null, localizer, form)) {
 					fsmProp.processTerminal(FormEditTerminal.COMPLETE, null);
+					ns.caption = ns.id+ns.type.getResourceType().getResourceSuffix();
 					
-					ns.id = UUID.randomUUID().toString();
 					insertChild(sel.item, sel.node, new JsonNode(JsonNodeType.JsonObject 
 							, new JsonNode(ns.id).setName(AdminUtils.F_ID)
 							, new JsonNode(ns.type.name()).setName(AdminUtils.F_TYPE)
@@ -697,17 +693,17 @@ class NavigatorTreeContent extends JTree implements LocaleChangeListener {
 		final ItemAndNode	sel = getSelection();
 		
 		if (sel != null) {
-			final int	suffix = uniqueNameSuffix++;
-			
 			try{ns.type = ContentNodeType.valueOf(sel.node.getChild(AdminUtils.F_TYPE).getStringValue());
-				ns.caption = sel.node.getChild(AdminUtils.F_CAPTION).getStringValue()+suffix;
+				final String	oldId = ns.id;
+				
+				ns.id = UUID.randomUUID().toString();					
+				ns.caption = ns.caption.replace(oldId, ns.id);
 				
 				fsmProp.processTerminal(FormEditTerminal.DUPLICATE_LEAF, null);
 
 				if (AutoBuiltForm.ask((JFrame)null, localizer, form)) {
 					fsmProp.processTerminal(FormEditTerminal.COMPLETE, null);
 					
-					ns.id = UUID.randomUUID().toString();					
 					final JsonNode	newNode = new JsonNode(JsonNodeType.JsonObject 
 														, new JsonNode(UUID.randomUUID().toString()).setName(AdminUtils.F_ID)
 														, new JsonNode(ns.type.name()).setName(AdminUtils.F_TYPE)
@@ -775,16 +771,14 @@ class NavigatorTreeContent extends JTree implements LocaleChangeListener {
 		final ItemAndNode	sel = getSelection();
 		
 		if (sel != null && (ContentNodeType.byFileNameSuffix(item.getName()).getGroup() == ContentNodeGroup.LEAF)) {
-			final int	suffix = uniqueNameSuffix++;
-			
 			ns.type = ContentNodeType.byFileNameSuffix(item.getName());
-			ns.caption = item.getName()+suffix;
+			ns.id = UUID.randomUUID().toString();
+			ns.caption = ns.id+ns.type.getResourceType().getResourceSuffix();
 			
 			try{fsmProp.processTerminal(FormEditTerminal.INSERT_FILE, null);
 				
 				if (AutoBuiltForm.ask((JFrame)null, localizer, form)) {
 					fsmProp.processTerminal(FormEditTerminal.COMPLETE, null);
-					ns.id = UUID.randomUUID().toString();
 
 					try(final FileSystemInterface	temp = fsi.clone().open("/"+ns.id+ns.type.getResourceType().getResourceSuffix()).create();
 							final InputStream			is = new FileInputStream(item);

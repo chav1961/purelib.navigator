@@ -5,6 +5,7 @@ import java.awt.Dimension;
 import java.awt.Image;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.awt.image.RenderedImage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -74,7 +75,7 @@ import chav1961.purelib.ui.swing.useful.JLocalizedOptionPane;
 import chav1961.purelib.ui.swing.useful.JStateString;
 import chav1961.purelib.ui.swing.useful.LRUManager;
 import chav1961.purelib.ui.swing.useful.interfaces.LRUPersistence;
-import chav1961.purelibnavigator.admin.ContentEditorAndViewer.ContentType;
+import chav1961.purelibnavigator.admin.ContentEditorAndViewer.EditorContentType;
 import chav1961.purelibnavigator.admin.entities.AppSettings;
 import chav1961.purelibnavigator.admin.entities.TreeContentNode;
 import chav1961.purelibnavigator.interfaces.ContentNodeType;
@@ -88,9 +89,6 @@ public class Application extends JFrame implements LocaleChangeListener, AutoClo
 	public static final String					APP_SETTINGS_FILE = "./.admin.properties";
 
 	private static final String					APPLICATION_TITLE = "Application.title";
-	private static final String					MESSAGE_FILE_LOADED = "Application.message.fileLoaded";
-	private static final String					MESSAGE_FILE_SAVED = "Application.message.fileSaved";
-	
 	private static final String					APPLICATION_HELP_TITLE = "Application.help.title";
 	private static final String					APPLICATION_HELP_CONTENT = "Application.help.content";
 
@@ -123,7 +121,8 @@ public class Application extends JFrame implements LocaleChangeListener, AutoClo
 	
 	private FileSystemInterface					fsi;
 	private JsonNode							rootNode;
-	private String								creoleContent = null;
+	private String								creoleContentName = null;
+	private String								imageContentName = null;
 	private String								lastLoaded = "";
 	
 	public Application(final ContentMetadataInterface mdi, final Localizer parent, final int localHelpPort, final CountDownLatch latch) throws EnvironmentException, NullPointerException, IllegalArgumentException, IOException, ContentException {
@@ -194,7 +193,7 @@ public class Application extends JFrame implements LocaleChangeListener, AutoClo
 			final JPanel		rightPanel = new JPanel(new BorderLayout());
 			
 			this.fsi = null;
-			this.ceav = new ContentEditorAndViewer(localizer, state, mdi, (t)->saveCreoleContent(t));
+			this.ceav = new ContentEditorAndViewer(localizer, state, mdi, (ct,t)->saveCreoleContent(ct, t));
 			this.ntc = new NavigatorTreeContent(mdi, localizer, state, 
 						new TreeManipulationCallback() {
 							@Override
@@ -263,11 +262,27 @@ public class Application extends JFrame implements LocaleChangeListener, AutoClo
 		SwingUtils.refreshLocale(state, oldLocale, newLocale);
 	}
 	
-	private void saveCreoleContent(final String content) throws IOException {
-		try(final FileSystemInterface	creole = fsi.clone().open(creoleContent)) {
-			try(final Writer			wr = creole.create().charWrite(PureLibSettings.DEFAULT_CONTENT_ENCODING)) {
-				Utils.copyStream(new StringReader(content), wr);
-			}
+	private void saveCreoleContent(final EditorContentType type, final Object content) throws IOException {
+		switch (type) {
+			case COMMON	:
+				break;
+			case CREOLE	:
+				try(final FileSystemInterface	creole = fsi.clone().open(creoleContentName)) {
+					try(final Writer			wr = creole.create().charWrite(PureLibSettings.DEFAULT_CONTENT_ENCODING)) {
+						Utils.copyStream(new StringReader((String)content), wr);
+					}
+				}
+				break;
+			case IMAGE	:
+				try(final FileSystemInterface	image = fsi.clone().open(imageContentName)) {
+					try(final OutputStream		os = image.create().write()) {
+						ImageIO.write((RenderedImage)content, "png", os);
+						os.flush();
+					}
+				}
+				break;
+			default :
+				throw new UnsupportedOperationException("Editor content type ["+type+"] is not supported yet");
 		}
 	}
 
@@ -335,6 +350,9 @@ public class Application extends JFrame implements LocaleChangeListener, AutoClo
 			else {
 				if (ceav.creoleContentWasChanged()) {
 					ceav.saveCreoleContent();
+				}
+				if (ceav.imageContentWasChanged()) {
+					ceav.saveImage();
 				}
 
 				if (ntc.treeWasModified()) {
@@ -453,7 +471,7 @@ public class Application extends JFrame implements LocaleChangeListener, AutoClo
 	}
 
 	private boolean saveAndNeedContinue() {
-		if ((ntc.treeWasModified() || ceav.creoleContentWasChanged())) {
+		if (ntc.treeWasModified() || ceav.creoleContentWasChanged() || ceav.imageContentWasChanged()) {
 			try{switch (new JLocalizedOptionPane(localizer).confirm(this, APPLICATION_SAVE_CONTENT, APPLICATION_SAVE_TITLE, JOptionPane.QUESTION_MESSAGE, JOptionPane.YES_NO_CANCEL_OPTION)) {
 					case JOptionPane.YES_OPTION 	:
 						saveFile();
@@ -479,8 +497,11 @@ public class Application extends JFrame implements LocaleChangeListener, AutoClo
 	}
 
 	private void refreshRightPanel(final ResourceType type, final String id) {
-		if (creoleContent != null && ceav.creoleContentWasChanged()) {
+		if (creoleContentName != null && ceav.creoleContentWasChanged()) {
 			ceav.saveCreoleContent();
+		}
+		if (imageContentName != null && ceav.imageContentWasChanged()) {
+			ceav.saveImage();
 		}
 		
 		if (type != ResourceType.NONE) {
@@ -488,39 +509,44 @@ public class Application extends JFrame implements LocaleChangeListener, AutoClo
 				if (content.exists() && content.isFile()) {
 					switch (type) {
 						case CREOLE	:
-							creoleContent = content.getPath();
+							creoleContentName = content.getPath();
 							
 							try(final Reader		rdr = content.charRead(PureLibSettings.DEFAULT_CONTENT_ENCODING)) {
 								
 								ceav.getCreoleEditor().setText(Utils.fromResource(rdr));
-								ceav.setContentType(ContentType.CREOLE, rootNode.getChild(AdminUtils.F_NAVIGATION), seekParentForId(rootNode, id), seekById(rootNode, id));
+								imageContentName = null; 
+								ceav.setContentType(EditorContentType.CREOLE, rootNode.getChild(AdminUtils.F_NAVIGATION), seekParentForId(rootNode, id), seekById(rootNode, id));
 							}
 							break;
 						case IMAGE	:
+							imageContentName = content.getPath();
+							
 							try(final InputStream	is = content.read()) {
 								final Image			image = ImageIO.read(is);
 								
-								ceav.getImageContainer().setBackground(image);
-								creoleContent = null; 
-								ceav.setContentType(ContentType.IMAGE, rootNode.getChild(AdminUtils.F_NAVIGATION), seekParentForId(rootNode, id), seekById(rootNode, id));
+								ceav.getImageContainer().setBackgroundImage(image);
+								creoleContentName = null; 
+								ceav.setContentType(EditorContentType.IMAGE, rootNode.getChild(AdminUtils.F_NAVIGATION), seekParentForId(rootNode, id), seekById(rootNode, id));
 							}
 							break;
 						default:
-							creoleContent = null; 
-							ceav.setContentType(ContentType.COMMON, rootNode.getChild(AdminUtils.F_NAVIGATION), seekParentForId(rootNode, id), seekById(rootNode, id));
+							creoleContentName = null; 
+							imageContentName = null; 
+							ceav.setContentType(EditorContentType.COMMON, rootNode.getChild(AdminUtils.F_NAVIGATION), seekParentForId(rootNode, id), seekById(rootNode, id));
 							break;
 					}
 				}
 				else {
-					creoleContent = null; 
-					ceav.setContentType(ContentType.COMMON, rootNode.getChild(AdminUtils.F_NAVIGATION), seekParentForId(rootNode, id), seekById(rootNode, id));
+					creoleContentName = null; 
+					imageContentName = null; 
+					ceav.setContentType(EditorContentType.COMMON, rootNode.getChild(AdminUtils.F_NAVIGATION), seekParentForId(rootNode, id), seekById(rootNode, id));
 				}
 			} catch (IOException exc) {
 				state.message(Severity.error, exc.getLocalizedMessage(), exc);
 			}
 		}
 		else {
-			ceav.setContentType(ContentType.COMMON, rootNode.getChild(AdminUtils.F_NAVIGATION), rootNode.getChild(AdminUtils.F_NAVIGATION), rootNode.getChild(AdminUtils.F_NAVIGATION));
+			ceav.setContentType(EditorContentType.COMMON, rootNode.getChild(AdminUtils.F_NAVIGATION), rootNode.getChild(AdminUtils.F_NAVIGATION), rootNode.getChild(AdminUtils.F_NAVIGATION));
 		}
 	}
 	

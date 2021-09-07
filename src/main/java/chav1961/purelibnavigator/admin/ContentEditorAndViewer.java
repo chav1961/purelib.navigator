@@ -2,8 +2,14 @@ package chav1961.purelibnavigator.admin;
 
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
+import java.awt.HeadlessException;
+import java.awt.Image;
 import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.FlavorListener;
 import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.IOException;
@@ -43,14 +49,14 @@ class ContentEditorAndViewer extends JPanel implements LocaleChangeListener {
 	private static final String		MENU_TOTAL_TREE = "ContentEditorAndViewer.menu.totaltree";
 	private static final String		LABEL_NOT_SELECTED = "ContentEditorAndViewer.label.notselected";
 
-	public static enum ContentType {
+	public static enum EditorContentType {
 		CREOLE("creole"),
 		IMAGE("image"),
 		COMMON("common");
 		
 		private final String	cardName;
 		
-		private ContentType(final String cardName) {
+		private EditorContentType(final String cardName) {
 			this.cardName = cardName;
 		}
 		
@@ -60,14 +66,14 @@ class ContentEditorAndViewer extends JPanel implements LocaleChangeListener {
 	}
 	
 	@FunctionalInterface
-	static interface CreoleContentSaveCallback {
-		void save(String content) throws IOException;
+	static interface EditorContentSaveCallback {
+		void save(EditorContentType contentType, Object content) throws IOException;
 	}
 	
 	private final Localizer					localizer;
 	private final LoggerFacade				logger;
 	private final ContentMetadataInterface	mdi;
-	private final CreoleContentSaveCallback	callback;
+	private final EditorContentSaveCallback	callback;
 	private final CardLayout				layout = new CardLayout();
 	private final JToolBar					creoleToolBar;
 	private final JCreoleEditor				editor = new JCreoleEditor();
@@ -75,11 +81,12 @@ class ContentEditorAndViewer extends JPanel implements LocaleChangeListener {
 	private final JBackgroundComponent		image;
 	private final JLabel					notSelectedLabel = new JLabel("", JLabel.CENTER);
 	
-	private ContentType						contentType = ContentType.CREOLE;
+	private EditorContentType						contentType = EditorContentType.CREOLE;
 	private JsonNode						navigator = null, parent =  null, current = null;
-	private boolean							editorContentChanged = false;
+	private boolean							editorContentChanged = true;
+	private boolean							imageContentChanged = true;
 	
-	public ContentEditorAndViewer(final Localizer localizer, final LoggerFacade logger, final ContentMetadataInterface mdi, final CreoleContentSaveCallback callback) throws NullPointerException, LocalizationException {
+	public ContentEditorAndViewer(final Localizer localizer, final LoggerFacade logger, final ContentMetadataInterface mdi, final EditorContentSaveCallback callback) throws NullPointerException, LocalizationException {
 		if (localizer == null) {
 			throw new NullPointerException("Localizer can't be null");
 		}
@@ -120,15 +127,15 @@ class ContentEditorAndViewer extends JPanel implements LocaleChangeListener {
 
 			commonPanel.add(notSelectedLabel, BorderLayout.CENTER);
 			
-			add(creolePanel, ContentType.CREOLE.getCardName());
-			add(imagePanel, ContentType.IMAGE.getCardName());
-			add(commonPanel, ContentType.COMMON.getCardName());
-			setContenTypeInternal(ContentType.COMMON);
+			add(creolePanel, EditorContentType.CREOLE.getCardName());
+			add(imagePanel, EditorContentType.IMAGE.getCardName());
+			add(commonPanel, EditorContentType.COMMON.getCardName());
+			setContenTypeInternal(EditorContentType.COMMON);
 			
 			editor.getDocument().addDocumentListener(new DocumentListener() {
-				@Override public void removeUpdate(DocumentEvent e) {setContentChanged(true);}
-				@Override public void insertUpdate(DocumentEvent e) {setContentChanged(true);}
-				@Override public void changedUpdate(DocumentEvent e) {setContentChanged(true);}
+				@Override public void removeUpdate(DocumentEvent e) {setEditorContentChanged(true);}
+				@Override public void insertUpdate(DocumentEvent e) {setEditorContentChanged(true);}
+				@Override public void changedUpdate(DocumentEvent e) {setEditorContentChanged(true);}
 			});
 			editor.addMouseListener(new MouseListener() {
 				@Override public void mouseReleased(MouseEvent e) {}
@@ -181,7 +188,14 @@ class ContentEditorAndViewer extends JPanel implements LocaleChangeListener {
 					}
 				}
 			});
-			setContentChanged(false);
+			Toolkit.getDefaultToolkit().getSystemClipboard().addFlavorListener((e)->{
+				final Clipboard	cl = (Clipboard)e.getSource();
+				final ContentNodeMetadata	imageMeta = mdi.byApplicationPath(URI.create(ContentMetadataInterface.APPLICATION_SCHEME+":action:/imagePaste"))[0];
+				
+				SwingUtils.findComponentByName(imageToolBar, imageMeta.getName()).setEnabled(cl.isDataFlavorAvailable(DataFlavor.imageFlavor));
+			});			
+			setEditorContentChanged(false);
+			setImageContentChanged(false);
 			fillLocalizedStrings();
 		}
 	}
@@ -191,11 +205,11 @@ class ContentEditorAndViewer extends JPanel implements LocaleChangeListener {
 		fillLocalizedStrings();
 	}
 	
-	public ContentType getContentType() {
+	public EditorContentType getContentType() {
 		return contentType;
 	}
 	
-	public void setContentType(final ContentType contentType, final JsonNode navigator, final JsonNode parent, final JsonNode current) {
+	public void setContentType(final EditorContentType contentType, final JsonNode navigator, final JsonNode parent, final JsonNode current) {
 		if (contentType == null) {
 			throw new NullPointerException("Content type can't be null"); 
 		}
@@ -212,24 +226,39 @@ class ContentEditorAndViewer extends JPanel implements LocaleChangeListener {
 			setContenTypeInternal(contentType);
 			this.navigator = navigator; 
 			this.parent = parent; 
-			this.current = current; 
-			setContentChanged(false);
+			this.current = current;
+			switch (contentType) {
+				case COMMON	:
+					break;
+				case CREOLE	:
+					setEditorContentChanged(false);
+					break;
+				case IMAGE	:
+					setImageContentChanged(false);
+					break;
+				default :
+					throw new UnsupportedOperationException("Editor content type ["+contentType+"] is not supported yet");
+			}
 		}
-	}
-
-	public JCreoleEditor getCreoleEditor() {
-		return editor;
 	}
 
 	public boolean creoleContentWasChanged() {
 		return editorContentChanged;
+	}
+
+	public boolean imageContentWasChanged() {
+		return editorContentChanged;
+	}
+
+	public JCreoleEditor getCreoleEditor() {
+		return editor;
 	}
 	
 	public JBackgroundComponent getImageContainer() {
 		return image;
 	}
 	
-	private void setContenTypeInternal(final ContentType contentType) {
+	private void setContenTypeInternal(final EditorContentType contentType) {
 		this.contentType = contentType;
 		layout.show(this, contentType.getCardName());
 	}
@@ -241,19 +270,28 @@ class ContentEditorAndViewer extends JPanel implements LocaleChangeListener {
 
 	@OnAction("action:/creoleSave")
 	void saveCreoleContent() {
-		try{callback.save(editor.getText());
-			setContentChanged(false);
+		try{callback.save(EditorContentType.CREOLE, editor.getText());
+			 setEditorContentChanged(false);
 		} catch (IOException e) {
 			logger.message(Severity.error, e.getLocalizedMessage(), e);
 		}
 	}
 	
-	private void setContentChanged(final boolean newState) {
+	private void setEditorContentChanged(final boolean newState) {
 		if (editorContentChanged != newState) {
-			final ContentNodeMetadata	meta = mdi.byApplicationPath(URI.create(ContentMetadataInterface.APPLICATION_SCHEME+":action:/creoleSave"))[0];
+			final ContentNodeMetadata	creoleMeta = mdi.byApplicationPath(URI.create(ContentMetadataInterface.APPLICATION_SCHEME+":action:/creoleSave"))[0];
 			
-			SwingUtils.findComponentByName(creoleToolBar, meta.getName()).setEnabled(newState);
+			SwingUtils.findComponentByName(creoleToolBar, creoleMeta.getName()).setEnabled(newState);
 			editorContentChanged = newState;
+		}
+	}
+
+	private void setImageContentChanged(final boolean newState) {
+		if (imageContentChanged != newState) {
+			final ContentNodeMetadata	imageMeta = mdi.byApplicationPath(URI.create(ContentMetadataInterface.APPLICATION_SCHEME+":action:/imageSave"))[0];
+			
+			SwingUtils.findComponentByName(imageToolBar, imageMeta.getName()).setEnabled(newState);
+			imageContentChanged = newState;
 		}
 	}
 	
@@ -267,6 +305,30 @@ class ContentEditorAndViewer extends JPanel implements LocaleChangeListener {
 		image.setFillMode(FillMode.ORIGINAL);
 	}
 
+	@OnAction("action:/imageCopy")
+	private void copyImage() {
+	}
+	
+	@OnAction("action:/imagePaste")
+	private void pasteImage() {
+		try{final Image	image = (Image)Toolkit.getDefaultToolkit().getSystemClipboard().getData(DataFlavor.imageFlavor);
+			
+			getImageContainer().setBackgroundImage(image);
+			setImageContentChanged(true);
+		} catch (HeadlessException | UnsupportedFlavorException | IOException e) {
+			logger.message(Severity.error, e.getLocalizedMessage());
+		}
+	}
+
+	@OnAction("action:/imageSave")
+	void saveImage() {
+		try{callback.save(EditorContentType.IMAGE, image.getBackgroundImage());
+			setImageContentChanged(false);
+		} catch (IOException e) {
+			logger.message(Severity.error, e.getLocalizedMessage(), e);
+		}
+	}
+	
 	private void fillLocalizedStrings() throws LocalizationException {
 		notSelectedLabel.setText(localizer.getValue(LABEL_NOT_SELECTED));
 	}

@@ -1,12 +1,15 @@
 package chav1961.purelibnavigator.admin;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
+import java.io.Writer;
 import java.net.URISyntaxException;
 import java.util.function.Predicate;
 import java.util.jar.JarEntry;
@@ -21,10 +24,12 @@ import chav1961.purelib.basic.URIUtils;
 import chav1961.purelib.basic.Utils;
 import chav1961.purelib.basic.exceptions.ContentException;
 import chav1961.purelib.basic.exceptions.SyntaxException;
+import chav1961.purelib.enumerations.ContinueMode;
 import chav1961.purelib.fsys.interfaces.FileSystemInterface;
 import chav1961.purelib.json.JsonNode;
 import chav1961.purelib.json.JsonUtils;
 import chav1961.purelib.streams.JsonStaxParser;
+import chav1961.purelib.streams.char2char.CreoleWriter;
 import chav1961.purelibnavigator.admin.entities.AppSettings;
 import chav1961.purelibnavigator.interfaces.ContentNodeGroup;
 import chav1961.purelibnavigator.interfaces.ContentNodeType;
@@ -238,7 +243,21 @@ public class AdminUtils {
 		dumpContentAsIs(jos, Navigator.class.getCanonicalName().replace('.', '/')+".class", Navigator.class.getResourceAsStream("Navigator.class"));
 		dumpContentAsIs(jos, Navigator.class.getPackage().getName().replace('.', '/')+"/avatar.jpg", Navigator.class.getResourceAsStream("avatar.jpg"));
 		dumpContentAsIs(jos, NavigatorHandler.class.getCanonicalName().replace('.', '/')+".class", NavigatorHandler.class.getResourceAsStream("NavigatorHandler.class"));
-		dumpContentAsIs(jos, "index.html", buildIndexHtml(root));
+		dumpContentAsIs(jos, "index.html", buildIndexHtml(root.getChild(F_NAVIGATION)));
+		try (final FileSystemInterface	item = fsi.clone()) {
+			item.list(".*\\.cre",  (f)->{
+				try(final ByteArrayOutputStream	baos = new ByteArrayOutputStream()) {
+					try(final Writer			wr = new OutputStreamWriter(baos);
+						final CreoleWriter		cwr = new CreoleWriter(wr);
+						final Reader			rdr = f.charRead(PureLibSettings.DEFAULT_CONTENT_ENCODING)) {
+					
+						Utils.copyStream(rdr, cwr);
+					}
+					dumpContentAsIs(jos, f.getName(), new ByteArrayInputStream(baos.toByteArray()));
+				}
+				return ContinueMode.CONTINUE;
+			});
+		}
 		if (javaDocLocation != null) {
 			dumpJavaDoc(javaDocLocation, javaDocLocation.getAbsolutePath(), jos);
 		}
@@ -279,15 +298,26 @@ public class AdminUtils {
 		// TODO Auto-generated method stub  http://htmlbook.ru/samlayout/verstka-na-html5/shapka-stranitsy
 		switch (node.getType()) {
 			case JsonObject :
-				sb.append("<li><a href=\"#\">").append(node.getChild(F_CAPTION).getStringValue());
+				final ContentNodeType	type = ContentNodeType.valueOf(node.getChild(F_TYPE).getStringValue()); 
+				
+				sb.append("<li>");
+				if (type.getResourceType().hasResource()) {
+					sb.append("<a href=\"javascript:setEmbedRef('/").append(node.getChild(F_ID).getStringValue()).append(type.getResourceType().getResourceSuffix()).append("')\">");
+				}
+				sb.append(node.getChild(F_CAPTION).getStringValue());
+				
+				if (type.getResourceType().hasResource()) {
+					sb.append("</a>");
+				}
 				if (ContentNodeType.valueOf(node.getChild(F_TYPE).getStringValue()).getGroup() == ContentNodeGroup.SUBTREE) {
-					sb.append("</a><br><ul>");
+					sb.append("<br><ul>");
 					buildNavigation(node.getChild(F_CONTENT), sb);
 					sb.append("</ul>");
 				}
-				else {
-					sb.append("</a></li>");
+				if (type.getResourceType().hasResource()) {
+					sb.append("</a>");
 				}
+				sb.append("</li>");
 				break;
 			case JsonArray 	:
 				for (JsonNode item : node.children()) {
