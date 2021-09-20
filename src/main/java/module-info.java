@@ -10,6 +10,7 @@ module chav1961.purelibnavigator {
 	requires java.compiler;
 	requires java.datatransfer;
 	requires fop;
+	requires servlet.api;
 
 	exports chav1961.purelibnavigator.admin; 
 	exports chav1961.purelibnavigator.admin.entities; 
