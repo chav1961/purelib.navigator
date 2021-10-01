@@ -17,26 +17,38 @@
     	width: 200px;
     	float: right;
 	}
-	nav {
-    	background: #f0f0f0;
-    	padding: 10px;
-    	width: 400px;
-    	vertical-align:top;
-    	float: left;
-	}
 	article {
 		margin-left: 10px;
 		margin-right: 10px;
 		text-align: center;
 		display: block;
 	}
+	nav {
+		display: block;
+   		background: #f0f0f0;
+    	padding: 10px;
+	}
 	footer{
 		display: block;
 		background: #00B0D8;
 	}
+	body > table {
+		width: 100%;
+	}
 	body > table > tbody > tr> td {
-    	vertical-align: top;
+   		vertical-align: top;
     	border: none;
+	}
+	body > table > tbody > tr> td:first-child {
+		width: 30%;
+	}
+	body > table > tbody > tr> td:last-child {
+		width: 70%;
+	}
+	embed {
+		display: block;
+		width: 100%;
+		height: 1000px;
 	}
 </style>
 <script type="text/javascript">
@@ -57,15 +69,3 @@ function setEmbedRef(ref) {
 	<table>
 	<tbody>
 	<tr><td>
-<!-- 	<aside>
-		<p>Экономьте электричество</p>
-		<p>Хороший язык</p>
-		<p>Чья палка больше</p>
-	</aside>
-	<section>
-		<h2>Съёмки фильма Полипропилен</h2>
-		<p>История о том, как снимали фильм, где герои отдыхали на пляже, 
-		потом пришёл антагонист, избил протагонистов, сбросил их в бассейн, 
-		и что из этого получилось.</p>
-	</section>
- -->

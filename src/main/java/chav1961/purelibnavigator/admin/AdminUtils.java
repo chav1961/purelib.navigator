@@ -11,6 +11,8 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.Writer;
 import java.net.URISyntaxException;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
@@ -239,27 +241,41 @@ public class AdminUtils {
 		// TODO Auto-generated method stub
 		final JarOutputStream 	jos = new JarOutputStream(os);
 		final JsonNode			root = loadContentDescriptor(fsi);
+		final Set<String>		creoleFiles = new HashSet<>();
 	
+		for (JsonNode fileGroups : root.getChild(F_RESOURCES).children()) {
+			final ContentNodeType	fileType = ContentNodeType.valueOf(fileGroups.getChild(F_TYPE).getStringValue());
+				
+			if (fileType.getResourceType() == ResourceType.CREOLE) {
+				for (JsonNode fileName : fileGroups.getChild(F_CONTENT).children()) {
+					creoleFiles.add(fileName.getStringValue());
+				}
+			}
+		}
+		
 		dumpContentAsIs(jos, "META-INF/", NULL_CONTENT);
 		dumpContentAsIs(jos, "META-INF/MANIFEST.MF", AdminUtils.class.getResourceAsStream("manifest.mf"));
 		dumpContentAsIs(jos, Navigator.class.getCanonicalName().replace('.', '/')+".class", Navigator.class.getResourceAsStream("Navigator.class"));
 		dumpContentAsIs(jos, Navigator.class.getPackage().getName().replace('.', '/')+"/avatar.jpg", Navigator.class.getResourceAsStream("avatar.jpg"));
+		dumpContentAsIs(jos, Navigator.class.getPackage().getName().replace('.', '/')+"/welcome.html", Navigator.class.getResourceAsStream("welcome.html"));
 		dumpContentAsIs(jos, Navigator.class.getPackage().getName().replace('.', '/')+"/notFound.html", Navigator.class.getResourceAsStream("notFound.html"));
 		dumpContentAsIs(jos, Navigator.class.getPackage().getName().replace('.', '/')+"/illegalRequest.html", Navigator.class.getResourceAsStream("illegalRequest.html"));
 		dumpContentAsIs(jos, NavigatorHandler.class.getCanonicalName().replace('.', '/')+".class", NavigatorHandler.class.getResourceAsStream("NavigatorHandler.class"));
 		dumpContentAsIs(jos, "index.html", buildIndexHtml(root.getChild(F_NAVIGATION)));
 		try (final FileSystemInterface	item = fsi.clone()) {
 			item.list(".*\\.cre",  (f)->{
-				try(final ByteArrayOutputStream	baos = new ByteArrayOutputStream()) {
-					try(final Writer			wr = new OutputStreamWriter(baos, PureLibSettings.DEFAULT_CONTENT_ENCODING);
-						final CreoleWriter		cwr = new CreoleWriter(wr, MarkupOutputFormat.XML2HTML, 
-															(wrP, instP)-> {((Writer)wrP).write(""); return false;}, 
-															(wrE, instE)-> {((Writer)wrE).write(""); return false;});
-						final Reader			rdr = f.charRead(PureLibSettings.DEFAULT_CONTENT_ENCODING)) {
-					
-						Utils.copyStream(rdr, cwr);
+				if (creoleFiles.contains(f.getName())) {
+					try(final ByteArrayOutputStream	baos = new ByteArrayOutputStream()) {
+						try(final Writer			wr = new OutputStreamWriter(baos, PureLibSettings.DEFAULT_CONTENT_ENCODING);
+							final CreoleWriter		cwr = new CreoleWriter(wr, MarkupOutputFormat.XML2HTML, 
+																(wrP, instP)-> {((Writer)wrP).write(""); return false;}, 
+																(wrE, instE)-> {((Writer)wrE).write(""); return false;});
+							final Reader			rdr = f.charRead(PureLibSettings.DEFAULT_CONTENT_ENCODING)) {
+						
+							Utils.copyStream(rdr, cwr);
+						}
+						dumpContentAsIs(jos, f.getName(), new ByteArrayInputStream(baos.toByteArray()));
 					}
-					dumpContentAsIs(jos, f.getName(), new ByteArrayInputStream(baos.toByteArray()));
 				}
 				return ContinueMode.CONTINUE;
 			});
