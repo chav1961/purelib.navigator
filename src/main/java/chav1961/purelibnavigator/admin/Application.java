@@ -65,6 +65,9 @@ import chav1961.purelib.model.interfaces.ContentMetadataInterface;
 import chav1961.purelib.model.interfaces.ContentMetadataInterface.ContentNodeMetadata;
 import chav1961.purelib.nanoservice.NanoServiceFactory;
 import chav1961.purelib.streams.JsonStaxPrinter;
+import chav1961.purelib.ui.LRUManager;
+import chav1961.purelib.ui.interfaces.LRUManagerOwner;
+import chav1961.purelib.ui.interfaces.LRUPersistence;
 import chav1961.purelib.ui.interfaces.UIItemState;
 import chav1961.purelib.ui.swing.AutoBuiltForm;
 import chav1961.purelib.ui.swing.SwingUtils;
@@ -73,8 +76,6 @@ import chav1961.purelib.ui.swing.useful.JFileSelectionDialog;
 import chav1961.purelib.ui.swing.useful.JFileSelectionDialog.FilterCallback;
 import chav1961.purelib.ui.swing.useful.JLocalizedOptionPane;
 import chav1961.purelib.ui.swing.useful.JStateString;
-import chav1961.purelib.ui.swing.useful.LRUManager;
-import chav1961.purelib.ui.swing.useful.interfaces.LRUPersistence;
 import chav1961.purelibnavigator.admin.ContentEditorAndViewer.EditorContentType;
 import chav1961.purelibnavigator.admin.entities.AppSettings;
 import chav1961.purelibnavigator.admin.entities.TreeContentNode;
@@ -82,7 +83,7 @@ import chav1961.purelibnavigator.interfaces.ContentNodeType;
 import chav1961.purelibnavigator.interfaces.ResourceType;
 import chav1961.purelibnavigator.interfaces.TreeManipulationCallback;
 
-public class Application extends JFrame implements LocaleChangeListener, AutoCloseable {
+public class Application extends JFrame implements LocaleChangeListener, AutoCloseable, LRUManagerOwner {
 	private static final long 					serialVersionUID = -3061028320843379171L;
 
 	public static final String					ARG_HELP_PORT = "helpport";
@@ -187,11 +188,10 @@ public class Application extends JFrame implements LocaleChangeListener, AutoClo
 					}
 				}
 			});
-			this.mgr.addLRUManagerListener((m,t,i)->SwingUtils.fillLruSubmenu((JMenu)SwingUtils.findComponentByName(menu, Constants.MODEL_BUILTIN_LRU), m));
 			
 			final JSplitPane	splitter = new JSplitPane();
 			final JPanel		rightPanel = new JPanel(new BorderLayout());
-			
+	 		
 			this.fsi = null;
 			this.ceav = new ContentEditorAndViewer(localizer, state, mdi, (ct,t)->saveCreoleContent(ct, t));
 			this.ntc = new NavigatorTreeContent(mdi, localizer, state, 
@@ -261,6 +261,11 @@ public class Application extends JFrame implements LocaleChangeListener, AutoClo
 		SwingUtils.refreshLocale(ceav, oldLocale, newLocale);
 		SwingUtils.refreshLocale(state, oldLocale, newLocale);
 	}
+
+	@Override
+	public LRUManager getLRUManager() {
+		return mgr;
+	}
 	
 	private void saveCreoleContent(final EditorContentType type, final Object content) throws IOException {
 		switch (type) {
@@ -323,7 +328,7 @@ public class Application extends JFrame implements LocaleChangeListener, AutoClo
 	@OnAction("action:builtin:/builtin.lru")
 	private void openLRU(final Map<String,String[]> file) {
 		if (saveAndNeedContinue()) {
-			final String	name = file.get("name")[0];
+			final String	name = file.get("item")[0];
 			final URI		lruUri = URI.create(name);
 				
 			try(final FileSystemInterface	lru = FileSystemFactory.createFileSystem(lruUri)) {
@@ -670,5 +675,4 @@ public class Application extends JFrame implements LocaleChangeListener, AutoClo
 			super(new IntegerArg(ARG_HELP_PORT,false,"help system port",0));
 		}
 	}
-
 }
