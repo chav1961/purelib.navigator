@@ -185,7 +185,7 @@ class NavigatorTreeContent extends JTree implements LocaleChangeListener {
 	private final JPopupMenu				leafMenu; 
 	private final JPopupMenu				emptyMenu; 
 	private final NodeSettings				ns;
-	private final AutoBuiltForm<NodeSettings>	form;
+	private final AutoBuiltForm<NodeSettings,?>	form;
 	
 	private FileSystemInterface				fsi;
 //	private int								uniqueNameSuffix = 1;
@@ -401,7 +401,7 @@ class NavigatorTreeContent extends JTree implements LocaleChangeListener {
 			});
 
 			this.ns = new NodeSettings(logger);
-			this.form = new AutoBuiltForm<NodeSettings>(ContentModelFactory.forAnnotatedClass(NodeSettings.class), localizer, PureLibSettings.INTERNAL_LOADER, ns, ns, (meta)->getAccessAndVisibility(meta));
+			this.form = new AutoBuiltForm<NodeSettings,Object>(ContentModelFactory.forAnnotatedClass(NodeSettings.class), localizer, PureLibSettings.INTERNAL_LOADER, ns, ns, (meta)->getAccessAndVisibility(meta));
 			this.form.setPreferredSize(new Dimension(300,100));
 			
 			((DefaultTreeModel)getModel()).setRoot(new TreeContentNode(new JsonNode(JsonNodeType.JsonObject, new JsonNode("undefined").setName(AdminUtils.F_CAPTION), new JsonNode("SUBTREE").setName(AdminUtils.F_TYPE))));

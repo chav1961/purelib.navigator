@@ -118,7 +118,7 @@ public class Application extends JFrame implements LocaleChangeListener, AutoClo
 	private final Set<File>						temporaries = new HashSet<>();
 	private final AppSettings					as;
 	private final LRUManager					mgr;
-	private final AutoBuiltForm<AppSettings>	form;
+	private final AutoBuiltForm<AppSettings,?>	form;
 	
 	private FileSystemInterface					fsi;
 	private JsonNode							rootNode;
@@ -150,7 +150,7 @@ public class Application extends JFrame implements LocaleChangeListener, AutoClo
 			SwingUtils.assignActionListeners(menu,this);
 			
 			this.as = new AppSettings(state);
-			this.form = new AutoBuiltForm<AppSettings>(ContentModelFactory.forAnnotatedClass(AppSettings.class), localizer, PureLibSettings.INTERNAL_LOADER, as, as);
+			this.form = new AutoBuiltForm<AppSettings,Object>(ContentModelFactory.forAnnotatedClass(AppSettings.class), localizer, PureLibSettings.INTERNAL_LOADER, as, as);
 			this.form.setPreferredSize(new Dimension(300,110));
 			
 			final File	f = new File(APP_SETTINGS_FILE);
