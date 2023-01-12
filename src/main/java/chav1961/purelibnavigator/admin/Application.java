@@ -141,9 +141,11 @@ public class Application extends JFrame implements LocaleChangeListener, AutoClo
 			this.localizer = LocalizerFactory.getLocalizer(mdi.getRoot().getLocalizerAssociated());
 			this.localHelpPort = localHelpPort;
 			this.latch = latch;
-			this.state = new JStateString(this.localizer,10);
 			
 			parent.push(localizer);
+			
+			this.state = new JStateString(this.localizer,10);
+			
 			localizer.addLocaleChangeListener(this);
 			this.menu = SwingUtils.toJComponent(mdi.byUIPath(URI.create("ui:/model/navigation.top.mainmenu")), JMenuBar.class, (meta)->getAccessAndVisibility(meta));
 			
