@@ -63,7 +63,6 @@ import chav1961.purelib.model.Constants;
 import chav1961.purelib.model.ContentModelFactory;
 import chav1961.purelib.model.interfaces.ContentMetadataInterface;
 import chav1961.purelib.model.interfaces.ContentMetadataInterface.ContentNodeMetadata;
-import chav1961.purelib.nanoservice.NanoServiceFactory;
 import chav1961.purelib.streams.JsonStaxPrinter;
 import chav1961.purelib.ui.LRUManager;
 import chav1961.purelib.ui.interfaces.LRUManagerOwner;
@@ -638,25 +637,14 @@ public class Application extends JFrame implements LocaleChangeListener, AutoClo
 		try{final ArgParser						parser = new ApplicationArgParser().parse(args);
 		
 			final int							helpPort = !parser.isTyped(ARG_HELP_PORT) ? getFreePort() : parser.getValue(ARG_HELP_PORT, int.class);
-			
-			final SubstitutableProperties		props = new SubstitutableProperties(Utils.mkProps(
-													 NanoServiceFactory.NANOSERVICE_PORT, ""+helpPort
-													,NanoServiceFactory.NANOSERVICE_ROOT, "fsys:xmlReadOnly:root://"+Application.class.getCanonicalName()+"/chav1961/purelibnavigator/admin/helptree.xml"
-													,NanoServiceFactory.NANOSERVICE_CREOLE_PROLOGUE_URI, Application.class.getResource("prolog.cre").toString() 
-													,NanoServiceFactory.NANOSERVICE_CREOLE_EPILOGUE_URI, Application.class.getResource("epilog.cre").toString() 
-												));
-		
 			try(final InputStream				is = Application.class.getResourceAsStream("application.xml");
 				final Localizer					localizer = new PureLibLocalizer(); ){
-//				final NanoServiceFactory		service = new NanoServiceFactory(logger,props)) {
 				final ContentMetadataInterface	xda = ContentModelFactory.forXmlDescription(is);
 				final CountDownLatch			latch = new CountDownLatch(1);
 				
 				try(final Application		newApp = new Application(xda,localizer,helpPort,latch)) {
-//					service.start();
 					newApp.setVisible(true);
 					latch.await();
-//					service.stop();
 				}
 			} catch (IOException | EnvironmentException | InterruptedException  e) {
 				e.printStackTrace();
