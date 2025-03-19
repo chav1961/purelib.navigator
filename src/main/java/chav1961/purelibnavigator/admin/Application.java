@@ -53,7 +53,6 @@ import chav1961.purelib.enumerations.NodeEnterMode;
 import chav1961.purelib.fsys.FileSystemFactory;
 import chav1961.purelib.fsys.interfaces.FileSystemInterface;
 import chav1961.purelib.i18n.LocalizerFactory;
-import chav1961.purelib.i18n.PureLibLocalizer;
 import chav1961.purelib.i18n.interfaces.Localizer;
 import chav1961.purelib.i18n.interfaces.Localizer.LocaleChangeListener;
 import chav1961.purelib.json.JsonNode;
@@ -638,7 +637,7 @@ public class Application extends JFrame implements LocaleChangeListener, AutoClo
 		
 			final int							helpPort = !parser.isTyped(ARG_HELP_PORT) ? getFreePort() : parser.getValue(ARG_HELP_PORT, int.class);
 			try(final InputStream				is = Application.class.getResourceAsStream("application.xml");
-				final Localizer					localizer = new PureLibLocalizer(); ){
+				final Localizer					localizer = PureLibSettings.PURELIB_LOCALIZER;){
 				final ContentMetadataInterface	xda = ContentModelFactory.forXmlDescription(is);
 				final CountDownLatch			latch = new CountDownLatch(1);
 				
