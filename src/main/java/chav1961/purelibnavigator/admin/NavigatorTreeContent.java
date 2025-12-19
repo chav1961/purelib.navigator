@@ -400,7 +400,7 @@ class NavigatorTreeContent extends JTree implements LocaleChangeListener {
 				}
 			});
 
-			this.ns = new NodeSettings(logger);
+			this.ns = new NodeSettings();
 			this.form = new AutoBuiltForm<NodeSettings,Object>(ContentModelFactory.forAnnotatedClass(NodeSettings.class), localizer, PureLibSettings.INTERNAL_LOADER, ns, ns, (meta)->getAccessAndVisibility(meta));
 			this.form.setPreferredSize(new Dimension(300,100));
 			

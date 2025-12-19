@@ -41,19 +41,11 @@ public class AppSettings implements FormManager<Object,AppSettings>, ModuleAcces
 	public String		lruList = "";
 	
 	
-	private final LoggerFacade 	logger;
-
-	public AppSettings(final LoggerFacade logger) {
-		if (logger == null) {
-			throw new NullPointerException("Logger can't be null");
-		}
-		else {
-			this.logger = logger;
-		}
+	public AppSettings() {
 	}
 
 	@Override
-	public RefreshMode onField(final AppSettings inst, final Object id, final String fieldName, final Object oldValue, final boolean beforeCommit) throws FlowException, LocalizationException {
+	public RefreshMode onField(final LoggerFacade logger, final AppSettings inst, final Object id, final String fieldName, final Object oldValue, final boolean beforeCommit) throws FlowException, LocalizationException {
 		return RefreshMode.DEFAULT;
 	}
 
@@ -64,11 +56,6 @@ public class AppSettings implements FormManager<Object,AppSettings>, ModuleAcces
 		}
 	}
 
-	@Override
-	public LoggerFacade getLogger() {
-		return logger;
-	}
-	
 	public void load(final InputStream is) throws IOException{
 		if (is == null) {
 			throw new NullPointerException("Input stream can't be null"); 

@@ -149,7 +149,7 @@ public class Application extends JFrame implements LocaleChangeListener, AutoClo
 			
 			SwingUtils.assignActionListeners(menu,this);
 			
-			this.as = new AppSettings(state);
+			this.as = new AppSettings();
 			this.form = new AutoBuiltForm<AppSettings,Object>(ContentModelFactory.forAnnotatedClass(AppSettings.class), localizer, PureLibSettings.INTERNAL_LOADER, as, as);
 			this.form.setPreferredSize(new Dimension(300,110));
 			

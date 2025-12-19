@@ -25,28 +25,15 @@ public class NodeSettings implements FormManager<Object,NodeSettings>, ModuleAcc
 	public String			id = "";
 	
 	
-	private final LoggerFacade 	logger;
-
-	public NodeSettings(final LoggerFacade logger) {
-		if (logger == null) {
-			throw new NullPointerException("Logger can't be null");
-		}
-		else {
-			this.logger = logger;
-		}
+	public NodeSettings() {
 	}
 	
 	@Override
-	public RefreshMode onField(final NodeSettings inst, final Object id, final String fieldName, final Object oldValue, final boolean beforeCommit) throws FlowException, LocalizationException {
+	public RefreshMode onField(final LoggerFacade logger, final NodeSettings inst, final Object id, final String fieldName, final Object oldValue, final boolean beforeCommit) throws FlowException, LocalizationException {
 		// TODO Auto-generated method stub
 		return RefreshMode.DEFAULT;
 	}
 	
-	@Override
-	public LoggerFacade getLogger() {
-		return logger;
-	}
-
 	@Override
 	public void allowUnnamedModuleAccess(final Module... unnamedModules) {
 		for (Module item : unnamedModules) {
